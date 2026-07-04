@@ -345,6 +345,105 @@
     display:none;
   }
 
+  /* ---------- روابط التبديل بشاشة الدخول ---------- */
+  .lg-switch{text-align:center;font-size:.76rem;color:var(--muted);margin-top:16px}
+  .lg-switch a{color:var(--primary);font-weight:700;cursor:pointer;text-decoration:none}
+
+  /* ---------- أزرار الصندوق (سحب / إيداع / سجل) ---------- */
+  .fund-actions{display:flex;gap:8px;margin-top:11px}
+  .fund-actions button{
+    flex:1;border-radius:12px;padding:10px 6px;font-family:inherit;font-weight:600;font-size:.78rem;cursor:pointer;
+    transition:transform .18s var(--ease),filter .2s;
+  }
+  .fund-actions button:active{transform:scale(.97)}
+  .fund-actions button:disabled{opacity:.5}
+  .fa-wd{border:1.5px solid var(--primary);background:var(--primary-soft);color:var(--primary)}
+  .fa-dep{border:none;background:var(--primary);color:#fff}
+  .fa-log{flex:0 0 auto;width:52px;border:1px solid var(--line);background:var(--card);color:var(--muted)}
+
+  /* ---------- سجل حركات الصندوق ---------- */
+  .flog{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 2px;border-bottom:1px solid var(--line);font-size:.8rem}
+  .flog:last-child{border-bottom:none}
+  .flog .fl-meta{color:var(--muted);font-size:.66rem;margin-top:2px}
+  .flog .fl-amt{font-weight:700;white-space:nowrap}
+  .flog .fl-amt.plus{color:var(--primary)}
+  .flog .fl-amt.minus{color:var(--red)}
+
+  /* ---------- كود العائلة ---------- */
+  .famcode{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:var(--primary-soft);border-radius:var(--radius-sm);padding:12px 14px;margin-top:6px;
+  }
+  .famcode b{font-size:1.05rem;letter-spacing:2px;color:var(--primary)}
+  .famcode button{
+    border:none;background:var(--primary);color:#fff;border-radius:10px;padding:8px 14px;
+    font-family:inherit;font-weight:700;font-size:.72rem;cursor:pointer;
+  }
+
+  /* ---------- التقرير (مشترك بين الطباعة والـ PDF) ---------- */
+  #pdfStage{position:absolute;top:0;right:-11000px;width:794px;background:#fff;padding:28px;color:#000;z-index:-1}
+  .report-doc h1{font-size:1.4rem;margin-bottom:4px;color:var(--primary)}
+  .report-doc .p-sub{color:#555;font-size:.85rem;margin-bottom:16px}
+  .report-doc table{width:100%;border-collapse:collapse;margin:10px 0 22px}
+  .report-doc th,.report-doc td{border:1px solid #ccc;padding:7px 9px;font-size:.82rem;text-align:right}
+  .report-doc th{background:#f0f0f0}
+  .report-doc h3{font-size:1rem;margin:18px 0 6px}
+  .report-doc .p-row{display:flex;justify-content:space-between;font-size:.9rem;padding:4px 0;border-bottom:1px solid #eee}
+  .report-doc .p-row b{font-weight:700}
+
+  /* ---------- حركة دخول العناصر ---------- */
+  @keyframes itemIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .exp,.env,.fund,.debt{animation:itemIn .3s var(--ease) both}
+  .env,.fund,.debt{transition:transform .18s var(--ease),box-shadow .2s}
+
+  /* ---------- تفاعلية الماوس (كمبيوتر) ---------- */
+  @media (hover:hover){
+    .btn:hover{filter:brightness(1.07)}
+    .btn.ghost:hover,.fund-actions button:hover{filter:brightness(.96)}
+    .icon-btn:hover{background:rgba(255,255,255,.3)}
+    .logout-btn:hover{background:rgba(255,255,255,.3)}
+    .exp:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+    .env:hover,.fund:hover,.debt:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(20,20,30,.09)}
+    nav button:hover{color:var(--primary);background:var(--primary-soft)}
+    .exp .del:hover{filter:brightness(.95)}
+    .sw:hover{transform:scale(1.1)}
+  }
+
+  /* ---------- وضع الأداء (أندرويد): بلا بلور وظلال خفيفة ---------- */
+  .perf .hstat{backdrop-filter:none}
+  .perf nav{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--card)}
+  .perf .modal{backdrop-filter:none}
+  .perf #loader{backdrop-filter:none}
+  .perf header{box-shadow:none}
+  .perf .card,.perf .env,.perf .fund,.perf .debt,.perf .exp,.perf .login-card{box-shadow:0 1px 3px rgba(20,20,30,.06)}
+  .perf .exp,.perf .env,.perf .fund,.perf .debt{animation-duration:.18s}
+
+  /* ---------- واجهة الكمبيوتر ---------- */
+  .dash-col{display:contents}
+  @media (min-width:1000px){
+    body{padding-bottom:32px;padding-right:104px}
+    nav{
+      top:0;bottom:0;right:0;left:auto;width:104px;
+      flex-direction:column;justify-content:flex-start;gap:8px;
+      padding:26px 12px;border-top:none;border-left:1px solid var(--line);
+      background:var(--card);
+    }
+    nav button{flex:0 0 auto;padding:13px 4px}
+    header{
+      position:static;max-width:1080px;margin:20px auto 0;
+      border-radius:26px;padding:22px 24px;
+    }
+    main{max-width:1080px;padding:20px 24px}
+    #tab-add,#tab-budget{max-width:620px;margin:0 auto}
+    #tab-dash.active{display:grid;grid-template-columns:1.05fr .95fr;gap:0 20px;align-items:start}
+    .dash-col{display:block;min-width:0}
+    .modal{align-items:center}
+    .modal-card{border-radius:24px;max-height:86vh}
+    .head-stats .hstat .val{font-size:1.25rem}
+    .donut{width:150px;height:150px}
+    .donut svg{width:150px;height:150px}
+  }
+
   /* ---------- تقرير الطباعة ---------- */
   #printArea{display:none}
   @media print{
@@ -374,12 +473,31 @@
     <div class="lg-brand">مصاريفنا</div>
     <div class="lg-sub">سجّل الدخول للمتابعة</div>
     <div id="liSetupWarn" class="lock-banner">⚠️ الموقع غير مربوط بقاعدة البيانات — عدّل SUPABASE_URL بالملف.</div>
-    <label>الإيميل</label>
-    <input type="email" id="liUser" dir="ltr" autocomplete="email" placeholder="you@example.com">
-    <label>الباسورد</label>
-    <input type="password" id="liPass" autocomplete="current-password" placeholder="••••••">
-    <div class="login-err" id="liErr"></div>
-    <button class="btn" id="btnLogin">دخول</button>
+
+    <div id="loginBox">
+      <label>الإيميل</label>
+      <input type="email" id="liUser" dir="ltr" autocomplete="email" placeholder="you@example.com">
+      <label>الباسورد</label>
+      <input type="password" id="liPass" autocomplete="current-password" placeholder="••••••">
+      <div class="login-err" id="liErr"></div>
+      <button class="btn" id="btnLogin">دخول</button>
+      <div class="lg-switch">ما عندك حساب؟ <a id="lnkSignup">سجّل جديد</a></div>
+    </div>
+
+    <div id="signupBox" style="display:none">
+      <label>اسمك</label>
+      <input type="text" id="suName" autocomplete="name" placeholder="مثلاً: أحمد">
+      <label>الإيميل</label>
+      <input type="email" id="suEmail" dir="ltr" autocomplete="email" placeholder="you@example.com">
+      <label>الباسورد</label>
+      <input type="password" id="suPass" autocomplete="new-password" placeholder="٦ خانات على الأقل">
+      <label>كود العائلة (اختياري)</label>
+      <input type="text" id="suCode" dir="ltr" autocomplete="off" placeholder="إذا زوجك/زوجتك مسجّل قبلك">
+      <div class="hint" style="margin-top:4px">تلكاه بإعداداته — بدونه تنسويلك مساحة عائلة جديدة خاصة بيك.</div>
+      <div class="login-err" id="suErr"></div>
+      <button class="btn" id="btnSignup">إنشاء الحساب</button>
+      <div class="lg-switch">عندك حساب؟ <a id="lnkLogin">سجّل دخول</a></div>
+    </div>
   </div>
 </div>
 
@@ -389,6 +507,7 @@
     <div class="brand">مصاريفنا<small>ميزانية البيت الشهرية</small></div>
     <div class="head-actions">
       <input type="month" id="monthPick" class="month-pick">
+      <button class="icon-btn" id="btnChart" title="مقارنة الأشهر">📊</button>
       <button class="icon-btn" id="btnTheme" title="الألوان">🎨</button>
       <button class="icon-btn" id="btnSettings" title="الإعدادات">⚙</button>
     </div>
@@ -443,23 +562,27 @@
         <select id="expCat"><option value="">— بلا تصنيف —</option></select>
       </div>
       <button class="btn" id="btnAddExp">إضافة المصروف</button>
-      <div class="hint">المصروف ينحفظ فوراً بكوكل شيت، ويتسجل وياه منو دخّله. للسحب من صندوق ادخار استعمل زر «سحب» باللوحة.</div>
+      <div class="hint">المصروف ينحفظ فوراً ويظهر لحظياً عند كل أفراد العائلة، ويتسجل وياه منو دخّله. للسحب أو الإيداع بصندوق ادخار استعمل الأزرار باللوحة.</div>
     </div>
   </section>
 
   <!-- تبويب: اللوحة -->
   <section class="tab" id="tab-dash">
-    <div id="summaryCard"></div>
-    <div id="envList"></div>
-    <div id="saveList"></div>
-    <div id="debtList"></div>
-    <h2 style="margin:18px 4px 10px">آخر المصاريف</h2>
-    <div class="filter-bar" id="filterBar" style="display:none">
-      <input type="text" id="fltText" placeholder="🔎 دوّر بالتفاصيل...">
-      <select id="fltCat"><option value="">كل التصنيفات</option></select>
-      <select id="fltBy"><option value="">الكل</option></select>
+    <div class="dash-col">
+      <div id="summaryCard"></div>
+      <div id="envList"></div>
     </div>
-    <div id="expList"></div>
+    <div class="dash-col">
+      <div id="saveList"></div>
+      <div id="debtList"></div>
+      <h2 style="margin:18px 4px 10px">آخر المصاريف</h2>
+      <div class="filter-bar" id="filterBar" style="display:none">
+        <input type="text" id="fltText" placeholder="🔎 دوّر بالتفاصيل...">
+        <select id="fltCat"><option value="">كل التصنيفات</option></select>
+        <select id="fltBy"><option value="">الكل</option></select>
+      </div>
+      <div id="expList"></div>
+    </div>
   </section>
 
   <!-- تبويب: الميزانية -->
@@ -614,9 +737,9 @@ $('modal').addEventListener('click', e => { if(e.target === $('modal')) modalClo
 
 /* ---------- الجلسة (Supabase Auth يديرها ويجدّدها تلقائياً) ---------- */
 async function fetchProfile(userId){
-  const { data, error } = await sb.from('profiles').select('display_name').eq('id', userId).single();
+  const { data, error } = await sb.from('profiles').select('display_name, household_id').eq('id', userId).single();
   if(error || !data) return null;
-  return { name: data.display_name };
+  return { name: data.display_name, hh: data.household_id };
 }
 
 function showLogin(){
@@ -632,7 +755,86 @@ function showApp(){
   $('appNav').style.display='';
   $('userName').textContent = 'مرحباً ' + (session && session.name ? session.name : '');
 }
-function doLogout(){ sb.auth.signOut().catch(()=>{}); session = null; showLogin(); }
+function doLogout(){ stopRealtime(); sb.auth.signOut().catch(()=>{}); session = null; showLogin(); }
+
+/* ---------- التبديل بين الدخول والتسجيل ---------- */
+function toggleAuth(signup){
+  $('loginBox').style.display  = signup ? 'none' : '';
+  $('signupBox').style.display = signup ? '' : 'none';
+  $('liErr').textContent = ''; $('suErr').textContent = '';
+}
+
+/* ---------- إنشاء حساب جديد ---------- */
+async function doSignup(){
+  if(!apiReady()){ $('suErr').textContent = 'الموقع غير مربوط بقاعدة البيانات بعد'; return; }
+  const name = $('suName').value.trim();
+  const email = $('suEmail').value.trim();
+  const pass = $('suPass').value;
+  const code = $('suCode').value.trim();
+  const err = $('suErr');
+  err.textContent = '';
+  if(!name || !email || !pass){ err.textContent = 'املأ الاسم والإيميل والباسورد'; return; }
+  if(pass.length < 6){ err.textContent = 'الباسورد لازم يكون ٦ خانات على الأقل'; return; }
+  loading(true);
+  try{
+    if(code){
+      const { data: famName, error: e0 } = await sb.rpc('check_family_code', { p_code: code });
+      if(e0 || !famName){ err.textContent = 'كود العائلة غلط — دقق عليه أو خليه فارغ'; return; }
+      if(!confirm('راح تنضم لعائلة «' + famName + '» وتشوفون نفس البيانات سوا. تمام؟')) return;
+    }
+    const { data, error } = await sb.auth.signUp({
+      email, password: pass,
+      options: { data: { name, family_code: code } }
+    });
+    if(error){
+      err.textContent = /already|registered/i.test(error.message) ? 'هذا الإيميل مسجّل أصلاً — سجّل دخول بيه' : ('ما كدرت أسوي الحساب: ' + error.message);
+      return;
+    }
+    if(data.session && data.user){
+      toast('أهلاً بيك بمصاريفنا 🎉');
+      await afterLogin(data.user);
+    }else{
+      toggleAuth(false);
+      $('liErr').textContent = 'افتح إيميلك وأكّد الحساب، بعدين سجّل دخول من هنا';
+    }
+  }catch(_){ err.textContent = 'ما كدرت أوصل للخادم'; }
+  finally{ loading(false); }
+}
+
+/* ---------- المزامنة اللحظية (Realtime) ---------- */
+let rtChannel = null, rtTimer = null, inFlight = false;
+function startRealtime(){
+  stopRealtime();
+  if(!session || !session.hh) return;
+  try{
+    rtChannel = sb.channel('hh-' + session.hh);
+    ['expenses','budgets','categories','budget_incomes','debts'].forEach(tbl => {
+      rtChannel.on('postgres_changes',
+        { event:'*', schema:'public', table:tbl, filter:'household_id=eq.' + session.hh },
+        onRemoteChange);
+    });
+    rtChannel.subscribe();
+  }catch(_){ /* المزامنة كمالية — الموقع يشتغل بدونها */ }
+}
+function stopRealtime(){
+  if(rtChannel){ try{ sb.removeChannel(rtChannel); }catch(_){} rtChannel = null; }
+  clearTimeout(rtTimer);
+}
+function onRemoteChange(){
+  clearTimeout(rtTimer);
+  rtTimer = setTimeout(async () => {
+    if(inFlight || !session) return;
+    try{
+      const res = await apiGet(state.month);
+      if(res.ok){
+        state.budget = res.budget;
+        state.expenses = res.expenses;
+        state.debts = res.debts || [];
+        render();
+      }
+    }catch(_){}
+  }, 450);
+}
 
 /* ---------- API (Supabase RPC) ---------- */
 function apiReady(){
@@ -676,6 +878,9 @@ async function apiPost(p){
     case 'returnDebt':
       call = sb.rpc('return_debt', { p_id:p.id, p_date:p.date||'' });
       break;
+    case 'addDeposit':
+      call = sb.rpc('add_deposit', { p_fund:p.fund, p_amount:p.amount, p_date:p.date||'', p_descr:p.desc||'' });
+      break;
     case 'cancelDebt':
       call = sb.rpc('cancel_debt', { p_id:p.id });
       break;
@@ -697,6 +902,7 @@ async function afterLogin(user){
   session = prof || { name: '' };
   showApp();
   $('expDate').value = todayISO();
+  startRealtime();
   loadMonth(thisMonth());
 }
 async function doLogin(){
@@ -720,6 +926,7 @@ async function loadMonth(month){
   state.month = month;
   $('monthPick').value = month;
   if(!apiReady()){ render(); return; }
+  inFlight = true;
   loading(true);
   try{
     const res = await apiGet(month);
@@ -732,6 +939,7 @@ async function loadMonth(month){
   }catch(err){
     toast('ما كدرت أوصل للبيانات: ' + err.message, true);
   }finally{
+    inFlight = false;
     loading(false);
   }
 }
@@ -782,9 +990,9 @@ function render(){
   const totalIncome = totalSalary + extraIncome;
   const remain = totalIncome + spendCarried - saveContrib - spendingSpent;
 
-  $('hSalary').textContent = fmt(totalIncome);
-  $('hSpent').textContent  = fmt(spendingSpent);
-  $('hRemain').textContent = fmt(remain);
+  $('hSalary') && setStat($('hSalary'), totalIncome);
+  setStat($('hSpent'), spendingSpent);
+  setStat($('hRemain'), remain);
   $('hRemain').className = 'val' + (remain < 0 ? ' neg' : '');
 
   /* ===== ملخص + رسم ===== */
@@ -857,7 +1065,11 @@ function render(){
             <span>+ هذا الشهر: ${fmt(contrib)}</span>
             ${wd ? `<span>${wd>=0?'− صافي السحب':'+ صافي الإرجاع'}: ${fmt(Math.abs(wd))}</span>` : ''}
           </div>
-          <button class="fund-wd" onclick="openWithdraw(${i})" ${state.locked?'disabled':''}>سحب من الصندوق</button>
+          <div class="fund-actions">
+            <button class="fa-wd" onclick="openWithdraw(${i})" ${state.locked?'disabled':''}>سحب −</button>
+            <button class="fa-dep" onclick="openDeposit(${i})" ${state.locked?'disabled':''}>إيداع +</button>
+            <button class="fa-log" onclick="openFundLog(${i})" title="سجل الحركات">☰</button>
+          </div>
         </div>`;
       delete spentByCat[c.name];
     });
@@ -966,10 +1178,11 @@ function renderExpenseList(){
   list.forEach(e => {
     const isWd  = saveNames.has(e.category);
     const isRet = e.amount < 0;
+    const isDep = isRet && String(e.desc||'').indexOf('إيداع') === 0;
     const dotCls = isRet ? 'ret' : (isWd ? 'wd' : '');
-    const icon = isRet ? '↩' : (isWd ? '🏦' : esc((e.category||'؟').charAt(0)));
-    const label = e.desc || (isRet ? 'إرجاع' : (isWd ? 'سحب' : 'بدون تفاصيل'));
-    const tag = isRet ? ' · إرجاع' : (isWd ? ' · سحب' : '');
+    const icon = isDep ? '💰' : (isRet ? '↩' : (isWd ? '🏦' : esc((e.category||'؟').charAt(0))));
+    const label = e.desc || (isDep ? 'إيداع' : (isRet ? 'إرجاع' : (isWd ? 'سحب' : 'بدون تفاصيل')));
+    const tag = isDep ? ' · إيداع' : (isRet ? ' · إرجاع' : (isWd ? ' · سحب' : ''));
     expHtml += `
       <div class="exp" onclick="openEdit('${e.id}')">
         <div class="cat-dot ${dotCls}">${icon}</div>
@@ -1086,7 +1299,7 @@ window.openEdit = (id) => {
   if(state.locked) return;
   const e = state.expenses.find(x => x.id === id);
   if(!e) return;
-  if(e.amount < 0){ toast('حركة إرجاع — تنشطّر من ديون الصناديق', true); return; }
+  if(e.amount < 0){ toast('حركة صندوق (إيداع/إرجاع) — تكدر تحذفها من زر ✕ بس ما تنعدّل', true); return; }
   const cats = (state.budget.categories||[]);
   const opts = '<option value="">— بلا تصنيف —</option>' +
     cats.map(c => `<option value="${esc(c.name)}" ${c.name===e.category?'selected':''}>${esc(c.name)}${c.type==='save'?' (ادخار)':''}</option>`).join('');
@@ -1161,6 +1374,69 @@ window.openWithdraw = (idx) => {
     }catch(err){ toast('ما انسحب: ' + err.message, true); }
     finally{ loading(false); }
   };
+};
+
+/* ---------- إيداع بصندوق ادخار ---------- */
+window.openDeposit = (idx) => {
+  if(state.locked) return;
+  const c = (state.budget.categories||[])[idx];
+  if(!c) return;
+  modalOpen(`
+    <h2>إيداع بـ «${esc(c.name)}» 💰</h2>
+    <div class="hint" style="margin:0 0 8px">أي فلوس جتك من برة وتريد تضيفها للصندوق — تنسجل كحركة مستقلة بالسجل ويزيد الرصيد فوراً.</div>
+    <div class="row">
+      <div><label>المبلغ</label><input type="tel" id="dpAmount" inputmode="numeric" placeholder="0"></div>
+      <div><label>التاريخ</label><input type="date" id="dpDate" value="${todayISO()}"></div>
+    </div>
+    <label>المصدر / السبب (اختياري)</label>
+    <input type="text" id="dpDesc" placeholder="مثلاً: من بيع غرض / رجعتلي سلفة">
+    <button class="btn" id="dpSave">إيداع</button>
+    <button class="btn ghost" onclick="modalClose()">إلغاء</button>
+  `);
+  liveFormat($('dpAmount'));
+  $('dpSave').onclick = async () => {
+    const amount = num($('dpAmount').value);
+    if(amount <= 0) return toast('دخّل المبلغ', true);
+    loading(true);
+    try{
+      const res = await apiPost({ action:'addDeposit', fund:c.name, amount, date: $('dpDate').value || todayISO(), desc: $('dpDesc').value.trim() });
+      if(guardAuth(res)) return;
+      if(!res.ok) throw new Error(res.error || 'خطأ');
+      modalClose();
+      toast('انضاف للرصيد ✓ 💰');
+      await loadMonth(state.month);
+    }catch(err){ toast('ما انضاف: ' + err.message, true); }
+    finally{ loading(false); }
+  };
+};
+
+/* ---------- سجل حركات الصندوق ---------- */
+window.openFundLog = (idx) => {
+  const c = (state.budget.categories||[])[idx];
+  if(!c) return;
+  const moves = state.expenses.filter(e => e.category === c.name);
+  let rows = '';
+  moves.forEach(e => {
+    const isDep = e.amount < 0 && String(e.desc||'').indexOf('إيداع') === 0;
+    const isRet = e.amount < 0 && !isDep;
+    const sign = e.amount < 0 ? '+' : '−';
+    const cls = e.amount < 0 ? 'plus' : 'minus';
+    const kind = isDep ? 'إيداع' : (isRet ? 'إرجاع دين' : 'سحب');
+    rows += `
+      <div class="flog">
+        <div>
+          <div>${esc(e.desc || kind)}</div>
+          <div class="fl-meta">${esc(e.date)} · ${kind}${e.by ? ' · ' + esc(e.by) : ''}</div>
+        </div>
+        <div class="fl-amt ${cls}">${sign}${fmt(Math.abs(e.amount))}</div>
+      </div>`;
+  });
+  modalOpen(`
+    <h2>سجل «${esc(c.name)}» ☰</h2>
+    <div class="hint" style="margin:0 0 8px">حركات شهر ${esc(state.month)} — بدّل الشهر من فوق حتى تشوف أشهر ثانية. الأخضر يزيد الرصيد والأحمر ينقصه.</div>
+    ${rows || '<div class="empty">ماكو حركات على هذا الصندوق بهذا الشهر.</div>'}
+    <button class="btn ghost" onclick="modalClose()" style="margin-top:14px">إغلاق</button>
+  `);
 };
 
 /* ---------- إرجاع / شطب دين صندوق ---------- */
@@ -1271,6 +1547,10 @@ $('btnSettings').onclick = () => {
   modalOpen(`
     <h2>⚙ الإعدادات</h2>
 
+    <div class="set-sec">العائلة</div>
+    <div class="hint" style="margin:0">كود عائلتك — انطيه لزوجك/زوجتك يدخّله وقت التسجيل حتى تصيرون بنفس المساحة وتشوفون نفس البيانات:</div>
+    <div class="famcode"><b dir="ltr" id="famCode">…</b><button id="btnCopyCode">نسخ</button></div>
+
     <div class="set-sec">الحساب — ${esc(session && session.name ? session.name : '')}</div>
     <label>الباسورد الحالي</label>
     <input type="password" id="pwCur" autocomplete="current-password" placeholder="••••••">
@@ -1280,11 +1560,24 @@ $('btnSettings').onclick = () => {
     <input type="password" id="pwNew2" autocomplete="new-password" placeholder="أعد كتابته">
     <button class="btn" id="btnSavePw">تغيير الباسورد</button>
 
-    <div class="set-sec">التقارير</div>
-    <button class="btn ghost" id="btnPrint" style="margin-top:0">🖨 اطبع تقرير شهر ${esc(state.month)}</button>
+    <div class="set-sec">التقارير والتصدير</div>
+    <button class="btn ghost" id="btnPdf" style="margin-top:0">📄 تحميل تقرير PDF — شهر ${esc(state.month)}</button>
+    <button class="btn ghost" id="btnXlsMonth">📊 تصدير إكسل — شهر ${esc(state.month)}</button>
+    <button class="btn ghost" id="btnXlsAll">🗂 تصدير إكسل — كل الأشهر</button>
+    <button class="btn ghost" id="btnPrint">🖨 طباعة مباشرة (للكمبيوتر)</button>
 
     <button class="btn ghost" onclick="modalClose()" style="margin-top:16px">إغلاق</button>
   `);
+  /* كود العائلة */
+  sb.from('households').select('join_code').single().then(({ data }) => {
+    $('famCode') && ($('famCode').textContent = (data && data.join_code) || '—');
+  }).catch(()=>{});
+  $('btnCopyCode').onclick = async () => {
+    const code = $('famCode').textContent.trim();
+    if(!code || code === '—' || code === '…') return;
+    try{ await navigator.clipboard.writeText(code); toast('انتسخ الكود ✓'); }
+    catch(_){ toast('ما كدرت أنسخ — اكتبه يدوي: ' + code, true); }
+  };
   $('btnSavePw').onclick = async () => {
     const cur = $('pwCur').value, np = $('pwNew').value, np2 = $('pwNew2').value;
     if(!cur || !np) return toast('املأ الحقول', true);
@@ -1304,10 +1597,13 @@ $('btnSettings').onclick = () => {
     finally{ loading(false); }
   };
   $('btnPrint').onclick = () => { modalClose(); setTimeout(printReport, 250); };
+  $('btnPdf').onclick = () => { modalClose(); setTimeout(pdfReport, 250); };
+  $('btnXlsMonth').onclick = () => exportExcel('month');
+  $('btnXlsAll').onclick = () => exportExcel('all');
 };
 
-/* ---------- تقرير الطباعة ---------- */
-function printReport(){
+/* ---------- بناء التقرير (مشترك بين الطباعة والـ PDF) ---------- */
+function buildReportHTML(){
   const b = state.budget || { salary1:0, salary2:0, categories:[] };
   const cats = b.categories || [];
   const saveNames = new Set(cats.filter(c=>c.type==='save').map(c=>c.name));
@@ -1343,7 +1639,7 @@ function printReport(){
     expRows += `<tr><td>${esc(e.date)}</td><td>${esc(e.desc||'-')}</td><td>${esc(e.category||'-')}</td><td>${esc(e.by||'-')}</td><td>${(e.amount<0?'+':'')}${fmt(Math.abs(e.amount))}</td></tr>`;
   });
 
-  $('printArea').innerHTML = `
+  return `
     <h1>مصاريفنا — تقرير شهر ${esc(state.month)}</h1>
     <div class="p-sub">طُبع في ${todayISO()}</div>
     <div class="p-row"><span>إجمالي الرواتب</span><b>${fmt(totalSalary)}</b></div>
@@ -1362,7 +1658,195 @@ function printReport(){
     <h3>كل المصاريف</h3>
     <table><tr><th>التاريخ</th><th>التفاصيل</th><th>التصنيف</th><th>المُدخِل</th><th>المبلغ</th></tr>${expRows||'<tr><td colspan="5">—</td></tr>'}</table>
   `;
+}
+
+/* ---------- الطباعة المباشرة (كمبيوتر) ---------- */
+function printReport(){
+  $('printArea').innerHTML = buildReportHTML();
   window.print();
+}
+
+/* ---------- تحميل مكتبة خارجية عند الحاجة بس (حتى يظل الفتح سريع) ---------- */
+const _libs = {};
+function loadScript(src){
+  if(_libs[src]) return _libs[src];
+  _libs[src] = new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = res;
+    s.onerror = () => { delete _libs[src]; rej(new Error('ما كدرت أحمّل المكتبة — دقق على النت')); };
+    document.head.appendChild(s);
+  });
+  return _libs[src];
+}
+
+/* ---------- تقرير PDF (يشتغل تلفون وكمبيوتر) ---------- */
+async function pdfReport(){
+  loading(true);
+  try{
+    await loadScript('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js');
+    await loadScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js');
+
+    const stage = document.createElement('div');
+    stage.id = 'pdfStage';
+    stage.className = 'report-doc';
+    stage.dir = 'rtl';
+    stage.innerHTML = buildReportHTML();
+    document.body.appendChild(stage);
+    const canvas = await html2canvas(stage, { scale: 2, backgroundColor: '#ffffff' });
+    stage.remove();
+
+    const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
+    const pw = 210, ph = 297, margin = 8, iw = pw - margin*2;
+    const pagePx = Math.floor((ph - margin*2) * canvas.width / iw);
+    let done = 0, first = true;
+    while(done < canvas.height){
+      const slice = document.createElement('canvas');
+      slice.width = canvas.width;
+      slice.height = Math.min(pagePx, canvas.height - done);
+      slice.getContext('2d').drawImage(canvas, 0, done, canvas.width, slice.height, 0, 0, canvas.width, slice.height);
+      if(!first) pdf.addPage();
+      pdf.addImage(slice.toDataURL('image/jpeg', .92), 'JPEG', margin, margin, iw, slice.height * iw / canvas.width);
+      done += slice.height;
+      first = false;
+    }
+    pdf.save('مصاريفنا-' + state.month + '.pdf');
+    toast('انحمّل التقرير ✓ 📄');
+  }catch(err){ toast('ما كدرت أسوي الـ PDF: ' + err.message, true); }
+  finally{ loading(false); }
+}
+
+/* ---------- تصدير إكسل ---------- */
+async function exportExcel(scope){
+  loading(true);
+  try{
+    await loadScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
+    const wb = XLSX.utils.book_new();
+    wb.Workbook = { Views: [{ RTL: true }] };
+    const money = n => Number(n) || 0;
+
+    if(scope === 'month'){
+      const b = state.budget || { salary1:0, salary2:0, categories:[], incomes:[] };
+      const cats = b.categories || [];
+      const spent = {};
+      state.expenses.forEach(e => { const k = e.category || 'بلا تصنيف'; spent[k] = (spent[k]||0) + e.amount; });
+
+      const sum = [['الشهر', state.month], ['راتب 1', money(b.salary1)], ['راتب 2', money(b.salary2)]];
+      (b.incomes||[]).forEach(x => sum.push(['دخل إضافي: ' + (x.desc||''), money(x.amount)]));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sum), 'الملخص');
+
+      const catRows = cats.map(c => ({
+        'الاسم': c.name,
+        'النوع': c.type === 'save' ? 'صندوق ادخار' : 'مصروف',
+        'المخصص': money(c.amount),
+        'المرحّل': money(c.carried),
+        'المصروف/صافي السحب': money(spent[c.name]||0),
+        'الباقي/الرصيد': money(c.amount) + money(c.carried) - money(spent[c.name]||0)
+      }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(catRows), 'التصنيفات والصناديق');
+
+      const expRows = state.expenses.map(e => ({ 'التاريخ': e.date, 'التفاصيل': e.desc, 'التصنيف': e.category, 'المُدخِل': e.by, 'المبلغ': e.amount }));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(expRows), 'المصاريف');
+
+      const debtRows = (state.debts||[]).map(d => ({ 'الحساب': d.account, 'الصندوق': d.fund, 'المبلغ': money(d.amount), 'التاريخ': d.date }));
+      if(debtRows.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(debtRows), 'الديون المفتوحة');
+
+      XLSX.writeFile(wb, 'مصاريفنا-' + state.month + '.xlsx');
+    }else{
+      const { data, error } = await sb.rpc('export_all');
+      if(error) throw new Error(error.message);
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet((data.budgets||[]).map(b => ({ 'الشهر': b.month, 'راتب 1': money(b.salary1), 'راتب 2': money(b.salary2), 'مقفل': b.locked ? 'نعم' : 'لا' }))), 'الميزانيات');
+      const inc = (data.incomes||[]).map(i => ({ 'الشهر': i.month, 'الوصف': i.desc, 'المبلغ': money(i.amount) }));
+      if(inc.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(inc), 'إيرادات إضافية');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet((data.categories||[]).map(c => ({ 'الشهر': c.month, 'الاسم': c.name, 'النوع': c.type === 'save' ? 'صندوق ادخار' : 'مصروف', 'المخصص': money(c.amount), 'المرحّل': money(c.carried) }))), 'التصنيفات');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet((data.expenses||[]).map(e => ({ 'الشهر': e.month, 'التاريخ': e.date, 'التفاصيل': e.desc, 'التصنيف': e.category, 'المُدخِل': e.by, 'المبلغ': money(e.amount) }))), 'المصاريف');
+      const dr = (data.debts||[]).map(d => ({ 'الشهر': d.month, 'الحساب': d.account, 'الصندوق': d.fund, 'المبلغ': money(d.amount), 'الحالة': d.status, 'التاريخ': d.date }));
+      if(dr.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dr), 'الديون');
+      XLSX.writeFile(wb, 'مصاريفنا-كل-الأشهر.xlsx');
+    }
+    toast('انصدّر الإكسل ✓ 📊');
+  }catch(err){ toast('ما انصدّر: ' + err.message, true); }
+  finally{ loading(false); }
+}
+
+/* ---------- مقارنة الأشهر ---------- */
+async function showMonthsChart(){
+  loading(true);
+  try{
+    const { data, error } = await sb.rpc('months_summary');
+    if(error) throw new Error(error.message);
+    const arr = (data||[]).slice(-12);
+    if(!arr.length){ toast('بعد ماكو أشهر للمقارنة', true); return; }
+
+    const max = Math.max(1, ...arr.map(m => Math.max(m.spent||0, m.income||0)));
+    const W = Math.max(340, 20 + arr.length * 52), base = 172, H = 212;
+    let bars = '';
+    arr.forEach((m, i) => {
+      const x = 12 + i * 52;
+      const hi = Math.max(2, Math.round((m.income||0) / max * 132));
+      const hs = Math.max(0, Math.round(Math.max(0, m.spent||0) / max * 132));
+      const cur = m.month === state.month;
+      bars += `<g style="cursor:pointer" onclick="gotoMonth('${m.month}')">
+        <rect x="${x}" y="${base-hi}" width="16" height="${hi}" rx="4" fill="var(--primary-soft)"/>
+        <rect x="${x+18}" y="${base-Math.max(hs,2)}" width="16" height="${Math.max(hs,2)}" rx="4" fill="${(m.spent||0) > (m.income||0) ? 'var(--red)' : 'var(--primary)'}"/>
+        <text x="${x+17}" y="${base+16}" text-anchor="middle" font-size="9" fill="${cur ? 'var(--primary)' : '#8A8A8E'}" font-weight="${cur ? '800' : '400'}">${m.month.slice(2).replace('-','/')}${m.locked ? ' 🔒' : ''}</text>
+      </g>`;
+    });
+    const avg = Math.round(arr.reduce((s,m)=> s + (m.spent||0), 0) / arr.length);
+    const top = arr.reduce((a,b)=> (b.spent||0) > (a.spent||0) ? b : a);
+    modalOpen(`
+      <h2>📊 مقارنة الأشهر</h2>
+      <div class="hint" style="margin:0 0 6px">العمود الفاتح = الدخل، والغامق = المصروف (يحمرّ إذا الصرف تجاوز الدخل). اضغط على أي شهر حتى تفتحه.</div>
+      <div style="overflow-x:auto;direction:ltr"><svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="display:block;margin:0 auto">${bars}</svg></div>
+      <div class="alloc-line"><span>معدل الصرف الشهري</span><b>${fmt(avg)}</b></div>
+      <div class="alloc-line"><span>أعلى شهر صرف</span><b>${esc(top.month)} — ${fmt(top.spent||0)}</b></div>
+      <button class="btn ghost" onclick="modalClose()">إغلاق</button>
+    `);
+  }catch(err){ toast('ما كدرت أجيب المقارنة: ' + err.message, true); }
+  finally{ loading(false); }
+}
+window.gotoMonth = (m) => { modalClose(); loadMonth(m); };
+
+/* ---------- عدّاد متحرك لأرقام الهيدر ---------- */
+function setStat(el, value){
+  const from = Number(el.dataset.v || 0), to = Number(value) || 0;
+  el.dataset.v = to;
+  if(from === to){ el.textContent = fmt(to); return; }
+  const t0 = performance.now(), dur = 550;
+  cancelAnimationFrame(el._raf);
+  const step = (t) => {
+    const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+    el.textContent = fmt(Math.round(from + (to - from) * e));
+    if(k < 1) el._raf = requestAnimationFrame(step);
+  };
+  el._raf = requestAnimationFrame(step);
+}
+
+/* ---------- احتفال بسيط عند إقفال الشهر 🎉 ---------- */
+function confetti(){
+  try{
+    const cv = document.createElement('canvas');
+    cv.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:300';
+    cv.width = innerWidth; cv.height = innerHeight;
+    document.body.appendChild(cv);
+    const ctx = cv.getContext('2d');
+    const P = Array.from({ length: 110 }, () => ({
+      x: Math.random() * cv.width, y: -20 - Math.random() * cv.height * .4,
+      r: 3 + Math.random() * 5, c: PALETTE[Math.floor(Math.random() * PALETTE.length)],
+      vy: 2.2 + Math.random() * 3.4, vx: -1.5 + Math.random() * 3,
+      rot: Math.random() * Math.PI, vr: -.1 + Math.random() * .2
+    }));
+    let n = 0;
+    (function tick(){
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      P.forEach(p => {
+        p.y += p.vy; p.x += p.vx; p.rot += p.vr;
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+        ctx.fillStyle = p.c; ctx.fillRect(-p.r, -p.r/2, p.r*2, p.r); ctx.restore();
+      });
+      if(++n < 150) requestAnimationFrame(tick); else cv.remove();
+    })();
+  }catch(_){}
 }
 
 /* ---------- أحداث ---------- */
@@ -1378,6 +1862,13 @@ document.querySelectorAll('nav button').forEach(btn => {
 $('btnLogin').onclick = doLogin;
 $('liPass').addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
 $('btnLogout').onclick = doLogout;
+
+$('lnkSignup').onclick = () => toggleAuth(true);
+$('lnkLogin').onclick = () => toggleAuth(false);
+$('btnSignup').onclick = doSignup;
+$('suCode').addEventListener('keydown', e => { if(e.key === 'Enter') doSignup(); });
+
+$('btnChart').onclick = showMonthsChart;
 
 $('monthPick').onchange = e => loadMonth(e.target.value || thisMonth());
 
@@ -1461,13 +1952,15 @@ $('btnCloseMonth').onclick = async () => {
     const res = await apiPost({ action:'closeMonth', month: state.month });
     if(guardAuth(res)) return;
     if(!res.ok) throw new Error(res.error || 'خطأ');
-    toast('انقفل الشهر وانرحّل الباقي ✓');
+    toast('انقفل الشهر وانرحّل الباقي ✓ 🎉');
+    confetti();
     await loadMonth(state.month);
   }catch(err){ toast('ما انقفل: ' + err.message, true); }
   finally{ loading(false); }
 };
 
 /* ---------- تشغيل ---------- */
+if(/Android/i.test(navigator.userAgent)) document.documentElement.classList.add('perf');
 loadTheme();
 apiReady();
 (async () => {
