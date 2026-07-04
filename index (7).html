@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>مصاريفنا</title>
+<meta name="theme-color" content="#0D6E5F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="مصاريفنا">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F5F5F7;
+    --bg-2:#FFFFFF;
+    --card:#FFFFFF;
+    --ink:#1C1C1E;
+    --muted:#8A8A8E;
+    --line:#E6E6EA;
+    --primary:#0D6E5F;
+    --primary-soft:#E2F0ED;
+    --amber:#E0A52E;
+    --red:#D9544F;
+    --red-soft:#FBECEB;
+    --radius:18px;
+    --radius-sm:13px;
+    --shadow:0 1px 2px rgba(20,20,30,.04), 0 4px 16px rgba(20,20,30,.05);
+    --shadow-lg:0 8px 40px rgba(20,20,30,.16);
+    --blur:saturate(180%) blur(20px);
+    --ease:cubic-bezier(.32,.72,0,1);
+    --header-grad:linear-gradient(160deg, var(--primary), color-mix(in srgb, var(--primary) 78%, #000 22%));
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    font-family:'Alexandria',-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    min-height:100vh;
+    padding-bottom:calc(86px + env(safe-area-inset-bottom));
+    -webkit-font-smoothing:antialiased;
+    letter-spacing:-.1px;
+  }
+
+  /* ---------- شاشة الدخول ---------- */
+  #loginScreen{
+    position:fixed;inset:0;z-index:200;background:var(--bg);
+    display:none;align-items:center;justify-content:center;padding:24px;
+  }
+  #loginScreen.show{display:flex}
+  .login-card{
+    width:100%;max-width:360px;background:var(--card);border:1px solid var(--line);
+    border-radius:24px;box-shadow:var(--shadow);padding:30px 22px;
+    animation:pop .4s var(--ease);
+  }
+  @keyframes pop{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:none}}
+  .login-card .lg-brand{font-weight:800;font-size:1.6rem;color:var(--primary);text-align:center}
+  .login-card .lg-sub{font-size:.78rem;color:var(--muted);text-align:center;margin:4px 0 18px}
+  .login-card label{margin-top:12px}
+  .login-err{color:var(--red);font-size:.78rem;margin-top:10px;min-height:1.1em;text-align:center}
+
+  /* ---------- الهيدر ---------- */
+  header{
+    background:var(--header-grad);
+    color:#fff;
+    padding:calc(16px + env(safe-area-inset-top)) 16px 18px;
+    border-radius:0 0 26px 26px;
+    position:sticky;top:0;z-index:40;
+    box-shadow:0 6px 24px color-mix(in srgb, var(--primary) 28%, transparent);
+  }
+  .head-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .brand{font-weight:800;font-size:1.18rem;letter-spacing:0}
+  .brand small{display:block;font-weight:300;font-size:.7rem;opacity:.85;margin-top:2px}
+  .head-actions{display:flex;align-items:center;gap:8px}
+  .icon-btn{
+    width:38px;height:38px;flex-shrink:0;border-radius:12px;cursor:pointer;
+    background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);
+    color:#fff;font-size:1.05rem;display:flex;align-items:center;justify-content:center;
+    transition:transform .18s var(--ease),background .18s;
+  }
+  .icon-btn:active{transform:scale(.9)}
+  .month-pick{
+    background:rgba(255,255,255,.16);
+    border:1px solid rgba(255,255,255,.28);
+    color:#fff;border-radius:12px;
+    padding:9px 10px;font-family:inherit;font-size:.82rem;font-weight:500;
+  }
+  .month-pick::-webkit-calendar-picker-indicator{filter:invert(1)}
+  .head-stats{display:flex;gap:9px;margin-top:16px}
+  .hstat{flex:1;background:rgba(255,255,255,.13);border-radius:15px;padding:11px 12px;backdrop-filter:var(--blur)}
+  .hstat .lbl{font-size:.65rem;font-weight:300;opacity:.85}
+  .hstat .val{font-size:1.02rem;font-weight:700;margin-top:3px;white-space:nowrap}
+  .hstat.main{background:#fff;color:var(--primary)}
+  .hstat.main .lbl{opacity:.7}
+  .hstat .val.neg{color:#FFD9D7}
+  .hstat.main .val.neg{color:var(--red)}
+  .head-user{display:flex;align-items:center;justify-content:space-between;margin-top:13px}
+  .head-user .uname{font-size:.72rem;font-weight:500;opacity:.92}
+  .logout-btn{
+    background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);color:#fff;
+    border-radius:10px;padding:6px 13px;font-family:inherit;font-size:.7rem;font-weight:600;cursor:pointer;
+    transition:transform .18s var(--ease);
+  }
+  .logout-btn:active{transform:scale(.93)}
+
+  /* ---------- التبويبات السفلية ---------- */
+  nav{
+    position:fixed;bottom:0;right:0;left:0;z-index:50;
+    background:color-mix(in srgb, var(--card) 80%, transparent);
+    backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+    border-top:1px solid var(--line);
+    display:flex;
+    padding:7px 8px calc(7px + env(safe-area-inset-bottom));
+  }
+  nav button{
+    flex:1;background:none;border:none;font-family:inherit;cursor:pointer;
+    color:var(--muted);font-size:.68rem;font-weight:600;
+    padding:7px 4px;border-radius:13px;
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    transition:color .2s, background .2s, transform .18s var(--ease);
+  }
+  nav button .ic{font-size:1.3rem;line-height:1;transition:transform .2s var(--ease)}
+  nav button:active{transform:scale(.92)}
+  nav button.active{color:var(--primary);background:var(--primary-soft)}
+  nav button.active .ic{transform:translateY(-1px)}
+
+  /* ---------- عام ---------- */
+  main{padding:16px;max-width:560px;margin:0 auto}
+  .tab{display:none}
+  .tab.active{display:block;animation:fade .32s var(--ease)}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .card{
+    background:var(--card);border:1px solid var(--line);
+    border-radius:var(--radius);box-shadow:var(--shadow);
+    padding:16px;margin-bottom:14px;
+  }
+  h2{font-size:.96rem;font-weight:700;margin-bottom:12px}
+  label{display:block;font-size:.75rem;font-weight:500;color:var(--muted);margin-bottom:5px}
+  input,select{
+    width:100%;border:1px solid var(--line);border-radius:12px;
+    padding:12px 13px;font-family:inherit;font-size:.95rem;background:#fff;color:var(--ink);
+    transition:border-color .2s, box-shadow .2s;
+  }
+  input:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent)}
+  input:disabled,select:disabled,button:disabled{opacity:.5}
+  .row{display:flex;gap:10px}
+  .row>div{flex:1}
+  .btn{
+    width:100%;border:none;border-radius:14px;cursor:pointer;
+    font-family:inherit;font-weight:700;font-size:.95rem;
+    padding:14px;background:var(--primary);color:#fff;margin-top:14px;
+    transition:transform .18s var(--ease),filter .2s;
+    box-shadow:0 4px 14px color-mix(in srgb, var(--primary) 30%, transparent);
+  }
+  .btn:active{transform:scale(.97)}
+  .btn:disabled{opacity:.5;box-shadow:none}
+  .btn.ghost{background:var(--primary-soft);color:var(--primary);margin-top:10px;font-weight:600;box-shadow:none}
+  .btn.warn-btn{background:#fff;color:var(--primary);border:1.5px solid var(--primary);margin-top:10px;box-shadow:none}
+  .btn.danger{background:var(--red-soft);color:var(--red);box-shadow:none;font-weight:600;margin-top:10px}
+  .hint{font-size:.7rem;color:var(--muted);margin-top:8px;line-height:1.7}
+
+  /* ---------- ملخص اللوحة + الرسم ---------- */
+  .sum-card{padding:16px}
+  .sum-top{display:flex;gap:14px;align-items:center}
+  .donut{flex-shrink:0;width:128px;height:128px;display:flex;align-items:center;justify-content:center}
+  .sum-stats{flex:1;display:flex;flex-direction:column;gap:9px;min-width:0}
+  .ss{display:flex;justify-content:space-between;gap:6px;font-size:.76rem;color:var(--muted)}
+  .ss b{color:var(--ink);font-weight:700;white-space:nowrap}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:14px;font-size:.72rem;color:var(--muted)}
+  .lg-item{display:flex;align-items:center;gap:5px}
+  .lg-item b{color:var(--ink);font-weight:700;margin-right:2px}
+  .lg-dot{width:9px;height:9px;border-radius:3px;display:inline-block}
+
+  /* ---------- ظروف الميزانية (الداشبورد) ---------- */
+  .env{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);
+    box-shadow:var(--shadow);padding:13px 14px;margin-bottom:10px;
+  }
+  .env-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .env-name{font-weight:600;font-size:.9rem}
+  .env-left{font-size:.78rem;font-weight:700;color:var(--primary);white-space:nowrap}
+  .env-left.over{color:var(--red)}
+  .bar{height:8px;background:var(--primary-soft);border-radius:99px;margin-top:9px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--primary);border-radius:99px;transition:width .5s var(--ease)}
+  .bar i.warn{background:var(--amber)}
+  .bar i.over{background:var(--red)}
+  .env-sub{display:flex;justify-content:space-between;font-size:.68rem;color:var(--muted);margin-top:6px}
+  .env-carry{font-size:.66rem;color:var(--primary);font-weight:600;margin-top:5px}
+  .sec-head{font-weight:700;font-size:.95rem;margin:18px 4px 10px}
+
+  /* ---------- صناديق الادخار (اللوحة) ---------- */
+  .save-head{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:.95rem;margin:18px 4px 10px}
+  .save-head span{color:var(--primary);font-weight:800}
+  .fund{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);
+    box-shadow:var(--shadow);padding:13px 14px;margin-bottom:10px;
+  }
+  .fund-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .fund-name{font-weight:700;font-size:.92rem}
+  .fund-bal{font-weight:800;font-size:1.02rem;color:var(--primary);white-space:nowrap}
+  .fund-sub{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:.66rem;color:var(--muted);margin-top:7px}
+  .fund-wd{
+    margin-top:11px;width:100%;border:1.5px solid var(--primary);background:var(--primary-soft);
+    color:var(--primary);border-radius:12px;padding:10px;font-family:inherit;font-weight:600;font-size:.8rem;cursor:pointer;
+    transition:transform .18s var(--ease);
+  }
+  .fund-wd:active{transform:scale(.98)}
+  .fund-wd:disabled{opacity:.5}
+
+  /* ---------- ديون الصناديق ---------- */
+  .debt{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);
+    box-shadow:var(--shadow);padding:13px 14px;margin-bottom:10px;border-right:3px solid var(--amber);
+  }
+  .debt-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .debt-acc{font-weight:700;font-size:.9rem}
+  .debt-amt{font-weight:800;font-size:.98rem;color:var(--amber);white-space:nowrap}
+  .debt-sub{font-size:.66rem;color:var(--muted);margin-top:5px}
+  .debt-actions{display:flex;gap:8px;margin-top:11px}
+  .debt-actions button{
+    flex:1;border:none;border-radius:11px;padding:9px;font-family:inherit;font-weight:700;font-size:.78rem;cursor:pointer;
+    transition:transform .18s var(--ease);
+  }
+  .debt-actions button:active{transform:scale(.97)}
+  .db-return{background:var(--primary-soft);color:var(--primary)}
+  .db-cancel{background:var(--red-soft);color:var(--red)}
+
+  /* ---------- قائمة المصاريف + فلتر ---------- */
+  .filter-bar{display:flex;gap:8px;margin-bottom:10px}
+  .filter-bar input{flex:1.6}
+  .filter-bar select{flex:1}
+  .filter-bar input,.filter-bar select{padding:10px 12px;font-size:.82rem;border-radius:12px}
+  .exp{
+    display:flex;align-items:center;gap:11px;cursor:pointer;
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);
+    padding:11px 13px;margin-bottom:8px;transition:transform .15s var(--ease);
+  }
+  .exp:active{transform:scale(.99)}
+  .exp .cat-dot{
+    width:38px;height:38px;border-radius:12px;flex-shrink:0;
+    background:var(--primary-soft);color:var(--primary);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:.85rem;
+  }
+  .exp .cat-dot.wd{background:#FBEEDC;color:var(--amber)}
+  .exp .cat-dot.ret{background:var(--primary-soft);color:var(--primary)}
+  .exp .mid{flex:1;min-width:0}
+  .exp .desc{font-size:.85rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .exp .meta{font-size:.66rem;color:var(--muted);margin-top:2px}
+  .exp .amt{font-weight:700;font-size:.88rem;white-space:nowrap}
+  .exp .amt.ret{color:var(--primary)}
+  .exp .del{
+    border:none;background:var(--red-soft);color:var(--red);
+    width:30px;height:30px;border-radius:10px;cursor:pointer;font-size:.9rem;flex-shrink:0;
+  }
+
+  /* ---------- صفوف التصنيفات بالميزانية ---------- */
+  .cat-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+  .cat-row input.cname{flex:1.4}
+  .cat-row input.camt{flex:1}
+  .cat-row .rm{
+    border:none;background:var(--red-soft);color:var(--red);
+    width:42px;height:46px;border-radius:12px;cursor:pointer;font-size:1rem;flex-shrink:0;
+  }
+  .cat-carry{font-size:.68rem;color:var(--primary);font-weight:600;margin:-3px 2px 10px}
+  .alloc-line{
+    display:flex;justify-content:space-between;font-size:.75rem;
+    padding:8px 2px 0;color:var(--muted);font-weight:500;
+  }
+  .alloc-line b{color:var(--ink)}
+  .alloc-line b.neg{color:var(--red)}
+
+  /* ---------- بانر القفل ---------- */
+  .lock-banner{
+    display:none;background:#EDEBE6;border:1px solid var(--line);color:#5A5A52;
+    border-radius:var(--radius-sm);padding:12px 14px;font-size:.8rem;font-weight:600;
+    text-align:center;margin-bottom:14px;
+  }
+
+  /* ---------- مودال / شيت سفلي ---------- */
+  .modal{
+    position:fixed;inset:0;z-index:150;background:rgba(20,20,30,.4);
+    display:none;align-items:flex-end;justify-content:center;
+    backdrop-filter:blur(2px);
+  }
+  .modal.show{display:flex;animation:mfade .2s ease}
+  @keyframes mfade{from{opacity:0}to{opacity:1}}
+  .modal-card{
+    background:var(--card);width:100%;max-width:560px;
+    border-radius:24px 24px 0 0;padding:10px 18px calc(20px + env(safe-area-inset-bottom));
+    box-shadow:var(--shadow-lg);max-height:90vh;overflow:auto;
+    animation:slideup .4s var(--ease);
+  }
+  @keyframes slideup{from{transform:translateY(100%)}to{transform:none}}
+  .grabber{width:38px;height:5px;border-radius:99px;background:var(--line);margin:0 auto 14px}
+  .modal-card h2{margin-bottom:6px}
+  .modal-card label{margin-top:12px}
+  .set-sec{font-size:.72rem;font-weight:700;color:var(--muted);margin:18px 2px 8px}
+  .set-sec:first-of-type{margin-top:4px}
+
+  /* ---------- منتقي الألوان ---------- */
+  .swatches{display:flex;flex-wrap:wrap;gap:11px}
+  .sw{
+    width:42px;height:42px;border-radius:13px;cursor:pointer;border:3px solid transparent;
+    transition:transform .18s var(--ease);position:relative;
+  }
+  .sw:active{transform:scale(.9)}
+  .sw.sel{border-color:var(--ink)}
+  .sw.sel::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1rem}
+  .sw-custom{display:flex;align-items:center;justify-content:center;background:var(--bg);border:2px dashed var(--line);color:var(--muted);font-size:1.2rem}
+  .sw-custom input{position:absolute;inset:0;opacity:0;cursor:pointer}
+
+  /* ---------- حالات ---------- */
+  .empty{
+    text-align:center;color:var(--muted);font-size:.8rem;
+    padding:30px 10px;line-height:2;
+  }
+  .toast{
+    position:fixed;bottom:calc(95px + env(safe-area-inset-bottom));right:50%;transform:translateX(50%) translateY(10px);
+    background:var(--ink);color:#fff;font-size:.8rem;font-weight:500;
+    padding:11px 18px;border-radius:99px;z-index:99;
+    opacity:0;pointer-events:none;transition:opacity .28s var(--ease),transform .28s var(--ease);
+    max-width:90vw;text-align:center;box-shadow:var(--shadow-lg);
+  }
+  .toast.show{opacity:1;transform:translateX(50%) translateY(0)}
+  .toast.err{background:var(--red)}
+  #loader{
+    position:fixed;inset:0;background:rgba(245,245,247,.7);
+    display:none;align-items:center;justify-content:center;z-index:180;
+    backdrop-filter:blur(3px);
+  }
+  #loader.show{display:flex}
+  .spin{
+    width:34px;height:34px;border-radius:50%;
+    border:3px solid var(--primary-soft);border-top-color:var(--primary);
+    animation:rot .8s linear infinite;
+  }
+  @keyframes rot{to{transform:rotate(360deg)}}
+  #setupWarn{
+    background:#FDF3E3;border:1px solid #EFD9AC;color:#7A5A14;
+    border-radius:var(--radius-sm);padding:14px;font-size:.78rem;line-height:1.9;margin-bottom:14px;
+    display:none;
+  }
+
+  /* ---------- تقرير الطباعة ---------- */
+  #printArea{display:none}
+  @media print{
+    body{background:#fff;padding:0}
+    header,nav,main,.modal,.toast,#loader,#loginScreen{display:none!important}
+    #printArea{display:block!important;padding:24px;color:#000}
+    #printArea h1{font-size:1.4rem;margin-bottom:4px;color:var(--primary)}
+    #printArea .p-sub{color:#555;font-size:.85rem;margin-bottom:16px}
+    #printArea table{width:100%;border-collapse:collapse;margin:10px 0 22px}
+    #printArea th,#printArea td{border:1px solid #ccc;padding:7px 9px;font-size:.82rem;text-align:right}
+    #printArea th{background:#f0f0f0}
+    #printArea h3{font-size:1rem;margin:18px 0 6px}
+    #printArea .p-row{display:flex;justify-content:space-between;font-size:.9rem;padding:4px 0;border-bottom:1px solid #eee}
+    #printArea .p-row b{font-weight:700}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none!important;transition:none!important}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ شاشة الدخول ============ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="lg-brand">مصاريفنا</div>
+    <div class="lg-sub">سجّل الدخول للمتابعة</div>
+    <div id="liSetupWarn" class="lock-banner">⚠️ الموقع غير مربوط بقاعدة البيانات — عدّل SUPABASE_URL بالملف.</div>
+    <label>الإيميل</label>
+    <input type="email" id="liUser" dir="ltr" autocomplete="email" placeholder="you@example.com">
+    <label>الباسورد</label>
+    <input type="password" id="liPass" autocomplete="current-password" placeholder="••••••">
+    <div class="login-err" id="liErr"></div>
+    <button class="btn" id="btnLogin">دخول</button>
+  </div>
+</div>
+
+<!-- ============ التطبيق ============ -->
+<header id="appHeader" style="display:none">
+  <div class="head-top">
+    <div class="brand">مصاريفنا<small>ميزانية البيت الشهرية</small></div>
+    <div class="head-actions">
+      <input type="month" id="monthPick" class="month-pick">
+      <button class="icon-btn" id="btnTheme" title="الألوان">🎨</button>
+      <button class="icon-btn" id="btnSettings" title="الإعدادات">⚙</button>
+    </div>
+  </div>
+  <div class="head-stats">
+    <div class="hstat main">
+      <div class="lbl">الباقي للصرف</div>
+      <div class="val" id="hRemain">—</div>
+    </div>
+    <div class="hstat">
+      <div class="lbl">الدخل</div>
+      <div class="val" id="hSalary">—</div>
+    </div>
+    <div class="hstat">
+      <div class="lbl">المصروف</div>
+      <div class="val" id="hSpent">—</div>
+    </div>
+  </div>
+  <div class="head-user">
+    <span class="uname" id="userName"></span>
+    <button class="logout-btn" id="btnLogout">خروج</button>
+  </div>
+</header>
+
+<main id="appMain" style="display:none">
+  <div id="setupWarn">
+    ⚠️ <b>الموقع بعده غير مربوط.</b> افتح ملف index.html وتأكد من قيمتَي <b dir="ltr">SUPABASE_URL</b> و<b dir="ltr">SUPABASE_KEY</b>.
+  </div>
+
+  <div id="lockBanner" class="lock-banner"></div>
+
+  <!-- تبويب: مصروف جديد -->
+  <section class="tab active" id="tab-add">
+    <div class="card">
+      <h2>سجّل مصروف</h2>
+      <div class="row">
+        <div>
+          <label>المبلغ (د.ع)</label>
+          <input type="tel" id="expAmount" placeholder="50,000" inputmode="numeric">
+        </div>
+        <div>
+          <label>التاريخ</label>
+          <input type="date" id="expDate">
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <label>التفاصيل</label>
+        <input type="text" id="expDesc" placeholder="شنو اشتريت؟">
+      </div>
+      <div style="margin-top:10px">
+        <label>التصنيف</label>
+        <select id="expCat"><option value="">— بلا تصنيف —</option></select>
+      </div>
+      <button class="btn" id="btnAddExp">إضافة المصروف</button>
+      <div class="hint">المصروف ينحفظ فوراً بكوكل شيت، ويتسجل وياه منو دخّله. للسحب من صندوق ادخار استعمل زر «سحب» باللوحة.</div>
+    </div>
+  </section>
+
+  <!-- تبويب: اللوحة -->
+  <section class="tab" id="tab-dash">
+    <div id="summaryCard"></div>
+    <div id="envList"></div>
+    <div id="saveList"></div>
+    <div id="debtList"></div>
+    <h2 style="margin:18px 4px 10px">آخر المصاريف</h2>
+    <div class="filter-bar" id="filterBar" style="display:none">
+      <input type="text" id="fltText" placeholder="🔎 دوّر بالتفاصيل...">
+      <select id="fltCat"><option value="">كل التصنيفات</option></select>
+      <select id="fltBy"><option value="">الكل</option></select>
+    </div>
+    <div id="expList"></div>
+  </section>
+
+  <!-- تبويب: الميزانية -->
+  <section class="tab" id="tab-budget">
+    <button class="btn ghost" id="btnCopyLast" style="margin-top:0">⧉ انسخ تصنيفات الشهر الماضي</button>
+    <div class="card" style="margin-top:14px">
+      <h2>رواتب الشهر</h2>
+      <div class="row">
+        <div>
+          <label>راتبي</label>
+          <input type="tel" id="salary1" placeholder="0" inputmode="numeric">
+        </div>
+        <div>
+          <label>راتب زوجتي</label>
+          <input type="tel" id="salary2" placeholder="0" inputmode="numeric">
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>إيرادات إضافية 💵</h2>
+      <div id="incomeRows"></div>
+      <button class="btn ghost" id="btnAddIncome">+ إضافة دخل (سلفة / فلوس خارجية)</button>
+      <div class="hint">أي فلوس تجيك غير الراتب — سلفة، هدية، بيع غرض… تنضاف فوق مجموع الرواتب ويصير عندك رقم واحد توزّعه.</div>
+    </div>
+    <div class="card">
+      <h2>توزيع المصاريف</h2>
+      <div id="catRows"></div>
+      <button class="btn ghost" id="btnAddCat">+ إضافة تصنيف مصروف</button>
+    </div>
+    <div class="card">
+      <h2>صناديق الادخار 🏦</h2>
+      <div id="saveRows"></div>
+      <button class="btn ghost" id="btnAddSave">+ إضافة صندوق ادخار</button>
+      <div class="hint">المبلغ الي تحطه = المبلغ الي تدّخره شهرياً. الصندوق يتراكم تلقائياً، والسحب منه من تبويب «اللوحة».</div>
+    </div>
+    <div class="card">
+      <div class="alloc-line"><span>الرواتب</span><b id="aSalary">0 د.ع</b></div>
+      <div class="alloc-line"><span>إيرادات إضافية</span><b id="aIncome">0 د.ع</b></div>
+      <div class="alloc-line"><span>توزيع المصاريف</span><b id="aSpend">0 د.ع</b></div>
+      <div class="alloc-line"><span>محجوز للادخار</span><b id="aSave">0 د.ع</b></div>
+      <div class="alloc-line"><span>الباقي بلا توزيع</span><b id="allocLeft">0 د.ع</b></div>
+      <div class="alloc-line"><span>مرحّل من الشهر الماضي</span><b id="allocCarry">0 د.ع</b></div>
+    </div>
+    <button class="btn" id="btnSaveBudget">حفظ ميزانية الشهر</button>
+    <button class="btn warn-btn" id="btnCloseMonth">إقفال الشهر وترحيل الباقي ✓</button>
+    <button class="btn danger" id="btnClearMonth">🗑 تفريغ ميزانية هذا الشهر</button>
+    <div class="hint">الإقفال يخلّي الشهر للعرض فقط (ما تكدر تعدّله بعدها)، ويرحّل باقي كل تصنيف وكل صندوق ادخار للشهر الجاي. التفريغ يمسح الرواتب والتصنيفات (المصاريف المسجلة تبقى).</div>
+  </section>
+</main>
+
+<nav id="appNav" style="display:none">
+  <button data-tab="tab-add" class="active"><span class="ic">＋</span>مصروف</button>
+  <button data-tab="tab-dash"><span class="ic">◫</span>اللوحة</button>
+  <button data-tab="tab-budget"><span class="ic">⚖</span>الميزانية</button>
+</nav>
+
+<div class="modal" id="modal"><div class="modal-card" id="modalCard"></div></div>
+<div class="toast" id="toast"></div>
+<div id="loader"><div class="spin"></div></div>
+<div id="printArea"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+/* ============================================================
+   إعدادات Supabase — رابط المشروع + المفتاح العلني (Publishable)
+   ============================================================ */
+const SUPABASE_URL = "https://rcpwavfgxrqzgxclqwss.supabase.co";
+const SUPABASE_KEY = "sb_publishable_d6EVDwJ4-neRBjtXathxxA_yXqpKUMD";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const PALETTE = ['#0D6E5F','#2E9E8B','#D99A2B','#C0504D','#6A8CAF','#8E6FAE','#5BA86F','#B5793A','#4C9DA6','#9A6FA0'];
+
+/* الثيمات الجاهزة (لون أساسي لكل ثيم) */
+const THEMES = [
+  { id:'teal',   name:'أخضر مزرق', primary:'#0D6E5F' },
+  { id:'blue',   name:'أزرق',      primary:'#2563EB' },
+  { id:'indigo', name:'بنفسجي',    primary:'#6D5AE0' },
+  { id:'rose',   name:'وردي',      primary:'#E0457B' },
+  { id:'orange', name:'برتقالي',   primary:'#E0742E' },
+  { id:'amber',  name:'عسلي',      primary:'#C99A1E' },
+  { id:'slate',  name:'رصاصي',     primary:'#475569' },
+  { id:'black',  name:'فحمي',      primary:'#1F2937' }
+];
+
+let state = { month:'', budget:null, expenses:[], debts:[], locked:false };
+let session = null;
+
+/* ---------- أدوات ---------- */
+const $ = id => document.getElementById(id);
+const fmt = n => (Number(n)||0).toLocaleString('en-US') + ' د.ع';
+const num = v => Number(String(v).replace(/[^\d.]/g,'')) || 0;
+const todayISO = () => new Date().toISOString().slice(0,10);
+const thisMonth = () => new Date().toISOString().slice(0,7);
+const prevMonthStr = m => { let p=m.split('-').map(Number),y=p[0],mm=p[1]-1; if(mm<1){mm=12;y--;} return y+'-'+('0'+mm).slice(-2); };
+const daysInMonth = m => { const p=m.split('-').map(Number); return new Date(p[0], p[1], 0).getDate(); };
+
+function monthProgress(m){
+  const total = daysInMonth(m);
+  const cur = thisMonth();
+  if(m < cur) return { elapsed: total, left: 0, total };
+  if(m > cur) return { elapsed: 0, left: total, total };
+  const day = new Date().getDate();
+  return { elapsed: day, left: Math.max(0, total - day), total };
+}
+
+function toast(msg, isErr){
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isErr ? ' err' : '');
+  clearTimeout(t._h);
+  t._h = setTimeout(()=> t.className='toast', 2600);
+}
+function loading(on){ $('loader').className = on ? 'show' : ''; }
+
+function liveFormat(input){
+  input.addEventListener('input', () => {
+    const n = num(input.value);
+    input.value = n ? n.toLocaleString('en-US') : '';
+  });
+}
+
+function esc(s){
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+/* ---------- الثيم / الألوان ---------- */
+// يطلّع نسخة فاتحة من اللون الأساسي للخلفيات الناعمة
+function softTint(hex){
+  const c = hex.replace('#','');
+  const r = parseInt(c.slice(0,2),16), g = parseInt(c.slice(2,4),16), b = parseInt(c.slice(4,6),16);
+  const mix = (x)=> Math.round(x + (255 - x) * 0.86);
+  return 'rgb(' + mix(r) + ',' + mix(g) + ',' + mix(b) + ')';
+}
+function applyTheme(primary){
+  document.documentElement.style.setProperty('--primary', primary);
+  document.documentElement.style.setProperty('--primary-soft', softTint(primary));
+}
+function loadTheme(){
+  let p = '';
+  try{ p = localStorage.getItem('mas_theme') || ''; }catch(_){}
+  if(p) applyTheme(p);
+}
+function saveTheme(primary){
+  try{ localStorage.setItem('mas_theme', primary); }catch(_){}
+  applyTheme(primary);
+}
+
+/* ---------- المودال ---------- */
+function modalOpen(html){ $('modalCard').innerHTML = '<div class="grabber"></div>' + html; $('modal').classList.add('show'); }
+window.modalClose = () => $('modal').classList.remove('show');
+$('modal').addEventListener('click', e => { if(e.target === $('modal')) modalClose(); });
+
+/* ---------- الجلسة (Supabase Auth يديرها ويجدّدها تلقائياً) ---------- */
+async function fetchProfile(userId){
+  const { data, error } = await sb.from('profiles').select('display_name').eq('id', userId).single();
+  if(error || !data) return null;
+  return { name: data.display_name };
+}
+
+function showLogin(){
+  $('loginScreen').classList.add('show');
+  $('appHeader').style.display='none';
+  $('appMain').style.display='none';
+  $('appNav').style.display='none';
+}
+function showApp(){
+  $('loginScreen').classList.remove('show');
+  $('appHeader').style.display='';
+  $('appMain').style.display='';
+  $('appNav').style.display='';
+  $('userName').textContent = 'مرحباً ' + (session && session.name ? session.name : '');
+}
+function doLogout(){ sb.auth.signOut().catch(()=>{}); session = null; showLogin(); }
+
+/* ---------- API (Supabase RPC) ---------- */
+function apiReady(){
+  const ok = SUPABASE_URL.startsWith('https://') && SUPABASE_URL.includes('.supabase.co') && SUPABASE_KEY.length > 20;
+  const sw = $('setupWarn'); if(sw) sw.style.display = ok ? 'none' : 'block';
+  const lw = $('liSetupWarn'); if(lw) lw.style.display = ok ? 'none' : 'block';
+  return ok;
+}
+// يحوّل خطأ Supabase لنفس شكل ردود النسخة القديمة { ok, error, authFail }
+function rpcFail(error){
+  const msg = (error && error.message) || 'خطأ بالخادم';
+  const authFail = (error && (error.code === 'PGRST301' || /JWT|jwt/.test(msg))) || msg.indexOf('الدخول مطلوب') !== -1;
+  return { ok:false, error: msg, authFail };
+}
+async function apiGet(month){
+  const { data, error } = await sb.rpc('load_month', { p_month: month });
+  if(error) return rpcFail(error);
+  return { ok:true, budget: data.budget, expenses: data.expenses || [], debts: data.debts || [] };
+}
+async function apiPost(p){
+  let call;
+  switch(p.action){
+    case 'saveBudget':
+      call = sb.rpc('save_budget', { p_month:p.month, p_salary1:p.salary1, p_salary2:p.salary2, p_categories:p.categories, p_incomes:p.incomes });
+      break;
+    case 'addExpense':
+      call = sb.rpc('add_expense', { p_month:p.month, p_date:p.date, p_amount:p.amount, p_descr:p.desc||'', p_category:p.category||'', p_debt_account:p.debtAccount||'' });
+      break;
+    case 'editExpense':
+      call = sb.rpc('edit_expense', { p_id:p.id, p_date:p.date, p_amount:p.amount, p_descr:p.desc||'', p_category:p.category||'' });
+      break;
+    case 'deleteExpense':
+      call = sb.rpc('delete_expense', { p_id:p.id });
+      break;
+    case 'closeMonth':
+      call = sb.rpc('close_month', { p_month:p.month });
+      break;
+    case 'clearMonth':
+      call = sb.rpc('clear_month', { p_month:p.month });
+      break;
+    case 'returnDebt':
+      call = sb.rpc('return_debt', { p_id:p.id, p_date:p.date||'' });
+      break;
+    case 'cancelDebt':
+      call = sb.rpc('cancel_debt', { p_id:p.id });
+      break;
+    default:
+      return { ok:false, error:'إجراء غير معروف' };
+  }
+  const { data, error } = await call;
+  if(error) return rpcFail(error);
+  return { ok:true, data };
+}
+function guardAuth(res){
+  if(res && res.authFail){ doLogout(); toast('انتهت الجلسة، سجّل دخول من جديد', true); return true; }
+  return false;
+}
+
+/* ---------- الدخول ---------- */
+async function afterLogin(user){
+  const prof = await fetchProfile(user.id);
+  session = prof || { name: '' };
+  showApp();
+  $('expDate').value = todayISO();
+  loadMonth(thisMonth());
+}
+async function doLogin(){
+  if(!apiReady()){ $('liErr').textContent = 'الموقع غير مربوط بقاعدة البيانات بعد'; return; }
+  const email = $('liUser').value.trim();
+  const password = $('liPass').value;
+  if(!email || !password){ $('liErr').textContent = 'دخّل الإيميل والباسورد'; return; }
+  $('liErr').textContent = '';
+  loading(true);
+  try{
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if(error){ $('liErr').textContent = 'الإيميل أو الباسورد غلط'; return; }
+    $('liPass').value = '';
+    await afterLogin(data.user);
+  }catch(err){ $('liErr').textContent = 'ما كدرت أوصل للخادم'; }
+  finally{ loading(false); }
+}
+
+/* ---------- تحميل الشهر ---------- */
+async function loadMonth(month){
+  state.month = month;
+  $('monthPick').value = month;
+  if(!apiReady()){ render(); return; }
+  loading(true);
+  try{
+    const res = await apiGet(month);
+    if(guardAuth(res)) return;
+    if(!res.ok) throw new Error(res.error || 'خطأ بالخادم');
+    state.budget = res.budget;
+    state.expenses = res.expenses;
+    state.debts = res.debts || [];
+    render();
+  }catch(err){
+    toast('ما كدرت أوصل للبيانات: ' + err.message, true);
+  }finally{
+    loading(false);
+  }
+}
+
+/* ---------- الرسم الدائري ---------- */
+function donutSVG(parts){
+  const total = parts.reduce((s,p)=> s + p.value, 0);
+  if(total <= 0) return '<div class="empty" style="padding:14px">ماكو مصاريف</div>';
+  const r = 52, c = 2*Math.PI*r, cx = 64, cy = 64;
+  let off = 0, segs = '';
+  parts.forEach((p,i) => {
+    const len = (p.value/total) * c;
+    segs += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${PALETTE[i%PALETTE.length]}" stroke-width="18" stroke-dasharray="${len.toFixed(2)} ${(c-len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"/>`;
+    off += len;
+  });
+  return `<svg viewBox="0 0 128 128" width="128" height="128">${segs}`+
+    `<text x="64" y="61" text-anchor="middle" font-size="9" fill="#7A8784">صرفت</text>`+
+    `<text x="64" y="76" text-anchor="middle" font-size="11" font-weight="700" fill="#1E2A28">${(total).toLocaleString('en-US')}</text></svg>`;
+}
+
+/* ---------- العرض ---------- */
+function render(){
+  const b = state.budget || { salary1:0, salary2:0, categories:[], locked:false };
+  state.locked = !!b.locked;
+  const cats = b.categories || [];
+
+  /* تقسيم الأنواع */
+  let spendAlloc=0, spendCarried=0, saveContrib=0, saveCarried=0;
+  cats.forEach(c => {
+    if(c.type === 'save'){ saveContrib += (c.amount||0); saveCarried += (c.carried||0); }
+    else { spendAlloc += (c.amount||0); spendCarried += (c.carried||0); }
+  });
+  const saveNames = new Set(cats.filter(c=>c.type==='save').map(c=>c.name));
+
+  /* المصروف حسب التصنيف (الإرجاعات السالبة تنطرح تلقائياً) */
+  const spentByCat = {};
+  state.expenses.forEach(e => {
+    const k = e.category || '— بلا تصنيف —';
+    spentByCat[k] = (spentByCat[k]||0) + e.amount;
+  });
+
+  /* صرف المصاريف فقط (نتجاهل حركات الصناديق سحب/إرجاع) */
+  let spendingSpent=0;
+  state.expenses.forEach(e => { if(!saveNames.has(e.category)) spendingSpent += e.amount; });
+
+  const totalSalary = (b.salary1||0) + (b.salary2||0);
+  const extraIncome = ((b.incomes)||[]).reduce((s,x)=> s + (Number(x.amount)||0), 0);
+  const totalIncome = totalSalary + extraIncome;
+  const remain = totalIncome + spendCarried - saveContrib - spendingSpent;
+
+  $('hSalary').textContent = fmt(totalIncome);
+  $('hSpent').textContent  = fmt(spendingSpent);
+  $('hRemain').textContent = fmt(remain);
+  $('hRemain').className = 'val' + (remain < 0 ? ' neg' : '');
+
+  /* ===== ملخص + رسم ===== */
+  const donutParts = [];
+  const known = new Set(cats.map(c=>c.name));
+  cats.filter(c=>c.type!=='save').forEach(c => { const v = spentByCat[c.name]||0; if(v>0) donutParts.push({label:c.name, value:v}); });
+  let other = 0;
+  Object.keys(spentByCat).forEach(k => { if(!known.has(k) && !saveNames.has(k) && spentByCat[k]>0) other += spentByCat[k]; });
+  if(other > 0) donutParts.push({ label:'أخرى', value:other });
+
+  const prog = monthProgress(state.month);
+  const dailyAvg = prog.elapsed > 0 ? Math.round(spendingSpent / prog.elapsed) : 0;
+  const canDaily = prog.left > 0 ? Math.max(0, Math.round(remain / prog.left)) : 0;
+  const legend = donutParts.map((p,i)=>`<span class="lg-item"><span class="lg-dot" style="background:${PALETTE[i%PALETTE.length]}"></span><b>${esc(p.label)}</b>${fmt(p.value)}</span>`).join('');
+
+  $('summaryCard').innerHTML = `
+    <div class="card sum-card">
+      <div class="sum-top">
+        <div class="donut">${donutSVG(donutParts)}</div>
+        <div class="sum-stats">
+          <div class="ss"><span>المعدل اليومي</span><b>${fmt(dailyAvg)}</b></div>
+          <div class="ss"><span>باقي بالشهر</span><b>${prog.left} يوم</b></div>
+          <div class="ss"><span>تقدر تصرف باليوم</span><b>${fmt(canDaily)}</b></div>
+        </div>
+      </div>
+      ${legend ? `<div class="legend">${legend}</div>` : ''}
+    </div>`;
+
+  /* ===== ظروف المصاريف ===== */
+  let envHtml = '';
+  cats.filter(c=>c.type!=='save').forEach(c => {
+    const carried = Number(c.carried)||0;
+    const effective = (Number(c.amount)||0) + carried;
+    const spent = spentByCat[c.name] || 0;
+    const left = effective - spent;
+    const pct = effective > 0 ? Math.min(100, Math.round(spent / effective * 100)) : (spent>0?100:0);
+    const cls = pct >= 100 ? 'over' : (pct >= 80 ? 'warn' : '');
+    envHtml += `
+      <div class="env">
+        <div class="env-top">
+          <span class="env-name">${esc(c.name)}</span>
+          <span class="env-left ${left<0?'over':''}">${left<0 ? 'تجاوز ' + fmt(-left) : 'باقي ' + fmt(left)}</span>
+        </div>
+        <div class="bar"><i class="${cls}" style="width:${pct}%"></i></div>
+        <div class="env-sub"><span>صرفت ${fmt(spent)}</span><span>المتاح ${fmt(effective)}</span></div>
+        ${carried ? `<div class="env-carry">↩ منها مرحّل من الشهر الماضي: ${fmt(carried)}</div>` : ''}
+      </div>`;
+    delete spentByCat[c.name];
+  });
+
+  /* ===== صناديق الادخار ===== */
+  let saveHtml = '';
+  const saveList = cats.map((c,i)=>({c,i})).filter(x=>x.c.type==='save');
+  if(saveList.length){
+    let totalBal = 0, rows = '';
+    saveList.forEach(({c,i}) => {
+      const carried = Number(c.carried)||0;
+      const contrib = Number(c.amount)||0;
+      const wd = spentByCat[c.name] || 0;   // صافي السحب (السحب موجب، الإرجاع سالب)
+      const bal = carried + contrib - wd;
+      totalBal += bal;
+      rows += `
+        <div class="fund">
+          <div class="fund-top">
+            <span class="fund-name">🏦 ${esc(c.name)}</span>
+            <span class="fund-bal">${fmt(bal)}</span>
+          </div>
+          <div class="fund-sub">
+            <span>مرحّل: ${fmt(carried)}</span>
+            <span>+ هذا الشهر: ${fmt(contrib)}</span>
+            ${wd ? `<span>${wd>=0?'− صافي السحب':'+ صافي الإرجاع'}: ${fmt(Math.abs(wd))}</span>` : ''}
+          </div>
+          <button class="fund-wd" onclick="openWithdraw(${i})" ${state.locked?'disabled':''}>سحب من الصندوق</button>
+        </div>`;
+      delete spentByCat[c.name];
+    });
+    saveHtml = `<div class="save-head">صناديق الادخار 🏦 <span>الإجمالي: ${fmt(totalBal)}</span></div>` + rows;
+  }
+  $('saveList').innerHTML = saveHtml;
+
+  /* ===== ديون الصناديق (السحب على حساب) ===== */
+  let debtHtml = '';
+  const open = state.debts || [];
+  if(open.length){
+    const totalDebt = open.reduce((s,d)=> s + (d.amount||0), 0);
+    let rows = '';
+    open.forEach(d => {
+      rows += `
+        <div class="debt">
+          <div class="debt-top">
+            <span class="debt-acc">${esc(d.account)}</span>
+            <span class="debt-amt">${fmt(d.amount)}</span>
+          </div>
+          <div class="debt-sub">مطلوب لصندوق «${esc(d.fund)}» · سُحب ${esc(d.date)}</div>
+          <div class="debt-actions">
+            <button class="db-return" onclick="returnDebt('${d.id}')">↩ رجّعه للصندوق</button>
+            <button class="db-cancel" onclick="cancelDebt('${d.id}')">شطب (احذفه)</button>
+          </div>
+        </div>`;
+    });
+    debtHtml = `<div class="save-head">ديون الصناديق ⏳ <span>الإجمالي: ${fmt(totalDebt)}</span></div>` + rows;
+  }
+  $('debtList').innerHTML = debtHtml;
+
+  /* مصاريف على تصنيفات غير موجودة بالميزانية */
+  Object.keys(spentByCat).forEach(k => {
+    if(spentByCat[k] <= 0) return;
+    envHtml += `
+      <div class="env">
+        <div class="env-top">
+          <span class="env-name">${esc(k)}</span>
+          <span class="env-left over">بلا مخصص</span>
+        </div>
+        <div class="bar"><i class="over" style="width:100%"></i></div>
+        <div class="env-sub"><span>صرفت ${fmt(spentByCat[k])}</span><span>المتاح 0 د.ع</span></div>
+      </div>`;
+  });
+  $('envList').innerHTML = envHtml || '<div class="empty">بعد ما مسوّي ميزانية لهذا الشهر.<br>روح لتبويب «الميزانية» وحدد الرواتب والتصنيفات.</div>';
+
+  /* ===== فلتر + قائمة المصاريف ===== */
+  buildFilterOptions();
+  renderExpenseList();
+
+  /* ===== قائمة تصنيفات فورم الإضافة (بدون صناديق الادخار) ===== */
+  const sel = $('expCat');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— بلا تصنيف —</option>' +
+    cats.filter(c=>c.type!=='save').map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
+  sel.value = cur;
+
+  /* ===== فورم الميزانية ===== */
+  $('salary1').value = b.salary1 ? b.salary1.toLocaleString('en-US') : '';
+  $('salary2').value = b.salary2 ? b.salary2.toLocaleString('en-US') : '';
+  $('catRows').innerHTML = '';
+  $('saveRows').innerHTML = '';
+  $('incomeRows').innerHTML = '';
+  cats.forEach(c => addRow(c.type === 'save' ? 'save' : 'spend', c.name, c.amount, c.carried));
+  (b.incomes || []).forEach(x => addIncomeRow(x.desc, x.amount));
+  if(!document.querySelector('#catRows .cat-row')) addRow('spend','','',0);
+  $('allocCarry').textContent = fmt(spendCarried + saveCarried);
+  updateAlloc();
+
+  /* حالة القفل */
+  $('btnCloseMonth').textContent = state.locked ? '🔒 الشهر مقفل' : 'إقفال الشهر وترحيل الباقي ✓';
+  applyLock(state.locked);
+}
+
+/* ---------- خيارات الفلتر ---------- */
+function buildFilterOptions(){
+  const cats = (state.budget && state.budget.categories) || [];
+  const fc = $('fltCat'), fb = $('fltBy');
+  const curC = fc.value, curB = fb.value;
+  const catNames = Array.from(new Set(state.expenses.map(e=>e.category).filter(Boolean)));
+  fc.innerHTML = '<option value="">كل التصنيفات</option>' + catNames.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  fc.value = curC;
+  const people = Array.from(new Set(state.expenses.map(e=>e.by).filter(Boolean)));
+  fb.innerHTML = '<option value="">الكل</option>' + people.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
+  fb.value = curB;
+  $('filterBar').style.display = state.expenses.length ? 'flex' : 'none';
+}
+
+/* ---------- قائمة المصاريف (مع الفلتر) ---------- */
+function renderExpenseList(){
+  const saveNames = new Set(((state.budget&&state.budget.categories)||[]).filter(c=>c.type==='save').map(c=>c.name));
+  const txt = ($('fltText').value||'').trim().toLowerCase();
+  const fc = $('fltCat').value, fb = $('fltBy').value;
+
+  const list = state.expenses.filter(e => {
+    if(fc && e.category !== fc) return false;
+    if(fb && e.by !== fb) return false;
+    if(txt){
+      const hay = (e.desc + ' ' + e.category + ' ' + e.by).toLowerCase();
+      if(hay.indexOf(txt) === -1) return false;
+    }
+    return true;
+  });
+
+  let expHtml = '';
+  list.forEach(e => {
+    const isWd  = saveNames.has(e.category);
+    const isRet = e.amount < 0;
+    const dotCls = isRet ? 'ret' : (isWd ? 'wd' : '');
+    const icon = isRet ? '↩' : (isWd ? '🏦' : esc((e.category||'؟').charAt(0)));
+    const label = e.desc || (isRet ? 'إرجاع' : (isWd ? 'سحب' : 'بدون تفاصيل'));
+    const tag = isRet ? ' · إرجاع' : (isWd ? ' · سحب' : '');
+    expHtml += `
+      <div class="exp" onclick="openEdit('${e.id}')">
+        <div class="cat-dot ${dotCls}">${icon}</div>
+        <div class="mid">
+          <div class="desc">${esc(label)}</div>
+          <div class="meta">${esc(e.date)}${e.category ? ' · ' + esc(e.category) : ''}${e.by ? ' · ' + esc(e.by) : ''}${tag}</div>
+        </div>
+        <div class="amt ${isRet?'ret':''}">${isRet?'+':''}${fmt(Math.abs(e.amount))}</div>
+        ${state.locked ? '' : `<button class="del" onclick="event.stopPropagation();delExpense('${e.id}')" aria-label="حذف">✕</button>`}
+      </div>`;
+  });
+  $('expList').innerHTML = expHtml || '<div class="empty">' + (state.expenses.length ? 'ماكو نتائج للفلتر.' : 'ماكو مصاريف مسجلة بهذا الشهر.') + '</div>';
+}
+
+/* ---------- القفل ---------- */
+function applyLock(locked){
+  $('lockBanner').style.display = locked ? 'block' : 'none';
+  $('lockBanner').textContent = locked ? ('🔒 شهر ' + state.month + ' مقفل — للعرض فقط، ما تكدر تعدّله') : '';
+  ['btnAddExp','btnSaveBudget','btnAddCat','btnAddSave','btnAddIncome','btnCopyLast','btnCloseMonth','btnClearMonth','salary1','salary2','expAmount','expDesc','expDate','expCat']
+    .forEach(id => { const el = $(id); if(el) el.disabled = locked; });
+  document.querySelectorAll('#catRows input, #catRows .rm, #saveRows input, #saveRows .rm, #incomeRows input, #incomeRows .rm').forEach(el => el.disabled = locked);
+}
+
+/* ---------- صفوف التصنيفات والصناديق ---------- */
+function addRow(section, name, amount, carried){
+  carried = Number(carried)||0;
+  const isSave = section === 'save';
+  const container = isSave ? $('saveRows') : $('catRows');
+  const ph = isSave ? 'مثلاً: ادخار بيت' : 'مثلاً: أكل البيت';
+  const phAmt = isSave ? 'شهرياً' : 'المبلغ';
+  const wrap = document.createElement('div');
+  const div = document.createElement('div');
+  div.className = 'cat-row';
+  div.innerHTML = `
+    <input type="text" class="cname" placeholder="${ph}" value="${esc(name||'')}">
+    <input type="tel" class="camt" placeholder="${phAmt}" inputmode="numeric" value="${amount ? Number(amount).toLocaleString('en-US') : ''}">
+    <button class="rm" aria-label="حذف">✕</button>`;
+  div.querySelector('.rm').onclick = () => { wrap.remove(); updateAlloc(); };
+  const amt = div.querySelector('.camt');
+  liveFormat(amt);
+  amt.addEventListener('input', updateAlloc);
+  wrap.appendChild(div);
+  if(carried){
+    const note = document.createElement('div');
+    note.className = 'cat-carry';
+    note.textContent = isSave
+      ? ('🏦 رصيد مرحّل بالصندوق: ' + fmt(carried))
+      : ('↩ مرحّل: ' + fmt(carried) + ' · المتاح: ' + fmt((Number(amount)||0) + carried));
+    wrap.appendChild(note);
+  }
+  container.appendChild(wrap);
+}
+
+function readCats(){
+  const cats = [];
+  document.querySelectorAll('#catRows .cat-row').forEach(r => {
+    const name = r.querySelector('.cname').value.trim();
+    const amount = num(r.querySelector('.camt').value);
+    if(name) cats.push({ name, amount, type:'spend' });
+  });
+  document.querySelectorAll('#saveRows .cat-row').forEach(r => {
+    const name = r.querySelector('.cname').value.trim();
+    const amount = num(r.querySelector('.camt').value);
+    if(name) cats.push({ name, amount, type:'save' });
+  });
+  return cats;
+}
+
+/* ---------- صفوف الإيرادات الإضافية ---------- */
+function addIncomeRow(desc, amount){
+  const wrap = document.createElement('div');
+  const div = document.createElement('div');
+  div.className = 'cat-row';
+  div.innerHTML = `
+    <input type="text" class="iname" placeholder="مثلاً: سلفة من أخوي" value="${esc(desc||'')}">
+    <input type="tel" class="iamt" placeholder="المبلغ" inputmode="numeric" value="${amount ? Number(amount).toLocaleString('en-US') : ''}">
+    <button class="rm" aria-label="حذف">✕</button>`;
+  div.querySelector('.rm').onclick = () => { wrap.remove(); updateAlloc(); };
+  const amt = div.querySelector('.iamt');
+  liveFormat(amt);
+  amt.addEventListener('input', updateAlloc);
+  wrap.appendChild(div);
+  $('incomeRows').appendChild(wrap);
+}
+
+function readIncomes(){
+  const out = [];
+  document.querySelectorAll('#incomeRows .cat-row').forEach(r => {
+    const desc = r.querySelector('.iname').value.trim();
+    const amount = num(r.querySelector('.iamt').value);
+    if(amount > 0 || desc) out.push({ desc, amount });
+  });
+  return out;
+}
+
+function updateAlloc(){
+  const salary = num($('salary1').value) + num($('salary2').value);
+  let income = 0;
+  document.querySelectorAll('#incomeRows .iamt').forEach(i => income += num(i.value));
+  let spend = 0, save = 0;
+  document.querySelectorAll('#catRows .camt').forEach(i => spend += num(i.value));
+  document.querySelectorAll('#saveRows .camt').forEach(i => save += num(i.value));
+  $('aSalary').textContent = fmt(salary);
+  $('aIncome').textContent = fmt(income);
+  $('aSpend').textContent  = fmt(spend);
+  $('aSave').textContent   = fmt(save);
+  const left = (salary + income) - spend - save;
+  $('allocLeft').textContent = fmt(left);
+  $('allocLeft').className = left < 0 ? 'neg' : '';
+}
+
+/* ---------- تعديل مصروف ---------- */
+window.openEdit = (id) => {
+  if(state.locked) return;
+  const e = state.expenses.find(x => x.id === id);
+  if(!e) return;
+  if(e.amount < 0){ toast('حركة إرجاع — تنشطّر من ديون الصناديق', true); return; }
+  const cats = (state.budget.categories||[]);
+  const opts = '<option value="">— بلا تصنيف —</option>' +
+    cats.map(c => `<option value="${esc(c.name)}" ${c.name===e.category?'selected':''}>${esc(c.name)}${c.type==='save'?' (ادخار)':''}</option>`).join('');
+  modalOpen(`
+    <h2>تعديل المصروف</h2>
+    <div class="hint" style="margin:0 0 8px">دخّله ${esc(e.by||'؟')}</div>
+    <div class="row">
+      <div><label>المبلغ</label><input type="tel" id="edAmount" inputmode="numeric" value="${(e.amount||0).toLocaleString('en-US')}"></div>
+      <div><label>التاريخ</label><input type="date" id="edDate" value="${esc(e.date)}"></div>
+    </div>
+    <label>التفاصيل</label><input type="text" id="edDesc" value="${esc(e.desc)}">
+    <label>التصنيف</label><select id="edCat">${opts}</select>
+    <button class="btn" id="edSave">حفظ التعديل</button>
+    <button class="btn ghost" onclick="modalClose()">إلغاء</button>
+  `);
+  liveFormat($('edAmount'));
+  $('edSave').onclick = async () => {
+    const amount = num($('edAmount').value);
+    if(amount <= 0) return toast('دخّل المبلغ', true);
+    const date = $('edDate').value || e.date;
+    loading(true);
+    try{
+      const res = await apiPost({ action:'editExpense', id:e.id, amount, date, desc:$('edDesc').value.trim(), category:$('edCat').value });
+      if(guardAuth(res)) return;
+      if(!res.ok) throw new Error(res.error || 'خطأ');
+      modalClose();
+      toast('انعدّل ✓');
+      await loadMonth(state.month);
+    }catch(err){ toast('ما انعدّل: ' + err.message, true); }
+    finally{ loading(false); }
+  };
+};
+
+/* ---------- سحب من صندوق ادخار (مع خيار تسجيله كدين) ---------- */
+window.openWithdraw = (idx) => {
+  if(state.locked) return;
+  const c = (state.budget.categories||[])[idx];
+  if(!c) return;
+  modalOpen(`
+    <h2>سحب من «${esc(c.name)}»</h2>
+    <div class="hint" style="margin:0 0 8px">السحب ينقص رصيد الصندوق. لو سجّلته على حساب، يبقى مطلوب للصندوق لين ترجعه أو تشطبه.</div>
+    <div class="row">
+      <div><label>المبلغ</label><input type="tel" id="wdAmount" inputmode="numeric" placeholder="0"></div>
+      <div><label>التاريخ</label><input type="date" id="wdDate" value="${todayISO()}"></div>
+    </div>
+    <label>على حساب منو؟ (اختياري — للسحب كدين)</label>
+    <input type="text" id="wdAcc" placeholder="مثلاً: سلفة لأخوي / حساب الراتب">
+    <label>السبب (اختياري)</label><input type="text" id="wdDesc" placeholder="شنو الغرض؟">
+    <button class="btn" id="wdSave">سحب</button>
+    <button class="btn ghost" onclick="modalClose()">إلغاء</button>
+  `);
+  liveFormat($('wdAmount'));
+  $('wdSave').onclick = async () => {
+    const amount = num($('wdAmount').value);
+    if(amount <= 0) return toast('دخّل المبلغ', true);
+    const date = $('wdDate').value || todayISO();
+    const reason = $('wdDesc').value.trim();
+    const acc = $('wdAcc').value.trim();
+    loading(true);
+    try{
+      const res = await apiPost({
+        action:'addExpense', month:date.slice(0,7), date, amount,
+        desc: reason ? ('سحب: '+reason) : (acc ? ('سحب على: '+acc) : 'سحب'),
+        category:c.name,
+        debtAccount: acc
+      });
+      if(guardAuth(res)) return;
+      if(!res.ok) throw new Error(res.error || 'خطأ');
+      modalClose();
+      toast(acc ? 'انسحب وانسجّل كدين ✓' : 'انسحب ✓');
+      await loadMonth(state.month);
+    }catch(err){ toast('ما انسحب: ' + err.message, true); }
+    finally{ loading(false); }
+  };
+};
+
+/* ---------- إرجاع / شطب دين صندوق ---------- */
+window.returnDebt = async (id) => {
+  const d = (state.debts||[]).find(x=>x.id===id);
+  if(!d) return;
+  if(!confirm('ترجيع ' + fmt(d.amount) + ' لصندوق «' + d.fund + '»؟\nراح يرجع المبلغ لرصيد الصندوق ويتسجّل بتاريخ اليوم.')) return;
+  loading(true);
+  try{
+    const res = await apiPost({ action:'returnDebt', id, date: todayISO() });
+    if(guardAuth(res)) return;
+    if(!res.ok) throw new Error(res.error || 'خطأ');
+    toast('انرجّع للصندوق ✓');
+    await loadMonth(state.month);
+  }catch(err){ toast('ما انرجّع: ' + err.message, true); }
+  finally{ loading(false); }
+};
+
+window.cancelDebt = async (id) => {
+  const d = (state.debts||[]).find(x=>x.id===id);
+  if(!d) return;
+  if(!confirm('شطب الدين «' + d.account + '» (' + fmt(d.amount) + ')؟\nالمبلغ يبقى مسحوب من الصندوق وما راح يرجع. متأكد؟')) return;
+  loading(true);
+  try{
+    const res = await apiPost({ action:'cancelDebt', id });
+    if(guardAuth(res)) return;
+    if(!res.ok) throw new Error(res.error || 'خطأ');
+    toast('انشطب ✓');
+    await loadMonth(state.month);
+  }catch(err){ toast('ما انشطب: ' + err.message, true); }
+  finally{ loading(false); }
+};
+
+/* ---------- نسخ الشهر الماضي ---------- */
+$('btnCopyLast').onclick = async () => {
+  if(!apiReady()) return toast('اربط الموقع بالـ API أول', true);
+  if(state.locked) return;
+  const pm = prevMonthStr(state.month);
+  loading(true);
+  try{
+    const res = await apiGet(pm);
+    if(guardAuth(res)) return;
+    if(!res.ok) throw new Error(res.error || 'خطأ');
+    const pcats = (res.budget.categories||[]);
+    if(!pcats.length){ toast('ماكو ميزانية بشهر ' + pm, true); return; }
+    if(!confirm('نسخ تصنيفات وصناديق شهر ' + pm + '؟\nراح يستبدل الي مكتوب بالفورم هسه (المبالغ المرحّلة تبقى محفوظة).')) return;
+    const carriedByName = {};
+    (state.budget.categories||[]).forEach(c => carriedByName[c.name] = c.carried);
+    $('catRows').innerHTML = '';
+    $('saveRows').innerHTML = '';
+    pcats.forEach(c => addRow(c.type==='save'?'save':'spend', c.name, c.amount, carriedByName[c.name]||0));
+    if(!document.querySelector('#catRows .cat-row')) addRow('spend','','',0);
+    updateAlloc();
+    toast('انتسخت — عدّل المبالغ واحفظ');
+  }catch(err){ toast('ما انتسخت: ' + err.message, true); }
+  finally{ loading(false); }
+};
+
+/* ---------- تفريغ ميزانية الشهر ---------- */
+$('btnClearMonth').onclick = async () => {
+  if(!apiReady()) return toast('اربط الموقع بالـ API أول', true);
+  if(state.locked) return;
+  if(!confirm('تفريغ ميزانية شهر ' + state.month + '؟\n\nراح تنمسح الرواتب وكل التصنيفات والصناديق لهذا الشهر (المصاريف المسجلة والمبالغ المرحّلة تنمسح وياها).\nمتأكد؟')) return;
+  loading(true);
+  try{
+    const res = await apiPost({ action:'clearMonth', month: state.month });
+    if(guardAuth(res)) return;
+    if(!res.ok) throw new Error(res.error || 'خطأ');
+    toast('انفرّغت الميزانية ✓');
+    await loadMonth(state.month);
+  }catch(err){ toast('ما انفرّغت: ' + err.message, true); }
+  finally{ loading(false); }
+};
+
+/* ---------- منتقي الألوان (الثيم) ---------- */
+$('btnTheme').onclick = () => {
+  let cur = '';
+  try{ cur = localStorage.getItem('mas_theme') || THEMES[0].primary; }catch(_){ cur = THEMES[0].primary; }
+  const sw = THEMES.map(t => `<div class="sw ${t.primary.toLowerCase()===cur.toLowerCase()?'sel':''}" style="background:${t.primary}" title="${t.name}" onclick="pickTheme('${t.primary}')"></div>`).join('');
+  modalOpen(`
+    <h2>🎨 لون الواجهة</h2>
+    <div class="hint" style="margin:0 0 12px">اختر اللون الي يعجبك — يتطبّق فوراً وينحفظ بجهازك.</div>
+    <div class="swatches">
+      ${sw}
+      <label class="sw sw-custom" title="لون مخصص">＋<input type="color" id="customColor" value="${cur}"></label>
+    </div>
+    <button class="btn ghost" onclick="modalClose()" style="margin-top:18px">تمام</button>
+  `);
+  $('customColor').addEventListener('input', e => pickTheme(e.target.value, true));
+};
+window.pickTheme = (primary, keepOpen) => {
+  saveTheme(primary);
+  if(!keepOpen){ document.querySelectorAll('.sw').forEach(s=>s.classList.remove('sel')); }
+  // حدّث علامة الاختيار
+  document.querySelectorAll('.sw').forEach(s=>{
+    const bg = s.style.background;
+    s.classList.toggle('sel', !s.classList.contains('sw-custom') && rgbEq(bg, primary));
+  });
+  toast('انتغيّر اللون ✓');
+};
+function rgbEq(a,b){
+  const norm = x => { const d=document.createElement('div'); d.style.color=x; document.body.appendChild(d); const c=getComputedStyle(d).color; d.remove(); return c; };
+  return norm(a) === norm(b);
+}
+
+/* ---------- الإعدادات (تغيير الباسورد + الطباعة) ---------- */
+$('btnSettings').onclick = () => {
+  modalOpen(`
+    <h2>⚙ الإعدادات</h2>
+
+    <div class="set-sec">الحساب — ${esc(session && session.name ? session.name : '')}</div>
+    <label>الباسورد الحالي</label>
+    <input type="password" id="pwCur" autocomplete="current-password" placeholder="••••••">
+    <label>الباسورد الجديد</label>
+    <input type="password" id="pwNew" autocomplete="new-password" placeholder="٦ خانات على الأقل">
+    <label>تأكيد الباسورد الجديد</label>
+    <input type="password" id="pwNew2" autocomplete="new-password" placeholder="أعد كتابته">
+    <button class="btn" id="btnSavePw">تغيير الباسورد</button>
+
+    <div class="set-sec">التقارير</div>
+    <button class="btn ghost" id="btnPrint" style="margin-top:0">🖨 اطبع تقرير شهر ${esc(state.month)}</button>
+
+    <button class="btn ghost" onclick="modalClose()" style="margin-top:16px">إغلاق</button>
+  `);
+  $('btnSavePw').onclick = async () => {
+    const cur = $('pwCur').value, np = $('pwNew').value, np2 = $('pwNew2').value;
+    if(!cur || !np) return toast('املأ الحقول', true);
+    if(np.length < 6) return toast('الباسورد الجديد قصير — ٦ خانات على الأقل', true);
+    if(np !== np2) return toast('التأكيد ما يطابق', true);
+    loading(true);
+    try{
+      const { data:{ user } } = await sb.auth.getUser();
+      if(!user){ doLogout(); return toast('انتهت الجلسة، سجّل دخول من جديد', true); }
+      const { error: e1 } = await sb.auth.signInWithPassword({ email: user.email, password: cur });
+      if(e1) throw new Error('الباسورد الحالي غلط');
+      const { error: e2 } = await sb.auth.updateUser({ password: np });
+      if(e2) throw new Error(e2.message);
+      modalClose();
+      toast('انتغيّر الباسورد ✓');
+    }catch(err){ toast('ما انتغيّر: ' + err.message, true); }
+    finally{ loading(false); }
+  };
+  $('btnPrint').onclick = () => { modalClose(); setTimeout(printReport, 250); };
+};
+
+/* ---------- تقرير الطباعة ---------- */
+function printReport(){
+  const b = state.budget || { salary1:0, salary2:0, categories:[] };
+  const cats = b.categories || [];
+  const saveNames = new Set(cats.filter(c=>c.type==='save').map(c=>c.name));
+
+  const spentByCat = {};
+  state.expenses.forEach(e => { const k=e.category||'بلا تصنيف'; spentByCat[k]=(spentByCat[k]||0)+e.amount; });
+  let spendingSpent=0, saveContrib=0, spendCarried=0;
+  cats.forEach(c => { if(c.type==='save') saveContrib+=(c.amount||0); else spendCarried+=(c.carried||0); });
+  state.expenses.forEach(e => { if(!saveNames.has(e.category)) spendingSpent += e.amount; });
+  const totalSalary = (b.salary1||0)+(b.salary2||0);
+  const extraIncome = ((b.incomes)||[]).reduce((s,x)=> s + (Number(x.amount)||0), 0);
+  const totalIncome = totalSalary + extraIncome;
+  const remain = totalIncome + spendCarried - saveContrib - spendingSpent;
+
+  let catRows = '';
+  cats.filter(c=>c.type!=='save').forEach(c=>{
+    const eff = (c.amount||0)+(c.carried||0);
+    const sp = spentByCat[c.name]||0;
+    catRows += `<tr><td>${esc(c.name)}</td><td>${fmt(eff)}</td><td>${fmt(sp)}</td><td>${fmt(eff-sp)}</td></tr>`;
+  });
+
+  let fundRows = '';
+  cats.filter(c=>c.type==='save').forEach(c=>{
+    const bal = (c.carried||0)+(c.amount||0)-(spentByCat[c.name]||0);
+    fundRows += `<tr><td>${esc(c.name)}</td><td>${fmt(c.carried||0)}</td><td>${fmt(c.amount||0)}</td><td>${fmt(bal)}</td></tr>`;
+  });
+
+  let debtRows = '';
+  (state.debts||[]).forEach(d=>{ debtRows += `<tr><td>${esc(d.account)}</td><td>${esc(d.fund)}</td><td>${fmt(d.amount)}</td></tr>`; });
+
+  let expRows = '';
+  state.expenses.forEach(e=>{
+    expRows += `<tr><td>${esc(e.date)}</td><td>${esc(e.desc||'-')}</td><td>${esc(e.category||'-')}</td><td>${esc(e.by||'-')}</td><td>${(e.amount<0?'+':'')}${fmt(Math.abs(e.amount))}</td></tr>`;
+  });
+
+  $('printArea').innerHTML = `
+    <h1>مصاريفنا — تقرير شهر ${esc(state.month)}</h1>
+    <div class="p-sub">طُبع في ${todayISO()}</div>
+    <div class="p-row"><span>إجمالي الرواتب</span><b>${fmt(totalSalary)}</b></div>
+    ${extraIncome ? `<div class="p-row"><span>إيرادات إضافية</span><b>${fmt(extraIncome)}</b></div>
+    <div class="p-row"><span>إجمالي الدخل</span><b>${fmt(totalIncome)}</b></div>` : ''}
+    <div class="p-row"><span>إجمالي المصروف</span><b>${fmt(spendingSpent)}</b></div>
+    <div class="p-row"><span>محجوز للادخار</span><b>${fmt(saveContrib)}</b></div>
+    <div class="p-row"><span>الباقي للصرف</span><b>${fmt(remain)}</b></div>
+
+    <h3>تفاصيل التصنيفات</h3>
+    <table><tr><th>التصنيف</th><th>المتاح</th><th>المصروف</th><th>الباقي</th></tr>${catRows||'<tr><td colspan="4">—</td></tr>'}</table>
+
+    ${fundRows ? `<h3>صناديق الادخار</h3><table><tr><th>الصندوق</th><th>مرحّل</th><th>هذا الشهر</th><th>الرصيد</th></tr>${fundRows}</table>` : ''}
+    ${debtRows ? `<h3>ديون الصناديق (مطلوبة)</h3><table><tr><th>الحساب</th><th>الصندوق</th><th>المبلغ</th></tr>${debtRows}</table>` : ''}
+
+    <h3>كل المصاريف</h3>
+    <table><tr><th>التاريخ</th><th>التفاصيل</th><th>التصنيف</th><th>المُدخِل</th><th>المبلغ</th></tr>${expRows||'<tr><td colspan="5">—</td></tr>'}</table>
+  `;
+  window.print();
+}
+
+/* ---------- أحداث ---------- */
+document.querySelectorAll('nav button').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    btn.classList.add('active');
+    $(btn.dataset.tab).classList.add('active');
+  };
+});
+
+$('btnLogin').onclick = doLogin;
+$('liPass').addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
+$('btnLogout').onclick = doLogout;
+
+$('monthPick').onchange = e => loadMonth(e.target.value || thisMonth());
+
+/* فلتر المصاريف */
+$('fltText').addEventListener('input', renderExpenseList);
+$('fltCat').addEventListener('change', renderExpenseList);
+$('fltBy').addEventListener('change', renderExpenseList);
+
+$('btnAddExp').onclick = async () => {
+  if(!apiReady()) return toast('اربط الموقع بالـ API أول', true);
+  const amount = num($('expAmount').value);
+  if(amount <= 0) return toast('دخّل المبلغ', true);
+  const date = $('expDate').value || todayISO();
+  const month = date.slice(0,7);
+  const payload = {
+    action:'addExpense', month, date, amount,
+    desc: $('expDesc').value.trim(),
+    category: $('expCat').value
+  };
+  loading(true);
+  try{
+    const res = await apiPost(payload);
+    if(guardAuth(res)) return;
+    if(!res.ok) throw new Error(res.error || 'خطأ');
+    $('expAmount').value=''; $('expDesc').value='';
+    toast('انحفظ المصروف ✓');
+    if(month === state.month){ await loadMonth(state.month); }
+  }catch(err){ toast('ما انحفظ: ' + err.message, true); }
+  finally{ loading(false); }
+};
+
+window.delExpense = async (id) => {
+  if(!confirm('متأكد تريد تحذف هذا المصروف؟')) return;
+  loading(true);
+  try{
+    const res = await apiPost({ action:'deleteExpense', id });
+    if(guardAuth(res)) return;
+    if(!res.ok) throw new Error(res.error || 'خطأ');
+    toast('انحذف ✓');
+    await loadMonth(state.month);
+  }catch(err){ toast('ما انحذف: ' + err.message, true); }
+  finally{ loading(false); }
+};
+
+$('btnAddCat').onclick = () => addRow('spend','','',0);
+$('btnAddSave').onclick = () => addRow('save','','',0);
+$('btnAddIncome').onclick = () => { addIncomeRow('', 0); updateAlloc(); };
+$('salary1').addEventListener('input', updateAlloc);
+$('salary2').addEventListener('input', updateAlloc);
+liveFormat($('salary1'));
+liveFormat($('salary2'));
+liveFormat($('expAmount'));
+
+$('btnSaveBudget').onclick = async () => {
+  if(!apiReady()) return toast('اربط الموقع بالـ API أول', true);
+  const payload = {
+    action:'saveBudget',
+    month: state.month,
+    salary1: num($('salary1').value),
+    salary2: num($('salary2').value),
+    categories: readCats(),
+    incomes: readIncomes()
+  };
+  loading(true);
+  try{
+    const res = await apiPost(payload);
+    if(guardAuth(res)) return;
+    if(!res.ok) throw new Error(res.error || 'خطأ');
+    toast('انحفظت الميزانية ✓');
+    await loadMonth(state.month);
+  }catch(err){ toast('ما انحفظت: ' + err.message, true); }
+  finally{ loading(false); }
+};
+
+$('btnCloseMonth').onclick = async () => {
+  if(!apiReady()) return toast('اربط الموقع بالـ API أول', true);
+  if(state.locked) return;
+  if(!confirm('إقفال شهر ' + state.month + '؟\n\nراح ينقفل نهائياً (ما تكدر تعدّله بعدها)، ويتم ترحيل باقي كل تصنيف وكل صندوق ادخار للشهر الجاي.\nمتأكد؟')) return;
+  loading(true);
+  try{
+    const res = await apiPost({ action:'closeMonth', month: state.month });
+    if(guardAuth(res)) return;
+    if(!res.ok) throw new Error(res.error || 'خطأ');
+    toast('انقفل الشهر وانرحّل الباقي ✓');
+    await loadMonth(state.month);
+  }catch(err){ toast('ما انقفل: ' + err.message, true); }
+  finally{ loading(false); }
+};
+
+/* ---------- تشغيل ---------- */
+loadTheme();
+apiReady();
+(async () => {
+  try{
+    const { data:{ session: s } } = await sb.auth.getSession();
+    if(s && s.user){ await afterLogin(s.user); } else { showLogin(); }
+  }catch(_){ showLogin(); }
+})();
+/* ---------- تسجيل الـ Service Worker (فتح فوري + يشتغل كتطبيق) ---------- */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
