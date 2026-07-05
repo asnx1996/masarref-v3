@@ -444,6 +444,46 @@
     .donut svg{width:150px;height:150px}
   }
 
+  /* ---------- الأزرار السريعة ---------- */
+  .qh{display:flex;align-items:center;justify-content:space-between}
+  .qh-add{border:none;background:var(--primary-soft);color:var(--primary);border-radius:10px;padding:8px 13px;font-family:inherit;font-weight:700;font-size:.74rem;cursor:pointer;transition:transform .18s var(--ease)}
+  .qh-add:active{transform:scale(.94)}
+  .quick-grid{display:flex;flex-wrap:wrap;gap:9px}
+  .qbtn{
+    display:flex;flex-direction:column;gap:2px;align-items:flex-start;
+    border:1px solid var(--line);background:var(--card);border-radius:14px;
+    padding:11px 14px;cursor:pointer;font-family:inherit;position:relative;
+    transition:transform .16s var(--ease),box-shadow .2s,border-color .2s;min-width:104px;
+  }
+  .qbtn:active{transform:scale(.96)}
+  .qbtn .qb-label{font-weight:700;font-size:.86rem;color:var(--ink)}
+  .qbtn .qb-sub{font-size:.66rem;color:var(--muted)}
+  .qbtn .qb-del{position:absolute;top:-7px;left:-7px;width:22px;height:22px;border-radius:50%;border:none;background:var(--red);color:#fff;font-size:.75rem;cursor:pointer;display:none;align-items:center;justify-content:center;line-height:1}
+  .qbtn.editing .qb-del{display:flex}
+  @media (hover:hover){ .qbtn:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:var(--primary)} }
+
+  /* ---------- هدف الصندوق ---------- */
+  .goal-row{display:flex;align-items:center;gap:8px;margin:2px 2px 8px}
+  .goal-row .goal-lbl{font-size:.7rem;color:var(--muted);white-space:nowrap}
+  .goal-row .cgoal{flex:1;padding:8px 11px;font-size:.85rem;border-radius:10px}
+  .goal-wrap{margin-top:11px}
+  .goal-line{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:5px}
+  .goal-pct{font-weight:700;color:var(--primary)}
+  .goal-pct.done{color:var(--primary)}
+  .bar i.goalbar{background:linear-gradient(90deg,var(--primary),color-mix(in srgb,var(--primary) 55%,#7DD3C0))}
+  .goal-rem{font-size:.66rem;color:var(--muted);margin-top:5px}
+
+  /* ---------- لوحة المشرف ---------- */
+  .admin-stats{display:flex;gap:10px;margin:6px 0 4px}
+  .astat{flex:1;background:var(--primary-soft);border-radius:var(--radius-sm);padding:12px;text-align:center}
+  .astat .av{font-size:1.4rem;font-weight:800;color:var(--primary)}
+  .astat .al{font-size:.68rem;color:var(--muted);margin-top:2px}
+  .admin-fam{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 13px;margin-bottom:8px}
+  .admin-fam .af-main{flex:1;min-width:0}
+  .af-name{font-weight:700;font-size:.88rem}
+  .af-meta{font-size:.66rem;color:var(--muted);margin-top:3px}
+  .af-del{border:none;background:var(--red-soft);color:var(--red);border-radius:10px;padding:9px 14px;font-family:inherit;font-weight:700;font-size:.74rem;cursor:pointer;flex-shrink:0}
+
   /* ---------- تقرير الطباعة ---------- */
   #printArea{display:none}
   @media print{
@@ -563,6 +603,15 @@
       </div>
       <button class="btn" id="btnAddExp">إضافة المصروف</button>
       <div class="hint">المصروف ينحفظ فوراً ويظهر لحظياً عند كل أفراد العائلة، ويتسجل وياه منو دخّله. للسحب أو الإيداع بصندوق ادخار استعمل الأزرار باللوحة.</div>
+    </div>
+
+    <div class="card" id="quickCard">
+      <div class="qh">
+        <h2 style="margin:0">⚡ أزرار سريعة</h2>
+        <button class="qh-add" id="btnAddQuick">＋ زر جديد</button>
+      </div>
+      <div class="hint" style="margin:2px 0 12px">مصاريفك المتكررة (كهرباء، إيجار، بنزين...) — اضغط الزر ويتعبّى المبلغ والتصنيف، أو ينسجل فوراً. مشتركة بينك وبين العائلة.</div>
+      <div id="quickList"></div>
     </div>
   </section>
 
@@ -737,9 +786,9 @@ $('modal').addEventListener('click', e => { if(e.target === $('modal')) modalClo
 
 /* ---------- الجلسة (Supabase Auth يديرها ويجدّدها تلقائياً) ---------- */
 async function fetchProfile(userId){
-  const { data, error } = await sb.from('profiles').select('display_name, household_id').eq('id', userId).single();
+  const { data, error } = await sb.from('profiles').select('display_name, household_id, is_admin').eq('id', userId).single();
   if(error || !data) return null;
-  return { name: data.display_name, hh: data.household_id };
+  return { name: data.display_name, hh: data.household_id, admin: !!data.is_admin };
 }
 
 function showLogin(){
@@ -808,7 +857,7 @@ function startRealtime(){
   if(!session || !session.hh) return;
   try{
     rtChannel = sb.channel('hh-' + session.hh);
-    ['expenses','budgets','categories','budget_incomes','debts'].forEach(tbl => {
+    ['expenses','budgets','categories','budget_incomes','debts','quick_buttons'].forEach(tbl => {
       rtChannel.on('postgres_changes',
         { event:'*', schema:'public', table:tbl, filter:'household_id=eq.' + session.hh },
         onRemoteChange);
@@ -831,6 +880,7 @@ function onRemoteChange(){
         state.expenses = res.expenses;
         state.debts = res.debts || [];
         render();
+        loadQuick();
       }
     }catch(_){}
   }, 450);
@@ -903,6 +953,7 @@ async function afterLogin(user){
   showApp();
   $('expDate').value = todayISO();
   startRealtime();
+  loadQuick();
   loadMonth(thisMonth());
 }
 async function doLogin(){
@@ -1053,7 +1104,22 @@ function render(){
       const contrib = Number(c.amount)||0;
       const wd = spentByCat[c.name] || 0;   // صافي السحب (السحب موجب، الإرجاع سالب)
       const bal = carried + contrib - wd;
+      const goal = Number(c.goal)||0;
       totalBal += bal;
+      let goalHtml = '';
+      if(goal > 0){
+        const pct = Math.max(0, Math.min(100, Math.round(bal / goal * 100)));
+        const done = bal >= goal;
+        goalHtml = `
+          <div class="goal-wrap">
+            <div class="goal-line">
+              <span>🎯 الهدف: ${fmt(goal)}</span>
+              <span class="goal-pct ${done?'done':''}">${done ? '✓ تحقق!' : pct + '%'}</span>
+            </div>
+            <div class="bar"><i class="${done?'':'goalbar'}" style="width:${pct}%"></i></div>
+            ${done ? '' : `<div class="goal-rem">باقي ${fmt(goal - bal)} حتى توصله</div>`}
+          </div>`;
+      }
       rows += `
         <div class="fund">
           <div class="fund-top">
@@ -1063,8 +1129,9 @@ function render(){
           <div class="fund-sub">
             <span>مرحّل: ${fmt(carried)}</span>
             <span>+ هذا الشهر: ${fmt(contrib)}</span>
-            ${wd ? `<span>${wd>=0?'− صافي السحب':'+ صافي الإرجاع'}: ${fmt(Math.abs(wd))}</span>` : ''}
+            ${wd ? `<span>${wd>=0?'− صافي السحب':'+ صافي الإيداع'}: ${fmt(Math.abs(wd))}</span>` : ''}
           </div>
+          ${goalHtml}
           <div class="fund-actions">
             <button class="fa-wd" onclick="openWithdraw(${i})" ${state.locked?'disabled':''}>سحب −</button>
             <button class="fa-dep" onclick="openDeposit(${i})" ${state.locked?'disabled':''}>إيداع +</button>
@@ -1133,7 +1200,7 @@ function render(){
   $('catRows').innerHTML = '';
   $('saveRows').innerHTML = '';
   $('incomeRows').innerHTML = '';
-  cats.forEach(c => addRow(c.type === 'save' ? 'save' : 'spend', c.name, c.amount, c.carried));
+  cats.forEach(c => addRow(c.type === 'save' ? 'save' : 'spend', c.name, c.amount, c.carried, c.goal));
   (b.incomes || []).forEach(x => addIncomeRow(x.desc, x.amount));
   if(!document.querySelector('#catRows .cat-row')) addRow('spend','','',0);
   $('allocCarry').textContent = fmt(spendCarried + saveCarried);
@@ -1203,12 +1270,13 @@ function applyLock(locked){
   $('lockBanner').textContent = locked ? ('🔒 شهر ' + state.month + ' مقفل — للعرض فقط، ما تكدر تعدّله') : '';
   ['btnAddExp','btnSaveBudget','btnAddCat','btnAddSave','btnAddIncome','btnCopyLast','btnCloseMonth','btnClearMonth','salary1','salary2','expAmount','expDesc','expDate','expCat']
     .forEach(id => { const el = $(id); if(el) el.disabled = locked; });
-  document.querySelectorAll('#catRows input, #catRows .rm, #saveRows input, #saveRows .rm, #incomeRows input, #incomeRows .rm').forEach(el => el.disabled = locked);
+  document.querySelectorAll('#catRows input, #catRows .rm, #saveRows input, #saveRows .rm, #saveRows .cgoal, #incomeRows input, #incomeRows .rm').forEach(el => el.disabled = locked);
 }
 
 /* ---------- صفوف التصنيفات والصناديق ---------- */
-function addRow(section, name, amount, carried){
+function addRow(section, name, amount, carried, goal){
   carried = Number(carried)||0;
+  goal = Number(goal)||0;
   const isSave = section === 'save';
   const container = isSave ? $('saveRows') : $('catRows');
   const ph = isSave ? 'مثلاً: ادخار بيت' : 'مثلاً: أكل البيت';
@@ -1225,6 +1293,14 @@ function addRow(section, name, amount, carried){
   liveFormat(amt);
   amt.addEventListener('input', updateAlloc);
   wrap.appendChild(div);
+  if(isSave){
+    const goalRow = document.createElement('div');
+    goalRow.className = 'goal-row';
+    goalRow.innerHTML = `<span class="goal-lbl">🎯 الهدف (اختياري)</span>
+      <input type="tel" class="cgoal" inputmode="numeric" placeholder="مثلاً: 5,000,000" value="${goal ? goal.toLocaleString('en-US') : ''}">`;
+    liveFormat(goalRow.querySelector('.cgoal'));
+    wrap.appendChild(goalRow);
+  }
   if(carried){
     const note = document.createElement('div');
     note.className = 'cat-carry';
@@ -1243,10 +1319,14 @@ function readCats(){
     const amount = num(r.querySelector('.camt').value);
     if(name) cats.push({ name, amount, type:'spend' });
   });
-  document.querySelectorAll('#saveRows .cat-row').forEach(r => {
+  document.querySelectorAll('#saveRows > div').forEach(wrap => {
+    const r = wrap.querySelector('.cat-row');
+    if(!r) return;
     const name = r.querySelector('.cname').value.trim();
     const amount = num(r.querySelector('.camt').value);
-    if(name) cats.push({ name, amount, type:'save' });
+    const gEl = wrap.querySelector('.cgoal');
+    const goal = gEl ? num(gEl.value) : 0;
+    if(name) cats.push({ name, amount, type:'save', goal });
   });
   return cats;
 }
@@ -1376,17 +1456,39 @@ window.openWithdraw = (idx) => {
   };
 };
 
-/* ---------- إيداع بصندوق ادخار ---------- */
-window.openDeposit = (idx) => {
+/* ---------- إيداع بصندوق ادخار (محدود بالفائض المتاح) ---------- */
+window.openDeposit = async (idx) => {
   if(state.locked) return;
   const c = (state.budget.categories||[])[idx];
   if(!c) return;
+  loading(true);
+  let surplus = 0;
+  try{
+    const { data, error } = await sb.rpc('month_surplus', { p_month: state.month });
+    if(error) throw error;
+    surplus = Number(data) || 0;
+  }catch(err){ loading(false); return toast('ما كدرت أحسب الفائض: ' + (err.message||''), true); }
+  loading(false);
+
+  if(surplus <= 0){
+    modalOpen(`
+      <h2>إيداع بـ «${esc(c.name)}» 💰</h2>
+      <div class="empty" style="padding:20px 6px">ماكو فائض متاح تودّعه هالشهر 🚫<br>كل فلوسك موزّعة على المصاريف والادخار.<br><br>حتى تودّع، لازم يكون عندك فائض: زيّد دخلك من «الإيرادات الإضافية» بتبويب الميزانية، أو قلّل التوزيع.</div>
+      <button class="btn ghost" onclick="modalClose()">تمام</button>
+    `);
+    return;
+  }
+
   modalOpen(`
     <h2>إيداع بـ «${esc(c.name)}» 💰</h2>
-    <div class="hint" style="margin:0 0 8px">أي فلوس جتك من برة وتريد تضيفها للصندوق — تنسجل كحركة مستقلة بالسجل ويزيد الرصيد فوراً.</div>
+    <div class="hint" style="margin:0 0 6px">تودّع من فائض فلوسك غير الموزّعة — الحد الأقصى هالشهر: <b style="color:var(--primary)">${fmt(surplus)}</b>. المبلغ يزيد رصيد الصندوق وما يأثر على صرفك.</div>
     <div class="row">
       <div><label>المبلغ</label><input type="tel" id="dpAmount" inputmode="numeric" placeholder="0"></div>
       <div><label>التاريخ</label><input type="date" id="dpDate" value="${todayISO()}"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+      <button class="btn ghost" id="dpMax" style="margin:0;width:auto;padding:8px 14px;font-size:.75rem">إيداع كل الفائض (${fmt(surplus)})</button>
+      <span class="hint" id="dpLeft" style="margin:0"></span>
     </div>
     <label>المصدر / السبب (اختياري)</label>
     <input type="text" id="dpDesc" placeholder="مثلاً: من بيع غرض / رجعتلي سلفة">
@@ -1394,9 +1496,17 @@ window.openDeposit = (idx) => {
     <button class="btn ghost" onclick="modalClose()">إلغاء</button>
   `);
   liveFormat($('dpAmount'));
+  const updateLeft = () => {
+    const v = num($('dpAmount').value);
+    $('dpLeft').textContent = v > surplus ? '⚠ أكثر من الفائض' : (v > 0 ? 'يتبقى ' + fmt(surplus - v) : '');
+    $('dpLeft').style.color = v > surplus ? 'var(--red)' : 'var(--muted)';
+  };
+  $('dpAmount').addEventListener('input', updateLeft);
+  $('dpMax').onclick = () => { $('dpAmount').value = surplus.toLocaleString('en-US'); updateLeft(); };
   $('dpSave').onclick = async () => {
     const amount = num($('dpAmount').value);
     if(amount <= 0) return toast('دخّل المبلغ', true);
+    if(amount > surplus) return toast('المبلغ أكثر من الفائض المتاح (' + fmt(surplus) + ')', true);
     loading(true);
     try{
       const res = await apiPost({ action:'addDeposit', fund:c.name, amount, date: $('dpDate').value || todayISO(), desc: $('dpDesc').value.trim() });
@@ -1487,7 +1597,7 @@ $('btnCopyLast').onclick = async () => {
     (state.budget.categories||[]).forEach(c => carriedByName[c.name] = c.carried);
     $('catRows').innerHTML = '';
     $('saveRows').innerHTML = '';
-    pcats.forEach(c => addRow(c.type==='save'?'save':'spend', c.name, c.amount, carriedByName[c.name]||0));
+    pcats.forEach(c => addRow(c.type==='save'?'save':'spend', c.name, c.amount, carriedByName[c.name]||0, c.goal));
     if(!document.querySelector('#catRows .cat-row')) addRow('spend','','',0);
     updateAlloc();
     toast('انتسخت — عدّل المبالغ واحفظ');
@@ -1565,6 +1675,7 @@ $('btnSettings').onclick = () => {
     <button class="btn ghost" id="btnXlsMonth">📊 تصدير إكسل — شهر ${esc(state.month)}</button>
     <button class="btn ghost" id="btnXlsAll">🗂 تصدير إكسل — كل الأشهر</button>
     <button class="btn ghost" id="btnPrint">🖨 طباعة مباشرة (للكمبيوتر)</button>
+    ${session && session.admin ? `<div class="set-sec">المشرف</div><button class="btn ghost" id="btnAdmin" style="margin-top:0">🛡 لوحة المشرف</button>` : ''}
 
     <button class="btn ghost" onclick="modalClose()" style="margin-top:16px">إغلاق</button>
   `);
@@ -1600,6 +1711,75 @@ $('btnSettings').onclick = () => {
   $('btnPdf').onclick = () => { modalClose(); setTimeout(pdfReport, 250); };
   $('btnXlsMonth').onclick = () => exportExcel('month');
   $('btnXlsAll').onclick = () => exportExcel('all');
+  if($('btnAdmin')) $('btnAdmin').onclick = () => { modalClose(); setTimeout(showAdmin, 200); };
+};
+
+/* ---------- لوحة المشرف (سوبر أدمن) ---------- */
+async function showAdmin(){
+  loading(true);
+  try{
+    const { data, error } = await sb.rpc('admin_overview');
+    if(error) throw new Error(error.message);
+
+    const usedMB = (data.db_bytes / 1048576);
+    const limitMB = (data.db_limit_bytes / 1048576);
+    const usePct = Math.min(100, Math.round(usedMB / limitMB * 100));
+    const hh = data.households || [];
+    // تقدير كم عائلة باقية: على أساس متوسط حجم العائلة الحالي
+    const avgPerHH = hh.length ? (data.db_bytes / hh.length) : 0;
+    const freeBytes = Math.max(0, data.db_limit_bytes - data.db_bytes);
+    const canAdd = avgPerHH > 0 ? Math.floor(freeBytes / avgPerHH) : '∞';
+
+    let rows = '';
+    hh.forEach(h => {
+      const last = h.last_activity ? String(h.last_activity).slice(0,10) : 'ماكو نشاط';
+      const mine = h.id === (session && session.hh);
+      rows += `
+        <div class="admin-fam">
+          <div class="af-main">
+            <div class="af-name">${esc(h.name || 'عائلة')} ${mine ? '<span style="color:var(--primary);font-size:.65rem">(عائلتك)</span>' : ''}</div>
+            <div class="af-meta">${h.members} فرد · ${h.expenses} مصروف · ${h.months} شهر · آخر نشاط ${last}</div>
+            <div class="af-meta">👥 ${esc(h.member_names || '—')} · كود: <b dir="ltr">${esc(h.code||'—')}</b></div>
+          </div>
+          ${mine ? '' : `<button class="af-del" onclick="adminDelete('${h.id}','${esc((h.name||'').replace(/'/g,''))}')">حذف</button>`}
+        </div>`;
+    });
+
+    modalOpen(`
+      <h2>🛡 لوحة المشرف</h2>
+      <div class="admin-stats">
+        <div class="astat"><div class="av">${data.total_households}</div><div class="al">عائلة</div></div>
+        <div class="astat"><div class="av">${data.total_users}</div><div class="al">مستخدم</div></div>
+        <div class="astat"><div class="av">${data.total_expenses}</div><div class="al">مصروف</div></div>
+      </div>
+
+      <div class="set-sec">سعة قاعدة البيانات</div>
+      <div class="bar" style="height:12px"><i class="${usePct>=85?'over':(usePct>=60?'warn':'')}" style="width:${usePct}%"></i></div>
+      <div class="env-sub" style="margin-top:6px"><span>مستهلك ${usedMB.toFixed(1)} م.ب</span><span>من ${limitMB.toFixed(0)} م.ب (${usePct}%)</span></div>
+      <div class="famcode" style="background:var(--primary-soft)">
+        <span>تقدر تضيف تقريباً</span><b>${canAdd}</b><span>عائلة إضافية</span>
+      </div>
+      <div class="hint" style="margin-top:6px">تقدير على أساس متوسط حجم العوائل الحالية. كل ما تكبر البيانات يتغير الرقم.</div>
+
+      <div class="set-sec">العوائل (${hh.length})</div>
+      ${rows || '<div class="empty">ماكو عوائل</div>'}
+
+      <button class="btn ghost" onclick="modalClose()" style="margin-top:16px">إغلاق</button>
+    `);
+  }catch(err){ toast('ما كدرت أفتح اللوحة: ' + err.message, true); }
+  finally{ loading(false); }
+}
+window.adminDelete = async (id, name) => {
+  if(!confirm('حذف عائلة «' + name + '» نهائياً؟\n\nراح تنمسح كل بياناتها (المصاريف، الميزانيات، الصناديق، المستخدمين) وما ترجع.\nمتأكد ١٠٠٪؟')) return;
+  loading(true);
+  try{
+    const { error } = await sb.rpc('admin_delete_household', { p_id: id });
+    if(error) throw new Error(error.message);
+    toast('انحذفت العائلة ✓');
+    modalClose();
+    setTimeout(showAdmin, 200);
+  }catch(err){ toast('ما انحذفت: ' + err.message, true); }
+  finally{ loading(false); }
 };
 
 /* ---------- بناء التقرير (مشترك بين الطباعة والـ PDF) ---------- */
@@ -1740,6 +1920,7 @@ async function exportExcel(scope){
         'النوع': c.type === 'save' ? 'صندوق ادخار' : 'مصروف',
         'المخصص': money(c.amount),
         'المرحّل': money(c.carried),
+        'الهدف': c.type === 'save' ? money(c.goal) : '',
         'المصروف/صافي السحب': money(spent[c.name]||0),
         'الباقي/الرصيد': money(c.amount) + money(c.carried) - money(spent[c.name]||0)
       }));
@@ -1877,6 +2058,99 @@ $('fltText').addEventListener('input', renderExpenseList);
 $('fltCat').addEventListener('change', renderExpenseList);
 $('fltBy').addEventListener('change', renderExpenseList);
 
+/* ---------- الأزرار السريعة ---------- */
+let quickItems = [], quickEditing = false;
+async function loadQuick(){
+  try{
+    const { data, error } = await sb.rpc('list_quick');
+    if(error) throw error;
+    quickItems = data || [];
+    renderQuick();
+  }catch(_){ quickItems = []; renderQuick(); }
+}
+function renderQuick(){
+  const box = $('quickList');
+  if(!box) return;
+  if(!quickItems.length){
+    box.innerHTML = '<div class="empty" style="padding:14px">ماكو أزرار بعد — اضغط «＋ زر جديد» وسوّي أزرار لمصاريفك المتكررة.</div>';
+    return;
+  }
+  box.innerHTML = '<div class="quick-grid">' + quickItems.map(q => `
+    <div class="qbtn ${quickEditing?'editing':''}" onclick="useQuick('${q.id}')">
+      <button class="qb-del" onclick="event.stopPropagation();removeQuick('${q.id}')" aria-label="حذف">✕</button>
+      <span class="qb-label">${esc(q.label)}</span>
+      <span class="qb-sub">${q.amount>0 ? fmt(q.amount) : 'بلا مبلغ'}${q.category ? ' · ' + esc(q.category) : ''}</span>
+    </div>`).join('') +
+    `<div class="qbtn" style="justify-content:center;align-items:center;color:var(--muted)" onclick="toggleQuickEdit()">${quickEditing ? '✓ تم' : '✎ تعديل'}</div>` +
+    '</div>';
+}
+window.toggleQuickEdit = () => { quickEditing = !quickEditing; renderQuick(); };
+window.useQuick = async (id) => {
+  if(quickEditing) return;
+  const q = quickItems.find(x => x.id === id);
+  if(!q) return;
+  if(state.locked) return toast('الشهر مقفل', true);
+  // إذا الزر إله مبلغ ثابت → سجّل فوراً. إذا لا → عبّي الفورم بس
+  if(q.amount > 0){
+    const date = $('expDate').value || todayISO();
+    loading(true);
+    try{
+      const res = await apiPost({ action:'addExpense', month: date.slice(0,7), date, amount: q.amount, desc: q.label, category: q.category });
+      if(guardAuth(res)) return;
+      if(!res.ok) throw new Error(res.error || 'خطأ');
+      toast('انسجّل «' + q.label + '» ✓ ⚡');
+      if(date.slice(0,7) === state.month) await loadMonth(state.month);
+    }catch(err){ toast('ما انسجّل: ' + err.message, true); }
+    finally{ loading(false); }
+  }else{
+    $('expDesc').value = q.label;
+    if(q.category) $('expCat').value = q.category;
+    $('expAmount').focus();
+    toast('عبّي المبلغ واضغط إضافة');
+  }
+};
+window.removeQuick = async (id) => {
+  const q = quickItems.find(x => x.id === id);
+  if(!q || !confirm('حذف زر «' + q.label + '»؟')) return;
+  try{
+    const { error } = await sb.rpc('delete_quick', { p_id: id });
+    if(error) throw error;
+    quickItems = quickItems.filter(x => x.id !== id);
+    renderQuick();
+    toast('انحذف ✓');
+  }catch(err){ toast('ما انحذف: ' + err.message, true); }
+};
+function openAddQuick(){
+  const cats = ((state.budget && state.budget.categories) || []).filter(c => c.type !== 'save');
+  const opts = '<option value="">— بلا تصنيف —</option>' + cats.map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
+  modalOpen(`
+    <h2>⚡ زر سريع جديد</h2>
+    <div class="hint" style="margin:0 0 8px">لو حطيت مبلغ ثابت، الزر يسجّل المصروف بضغطة. لو خليته فارغ، يعبّي الفورم وتكتب المبلغ كل مرة.</div>
+    <label>اسم الزر</label>
+    <input type="text" id="qkLabel" placeholder="مثلاً: كهرباء / بنزين / إيجار">
+    <div class="row" style="margin-top:10px">
+      <div><label>المبلغ (اختياري)</label><input type="tel" id="qkAmount" inputmode="numeric" placeholder="ثابت أو فارغ"></div>
+      <div><label>التصنيف</label><select id="qkCat">${opts}</select></div>
+    </div>
+    <button class="btn" id="qkSave">حفظ الزر</button>
+    <button class="btn ghost" onclick="modalClose()">إلغاء</button>
+  `);
+  liveFormat($('qkAmount'));
+  $('qkSave').onclick = async () => {
+    const label = $('qkLabel').value.trim();
+    if(!label) return toast('دخّل اسم الزر', true);
+    loading(true);
+    try{
+      const { error } = await sb.rpc('add_quick', { p_label: label, p_category: $('qkCat').value, p_amount: num($('qkAmount').value) });
+      if(error) throw new Error(error.message);
+      modalClose();
+      toast('انضاف الزر ✓ ⚡');
+      await loadQuick();
+    }catch(err){ toast('ما انضاف: ' + err.message, true); }
+    finally{ loading(false); }
+  };
+}
+
 $('btnAddExp').onclick = async () => {
   if(!apiReady()) return toast('اربط الموقع بالـ API أول', true);
   const amount = num($('expAmount').value);
@@ -1914,6 +2188,7 @@ window.delExpense = async (id) => {
 };
 
 $('btnAddCat').onclick = () => addRow('spend','','',0);
+$('btnAddQuick').onclick = openAddQuick;
 $('btnAddSave').onclick = () => addRow('save','','',0);
 $('btnAddIncome').onclick = () => { addIncomeRow('', 0); updateAlloc(); };
 $('salary1').addEventListener('input', updateAlloc);
