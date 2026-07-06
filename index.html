@@ -444,6 +444,30 @@
     .donut svg{width:150px;height:150px}
   }
 
+  /* ---------- بطاقة الساعة والحكمة (كمبيوتر فقط) ---------- */
+  .add-col{display:contents}
+  #decoCard{display:none}
+  @media (min-width:1000px){
+    #tab-add{max-width:1020px}
+    #tab-add.active{display:grid;grid-template-columns:1.02fr .98fr;gap:20px;align-items:stretch}
+    .add-col{display:block;min-width:0}
+    #decoCard{
+      display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;
+      gap:6px;min-height:460px;border:none;color:#fff;position:sticky;top:20px;
+      background:
+        radial-gradient(circle at 82% 12%, rgba(255,255,255,.14), transparent 42%),
+        radial-gradient(circle at 12% 88%, rgba(255,255,255,.10), transparent 45%),
+        linear-gradient(160deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 62%, #16222c) 100%);
+    }
+    .deco-time{font-size:3.3rem;font-weight:800;letter-spacing:3px;font-variant-numeric:tabular-nums;line-height:1.1;animation:decoPulse 4s ease-in-out infinite}
+    .deco-date{font-size:.9rem;opacity:.85}
+    .deco-sep{width:44px;height:3px;border-radius:2px;background:rgba(255,255,255,.35);margin:16px 0}
+    .deco-quote{font-size:1.02rem;line-height:2;max-width:340px;opacity:1;transition:opacity .45s ease;min-height:96px;display:flex;align-items:center;justify-content:center}
+    .deco-mark{font-size:1.5rem;opacity:.5}
+    @keyframes decoPulse{0%,100%{text-shadow:0 0 0 rgba(255,255,255,0)}50%{text-shadow:0 0 26px rgba(255,255,255,.35)}}
+    .perf .deco-time{animation:none}
+  }
+
   /* ---------- الأزرار السريعة ---------- */
   .qh{display:flex;align-items:center;justify-content:space-between}
   .qh-add{border:none;background:var(--primary-soft);color:var(--primary);border-radius:10px;padding:8px 13px;font-family:inherit;font-weight:700;font-size:.74rem;cursor:pointer;transition:transform .18s var(--ease)}
@@ -547,6 +571,7 @@
     <div class="brand">مصاريفنا<small>ميزانية البيت الشهرية</small></div>
     <div class="head-actions">
       <input type="month" id="monthPick" class="month-pick">
+      <button class="icon-btn" id="btnLang" title="English / عربي">🌐</button>
       <button class="icon-btn" id="btnChart" title="مقارنة الأشهر">📊</button>
       <button class="icon-btn" id="btnTheme" title="الألوان">🎨</button>
       <button class="icon-btn" id="btnSettings" title="الإعدادات">⚙</button>
@@ -581,6 +606,7 @@
 
   <!-- تبويب: مصروف جديد -->
   <section class="tab active" id="tab-add">
+    <div class="add-col">
     <div class="card">
       <h2>سجّل مصروف</h2>
       <div class="row">
@@ -612,6 +638,15 @@
       </div>
       <div class="hint" style="margin:2px 0 12px">مصاريفك المتكررة (كهرباء، إيجار، بنزين...) — اضغط الزر ويتعبّى المبلغ والتصنيف، أو ينسجل فوراً. مشتركة بينك وبين العائلة.</div>
       <div id="quickList"></div>
+    </div>
+    </div><!-- /add-col -->
+
+    <div class="card" id="decoCard" aria-hidden="true">
+      <div class="deco-time" id="decoTime">--:--:--</div>
+      <div class="deco-date" id="decoDate"></div>
+      <div class="deco-sep"></div>
+      <div class="deco-mark">❝</div>
+      <div class="deco-quote" id="decoQuote"></div>
     </div>
   </section>
 
@@ -804,7 +839,7 @@ function showApp(){
   $('appNav').style.display='';
   $('userName').textContent = 'مرحباً ' + (session && session.name ? session.name : '');
 }
-function doLogout(){ stopRealtime(); sb.auth.signOut().catch(()=>{}); session = null; showLogin(); }
+function doLogout(){ clearTimeout(idleTimer); stopRealtime(); sb.auth.signOut().catch(()=>{}); session = null; showLogin(); }
 
 /* ---------- التبديل بين الدخول والتسجيل ---------- */
 function toggleAuth(signup){
@@ -953,6 +988,7 @@ async function afterLogin(user){
   showApp();
   $('expDate').value = todayISO();
   startRealtime();
+  resetIdle();
   loadQuick();
   loadMonth(thisMonth());
 }
@@ -1032,14 +1068,17 @@ function render(){
     spentByCat[k] = (spentByCat[k]||0) + e.amount;
   });
 
-  /* صرف المصاريف فقط (نتجاهل حركات الصناديق سحب/إرجاع) */
-  let spendingSpent=0;
-  state.expenses.forEach(e => { if(!saveNames.has(e.category)) spendingSpent += e.amount; });
+  /* صرف المصاريف فقط (نتجاهل حركات الصناديق سحب/إرجاع) — والإيداعات تنحسب لأنها تنحجز من الفائض */
+  let spendingSpent=0, fundDeposits=0;
+  state.expenses.forEach(e => {
+    if(!saveNames.has(e.category)) spendingSpent += e.amount;
+    else if(e.amount < 0 && String(e.desc||'').indexOf('إيداع') === 0) fundDeposits += -e.amount;
+  });
 
   const totalSalary = (b.salary1||0) + (b.salary2||0);
   const extraIncome = ((b.incomes)||[]).reduce((s,x)=> s + (Number(x.amount)||0), 0);
   const totalIncome = totalSalary + extraIncome;
-  const remain = totalIncome + spendCarried - saveContrib - spendingSpent;
+  const remain = totalIncome + spendCarried - saveContrib - spendingSpent - fundDeposits;
 
   $('hSalary') && setStat($('hSalary'), totalIncome);
   setStat($('hSpent'), spendingSpent);
@@ -1790,13 +1829,16 @@ function buildReportHTML(){
 
   const spentByCat = {};
   state.expenses.forEach(e => { const k=e.category||'بلا تصنيف'; spentByCat[k]=(spentByCat[k]||0)+e.amount; });
-  let spendingSpent=0, saveContrib=0, spendCarried=0;
+  let spendingSpent=0, saveContrib=0, spendCarried=0, fundDeposits=0;
   cats.forEach(c => { if(c.type==='save') saveContrib+=(c.amount||0); else spendCarried+=(c.carried||0); });
-  state.expenses.forEach(e => { if(!saveNames.has(e.category)) spendingSpent += e.amount; });
+  state.expenses.forEach(e => {
+    if(!saveNames.has(e.category)) spendingSpent += e.amount;
+    else if(e.amount < 0 && String(e.desc||'').indexOf('إيداع') === 0) fundDeposits += -e.amount;
+  });
   const totalSalary = (b.salary1||0)+(b.salary2||0);
   const extraIncome = ((b.incomes)||[]).reduce((s,x)=> s + (Number(x.amount)||0), 0);
   const totalIncome = totalSalary + extraIncome;
-  const remain = totalIncome + spendCarried - saveContrib - spendingSpent;
+  const remain = totalIncome + spendCarried - saveContrib - spendingSpent - fundDeposits;
 
   let catRows = '';
   cats.filter(c=>c.type!=='save').forEach(c=>{
@@ -1827,6 +1869,7 @@ function buildReportHTML(){
     <div class="p-row"><span>إجمالي الدخل</span><b>${fmt(totalIncome)}</b></div>` : ''}
     <div class="p-row"><span>إجمالي المصروف</span><b>${fmt(spendingSpent)}</b></div>
     <div class="p-row"><span>محجوز للادخار</span><b>${fmt(saveContrib)}</b></div>
+    ${fundDeposits ? `<div class="p-row"><span>مودَع بالصناديق من الفائض</span><b>${fmt(fundDeposits)}</b></div>` : ''}
     <div class="p-row"><span>الباقي للصرف</span><b>${fmt(remain)}</b></div>
 
     <h3>تفاصيل التصنيفات</h3>
@@ -1843,6 +1886,7 @@ function buildReportHTML(){
 /* ---------- الطباعة المباشرة (كمبيوتر) ---------- */
 function printReport(){
   $('printArea').innerHTML = buildReportHTML();
+  translateNode($('printArea'));
   window.print();
 }
 
@@ -1872,6 +1916,7 @@ async function pdfReport(){
     stage.className = 'report-doc';
     stage.dir = 'rtl';
     stage.innerHTML = buildReportHTML();
+    translateNode(stage);
     document.body.appendChild(stage);
     const canvas = await html2canvas(stage, { scale: 2, backgroundColor: '#ffffff' });
     stage.remove();
@@ -2042,7 +2087,15 @@ document.querySelectorAll('nav button').forEach(btn => {
 
 $('btnLogin').onclick = doLogin;
 $('liPass').addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
-$('btnLogout').onclick = doLogout;
+$('btnLogout').onclick = () => {
+  modalOpen(`
+    <h2>تسجيل الخروج</h2>
+    <div class="hint" style="margin:0 0 14px">متأكد تريد تسجّل خروج؟</div>
+    <button class="btn" id="lgYes">نعم، خروج</button>
+    <button class="btn ghost" onclick="modalClose()">إلغاء</button>
+  `);
+  $('lgYes').onclick = () => { modalClose(); doLogout(); };
+};
 
 $('lnkSignup').onclick = () => toggleAuth(true);
 $('lnkLogin').onclick = () => toggleAuth(false);
@@ -2234,10 +2287,209 @@ $('btnCloseMonth').onclick = async () => {
   finally{ loading(false); }
 };
 
+/* ============================================================
+   اللغة (عربي / English)
+   العربي هو الأساس — الإنكليزي ترجمة فوقه، وأي نص ما مترجم يظل عربي
+   ============================================================ */
+const LANG = { cur: localStorage.getItem('mas_lang') || 'ar' };
+const I18N = {
+  'مصاريفنا':'Masareef','ميزانية البيت الشهرية':'Monthly home budget',
+  'الباقي للصرف':'Left to spend','الدخل':'Income','المصروف':'Spent','خروج':'Logout',
+  'اللوحة':'Dashboard','الميزانية':'Budget','مصروف':'Expense',
+  'سجّل مصروف':'Log an expense','المبلغ':'Amount','المبلغ (د.ع)':'Amount (IQD)','التاريخ':'Date',
+  'التفاصيل':'Details','شنو اشتريت؟':'What did you buy?','التصنيف':'Category','— بلا تصنيف —':'— No category —',
+  'إضافة المصروف':'Add expense',
+  'المصروف ينحفظ فوراً ويظهر لحظياً عند كل أفراد العائلة، ويتسجل وياه منو دخّله. للسحب أو الإيداع بصندوق ادخار استعمل الأزرار باللوحة.':'Saved instantly and synced live to your whole family, with the name of who logged it. For fund withdrawals or deposits use the buttons on the dashboard.',
+  '⚡ أزرار سريعة':'⚡ Quick buttons','＋ زر جديد':'＋ New button','⚡ زر سريع جديد':'⚡ New quick button',
+  'مصاريفك المتكررة (كهرباء، إيجار، بنزين...) — اضغط الزر ويتعبّى المبلغ والتصنيف، أو ينسجل فوراً. مشتركة بينك وبين العائلة.':'Your recurring expenses (power, rent, fuel...) — tap to pre-fill or log instantly. Shared with your family.',
+  'ماكو أزرار بعد — اضغط «＋ زر جديد» وسوّي أزرار لمصاريفك المتكررة.':'No buttons yet — tap “＋ New button” to create shortcuts for recurring expenses.',
+  'اسم الزر':'Button name','مثلاً: كهرباء / بنزين / إيجار':'e.g. Power / Fuel / Rent','المبلغ (اختياري)':'Amount (optional)','ثابت أو فارغ':'Fixed or empty','حفظ الزر':'Save button','بلا مبلغ':'No amount','✎ تعديل':'✎ Edit','✓ تم':'✓ Done',
+  'لو حطيت مبلغ ثابت، الزر يسجّل المصروف بضغطة. لو خليته فارغ، يعبّي الفورم وتكتب المبلغ كل مرة.':'With a fixed amount, one tap logs the expense. Leave it empty to pre-fill the form and type the amount each time.',
+  'آخر المصاريف':'Recent expenses','كل التصنيفات':'All categories','الكل':'Everyone','🔎 دوّر بالتفاصيل...':'🔎 Search details...',
+  'ماكو مصاريف مسجلة بهذا الشهر.':'No expenses recorded this month.','ماكو نتائج للفلتر.':'No results for this filter.',
+  'رواتب الشهر':'Monthly salaries','راتبي':'My salary','راتب زوجتي':'Spouse salary',
+  'إيرادات إضافية 💵':'Extra income 💵','إيرادات إضافية':'Extra income','+ إضافة دخل (سلفة / فلوس خارجية)':'+ Add income (loan / external money)',
+  'مثلاً: سلفة من أخوي':'e.g. Loan from my brother',
+  'توزيع المصاريف':'Spending allocation','+ إضافة تصنيف مصروف':'+ Add spending category',
+  'صناديق الادخار':'Savings funds','صناديق الادخار 🏦':'Savings funds 🏦','+ إضافة صندوق ادخار':'+ Add savings fund',
+  '🎯 الهدف (اختياري)':'🎯 Goal (optional)','مثلاً: 5,000,000':'e.g. 5,000,000',
+  'حفظ ميزانية الشهر':'Save monthly budget','إقفال الشهر وترحيل الباقي ✓':'Close month & carry over ✓','🔒 الشهر مقفل':'🔒 Month locked',
+  '🗑 تفريغ ميزانية هذا الشهر':'🗑 Clear this month\'s budget','⧉ انسخ تصنيفات الشهر الماضي':'⧉ Copy last month\'s categories',
+  'مرحّل من الشهر الماضي':'Carried from last month','الباقي بلا توزيع':'Unallocated','بعد ما مسوّي ميزانية لهذا الشهر.':'No budget set for this month yet.',
+  'روح لتبويب «الميزانية» وحدد الرواتب والتصنيفات.':'Go to the “Budget” tab and set salaries and categories.',
+  'سحب −':'Withdraw −','إيداع +':'Deposit +','سحب':'Withdraw','إيداع':'Deposit','سجل الحركات':'History','مرحّل':'Carried','هذا الشهر':'this month','الرصيد':'Balance','بلا مخصص':'No allocation',
+  'ديون الصناديق ⏳':'Fund debts ⏳','ديون الصناديق (مطلوبة)':'Fund debts (owed)','↩ رجّعه للصندوق':'↩ Return to fund','شطب (احذفه)':'Write off (delete)',
+  'المعدل اليومي':'Daily average','باقي بالشهر':'Days left','تقدر تصرف باليوم':'Daily allowance',
+  'الإيميل':'Email','الباسورد':'Password','دخول':'Log in','سجّل الدخول للمتابعة':'Log in to continue',
+  'ما عندك حساب؟':'No account?','سجّل جديد':'Sign up','عندك حساب؟':'Have an account?','سجّل دخول':'Log in',
+  'اسمك':'Your name','مثلاً: أحمد':'e.g. Ahmed','كود العائلة (اختياري)':'Family code (optional)','إذا زوجك/زوجتك مسجّل قبلك':'If your spouse signed up first','إنشاء الحساب':'Create account',
+  'تلكاه بإعداداته — بدونه تنسويلك مساحة عائلة جديدة خاصة بيك.':'Find it in their settings — without it you get your own new family space.',
+  '٦ خانات على الأقل':'At least 6 characters','أعد كتابته':'Repeat it','••••••':'••••••',
+  '⚙ الإعدادات':'⚙ Settings','الإعدادات':'Settings','العائلة':'Family','نسخ':'Copy','الحساب':'Account',
+  'كود عائلتك — انطيه لزوجك/زوجتك يدخّله وقت التسجيل حتى تصيرون بنفس المساحة وتشوفون نفس البيانات:':'Your family code — give it to your spouse to enter at signup so you share the same space and data:',
+  'الباسورد الحالي':'Current password','الباسورد الجديد':'New password','تأكيد الباسورد الجديد':'Confirm new password','تغيير الباسورد':'Change password',
+  'التقارير والتصدير':'Reports & export','🖨 طباعة مباشرة (للكمبيوتر)':'🖨 Print (desktop)','إغلاق':'Close','إلغاء':'Cancel','تمام':'OK','حذف':'Delete',
+  'المشرف':'Admin','🛡 لوحة المشرف':'🛡 Admin panel','سعة قاعدة البيانات':'Database capacity','تقدر تضيف تقريباً':'You can add roughly','عائلة إضافية':'more families','عائلة':'families','مستخدم':'users','ماكو عوائل':'No families','(عائلتك)':'(your family)',
+  'تقدير على أساس متوسط حجم العوائل الحالية. كل ما تكبر البيانات يتغير الرقم.':'Estimate based on the average size of current families. It shifts as data grows.',
+  '📊 مقارنة الأشهر':'📊 Months comparison','مقارنة الأشهر':'Months comparison','معدل الصرف الشهري':'Avg monthly spending','أعلى شهر صرف':'Highest spending month',
+  'العمود الفاتح = الدخل، والغامق = المصروف (يحمرّ إذا الصرف تجاوز الدخل). اضغط على أي شهر حتى تفتحه.':'Light bar = income, dark = spending (turns red when spending beats income). Tap a month to open it.',
+  'تعديل المصروف':'Edit expense','حفظ التعديل':'Save changes','السبب (اختياري)':'Reason (optional)','شنو الغرض؟':'What is it for?','المصدر / السبب (اختياري)':'Source / reason (optional)','مثلاً: من بيع غرض / رجعتلي سلفة':'e.g. Sold something / loan repaid to me',
+  'على حساب منو؟ (اختياري — للسحب كدين)':'On whose account? (optional — withdraw as debt)','مثلاً: سلفة لأخوي / حساب الراتب':'e.g. Loan to my brother / salary account',
+  'تودّع من فائض فلوسك غير الموزّعة — الحد الأقصى هالشهر:':'Deposit from your unallocated surplus — this month\'s cap:','. المبلغ يزيد رصيد الصندوق وما يأثر على صرفك.':'. It raises the fund balance without touching your spending.',
+  'ماكو فائض متاح تودّعه هالشهر 🚫':'No surplus available to deposit this month 🚫','كل فلوسك موزّعة على المصاريف والادخار.':'All your money is allocated to spending and savings.',
+  'حتى تودّع، لازم يكون عندك فائض: زيّد دخلك من «الإيرادات الإضافية» بتبويب الميزانية، أو قلّل التوزيع.':'To deposit you need surplus: add income under “Extra income” in the Budget tab, or reduce allocations.',
+  'ماكو حركات على هذا الصندوق بهذا الشهر.':'No movements on this fund this month.',
+  'الأخضر يزيد الرصيد والأحمر ينقصه.':'Green raises the balance, red lowers it.','إرجاع دين':'Debt return',
+  '🎨 لون الواجهة':'🎨 Theme color','الألوان':'Colors','لون مخصص':'Custom color','اختر اللون الي يعجبك — يتطبّق فوراً وينحفظ بجهازك.':'Pick a color you like — applies instantly and is saved on this device.',
+  'إجمالي الرواتب':'Total salaries','إجمالي الدخل':'Total income','إجمالي المصروف':'Total spent','محجوز للادخار':'Reserved for savings','مودَع بالصناديق من الفائض':'Deposited to funds from surplus','تفاصيل التصنيفات':'Category details','كل المصاريف':'All expenses','المتاح':'Available','الباقي':'Left','الصندوق':'Fund','المُدخِل':'Logged by',
+  'تسجيل الخروج':'Log out','متأكد تريد تسجّل خروج؟':'Are you sure you want to log out?','نعم، خروج':'Yes, log out',
+  'انتهت الجلسة، سجّل دخول من جديد':'Session expired — please log in again','سجّلنا خروجك تلقائياً لأنك تركت التطبيق فترة 🔒':'Logged you out automatically after inactivity 🔒',
+  'الشهر مقفل':'Month is locked','دخّل المبلغ':'Enter the amount','املأ الحقول':'Fill in the fields','انحفظت الميزانية ✓':'Budget saved ✓','انقفل الشهر وانرحّل الباقي ✓ 🎉':'Month closed & carried over ✓ 🎉','انضاف للرصيد ✓ 💰':'Added to balance ✓ 💰','انحذف ✓':'Deleted ✓','انتسخ الكود ✓':'Code copied ✓','انصدّر الإكسل ✓ 📊':'Excel exported ✓ 📊','انحمّل التقرير ✓ 📄':'Report downloaded ✓ 📄','انتغيّر الباسورد ✓':'Password changed ✓','انضاف الزر ✓ ⚡':'Button added ✓ ⚡','عبّي المبلغ واضغط إضافة':'Enter the amount and tap Add','انضاف ✓':'Added ✓','انحفظ ✓':'Saved ✓','انحذف المصروف ✓':'Expense deleted ✓',
+  'الإيميل أو الباسورد غلط':'Wrong email or password','دخّل الإيميل والباسورد':'Enter email and password','املأ الاسم والإيميل والباسورد':'Fill in name, email and password','الباسورد لازم يكون ٦ خانات على الأقل':'Password must be at least 6 characters','كود العائلة غلط — دقق عليه أو خليه فارغ':'Wrong family code — check it or leave empty','هذا الإيميل مسجّل أصلاً — سجّل دخول بيه':'This email is already registered — log in instead','أهلاً بيك بمصاريفنا 🎉':'Welcome to Masareef 🎉','ما كدرت أوصل للخادم':'Could not reach the server'
+};
+const I18N_RULES = [
+  [/^مرحباً\s*(.*)$/, (m)=>'Welcome ' + m[1]],
+  [/^([\d,.\-]+)\s*د\.ع$/, (m)=> m[1] + ' IQD'],
+  [/^الإجمالي:\s*(.+)$/, (m)=>'Total: ' + m[1]],
+  [/^مرحّل:\s*(.+)$/, (m)=>'Carried: ' + m[1]],
+  [/^\+ هذا الشهر:\s*(.+)$/, (m)=>'+ This month: ' + m[1]],
+  [/^− صافي السحب:\s*(.+)$/, (m)=>'− Net withdrawals: ' + m[1]],
+  [/^\+ صافي الإيداع:\s*(.+)$/, (m)=>'+ Net deposits: ' + m[1]],
+  [/^🎯 الهدف:\s*(.+)$/, (m)=>'🎯 Goal: ' + m[1]],
+  [/^باقي (.+) حتى توصله$/, (m)=> m[1] + ' to go'],
+  [/^باقي\s+(.+)$/, (m)=>'Left ' + m[1]],
+  [/^صرفت\s+(.+)$/, (m)=>'Spent ' + m[1]],
+  [/^المتاح\s+(.+)$/, (m)=>'Available ' + m[1]],
+  [/^يتبقى\s+(.+)$/, (m)=>'Remaining ' + m[1]],
+  [/^(\d+)\s*يوم$/, (m)=> m[1] + ' days'],
+  [/^إيداع بـ «(.+)» 💰$/, (m)=>'Deposit to “' + m[1] + '” 💰'],
+  [/^سحب من «(.+)»(.*)$/, (m)=>'Withdraw from “' + m[1] + '”' + m[2]],
+  [/^سجل «(.+)» ☰$/, (m)=>'“' + m[1] + '” history ☰'],
+  [/^حركات شهر (.+) — بدّل الشهر من فوق حتى تشوف أشهر ثانية\.(.*)$/, (m)=>'Movements for ' + m[1] + ' — switch months above to see more.' + (I18N[m[2].trim()]||m[2])],
+  [/^إيداع:\s*(.+)$/, (m)=>'Deposit: ' + m[1]],
+  [/^إرجاع دين:\s*(.+)$/, (m)=>'Debt return: ' + m[1]],
+  [/^سحب على:\s*(.+)$/, (m)=>'Withdrawn on: ' + m[1]],
+  [/^مطلوب لصندوق «(.+)» · سُحب (.+)$/, (m)=>'Owed to fund “' + m[1] + '” · withdrawn ' + m[2]],
+  [/^الحساب —\s*(.*)$/, (m)=>'Account — ' + m[1]],
+  [/^📄 تحميل تقرير PDF — شهر (.+)$/, (m)=>'📄 Download PDF report — ' + m[1]],
+  [/^📊 تصدير إكسل — شهر (.+)$/, (m)=>'📊 Export Excel — ' + m[1]],
+  [/^🗂 تصدير إكسل — كل الأشهر$/, ()=>'🗂 Export Excel — all months'],
+  [/^🔒 شهر (.+) مقفل — للعرض فقط، ما تكدر تعدّله$/, (m)=>'🔒 ' + m[1] + ' is locked — view only'],
+  [/^(\d+)\s*فرد ·\s*(\d+)\s*مصروف ·\s*(\d+)\s*شهر · آخر نشاط (.+)$/, (m)=>`${m[1]} members · ${m[2]} expenses · ${m[3]} months · last active ${m[4]}`],
+  [/^مستهلك ([\d.]+) م\.ب$/, (m)=>'Used ' + m[1] + ' MB'],
+  [/^من ([\d.]+) م\.ب \((\d+)%\)$/, (m)=>'of ' + m[1] + ' MB (' + m[2] + '%)'],
+  [/^مقفل$/, ()=>'Locked']
+];
+function trString(s){
+  if(I18N[s]) return I18N[s];
+  for(const r of I18N_RULES){ const m = s.match(r[0]); if(m) return r[1](m); }
+  return s;
+}
+function translateNode(root){
+  if(LANG.cur !== 'en' || !root) return;
+  if(root.nodeType === 3){
+    const s = root.nodeValue.trim();
+    if(s && /[\u0600-\u06FF]/.test(s)){ const tr = trString(s); if(tr !== s) root.nodeValue = root.nodeValue.replace(s, tr); }
+    return;
+  }
+  if(root.nodeType !== 1 && root.nodeType !== 11) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let n;
+  while(n = walker.nextNode()){
+    const s = n.nodeValue.trim();
+    if(!s || !/[\u0600-\u06FF]/.test(s)) continue;
+    const tr = trString(s);
+    if(tr !== s) n.nodeValue = n.nodeValue.replace(s, tr);
+  }
+  if(root.querySelectorAll){
+    root.querySelectorAll('[placeholder],[title],[aria-label]').forEach(el => {
+      ['placeholder','title','aria-label'].forEach(a => {
+        const v = el.getAttribute(a);
+        if(v && /[\u0600-\u06FF]/.test(v)){ const tr = trString(v.trim()); if(tr !== v.trim()) el.setAttribute(a, tr); }
+      });
+    });
+  }
+}
+function applyLangBoot(){
+  if(LANG.cur === 'en'){
+    document.documentElement.lang = 'en';
+    document.documentElement.dir = 'ltr';
+    translateNode(document.body);
+    new MutationObserver(muts => {
+      muts.forEach(m => m.addedNodes.forEach(nd => translateNode(nd)));
+    }).observe(document.body, { childList: true, subtree: true });
+  }
+  const bl = $('btnLang');
+  if(bl) bl.textContent = LANG.cur === 'en' ? 'ع' : 'EN';
+}
+function toggleLang(){
+  localStorage.setItem('mas_lang', LANG.cur === 'en' ? 'ar' : 'en');
+  location.reload();
+}
+
+/* ============================================================
+   الخروج التلقائي بعد فترة خمول
+   ⬇️ غيّر الرقم هنا إذا تريد مدة أطول (بالدقائق) — ننصح بـ 10
+   ============================================================ */
+const AUTO_LOGOUT_MIN = 2;
+let idleTimer = null;
+function resetIdle(){
+  if(!session) return;
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => {
+    if(!session) return;
+    doLogout();
+    toast(trString2('سجّلنا خروجك تلقائياً لأنك تركت التطبيق فترة 🔒'), true);
+  }, AUTO_LOGOUT_MIN * 60 * 1000);
+}
+function trString2(s){ return LANG.cur === 'en' ? trString(s) : s; }
+['click','keydown','touchstart','scroll','pointermove'].forEach(ev =>
+  document.addEventListener(ev, () => resetIdle(), { passive: true })
+);
+
+/* ============================================================
+   بطاقة الساعة والحكمة (كمبيوتر)
+   ============================================================ */
+const QUOTES = [
+  { ar:'القرش الأبيض ينفع باليوم الأسود.', en:'Save your white penny for a black day.' },
+  { ar:'اللي يحسب فلوسه، فلوسه تحسبله مستقبله.', en:'Count your money, and it will count for your future.' },
+  { ar:'الغنى مو بكثرة المال، الغنى بحسن التدبير.', en:'Wealth is not having much — it is managing well.' },
+  { ar:'مصروف صغير كل يوم، جبل بآخر السنة.', en:'A small daily expense becomes a mountain by year\'s end.' },
+  { ar:'دينار تدّخره اليوم، يفزعلك باچر.', en:'The dinar you save today will rescue you tomorrow.' },
+  { ar:'لا تشتري بحاجتك للفرح، اشتري بحاجتك للشي.', en:'Buy because you need the thing, not because you need the joy.' },
+  { ar:'الميزانية مو قيد — الميزانية حرية بخطة.', en:'A budget is not a cage — it is freedom with a plan.' },
+  { ar:'اعرف وين تروح فلوسك، قبل ما تسأل وين راحت.', en:'Know where your money goes before asking where it went.' },
+  { ar:'القناعة كنز لا يفنى.', en:'Contentment is a treasure that never runs out.' },
+  { ar:'اللي ما يملك قوت يومه، يملكه ديْنه.', en:'Whoever does not own his daily bread is owned by his debt.' },
+  { ar:'خطط لفلوسك، لا تخلي فلوسك تخطط إلك.', en:'Plan your money, or your money will plan you.' },
+  { ar:'الادخار عادة، مو مبلغ.', en:'Saving is a habit, not an amount.' }
+];
+let quoteIdx = Math.floor(Math.random() * QUOTES.length);
+function startDeco(){
+  const tEl = $('decoTime'), dEl = $('decoDate'), qEl = $('decoQuote');
+  if(!tEl) return;
+  const tick = () => {
+    const d = new Date();
+    tEl.textContent = d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    dEl.textContent = d.toLocaleDateString(LANG.cur === 'en' ? 'en-GB' : 'ar-IQ-u-nu-latn', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  };
+  tick();
+  setInterval(tick, 1000);
+  const setQuote = () => { qEl.textContent = QUOTES[quoteIdx][LANG.cur === 'en' ? 'en' : 'ar']; };
+  setQuote();
+  setInterval(() => {
+    qEl.style.opacity = 0;
+    setTimeout(() => { quoteIdx = (quoteIdx + 1) % QUOTES.length; setQuote(); qEl.style.opacity = 1; }, 450);
+  }, 20000);
+}
+
 /* ---------- تشغيل ---------- */
 if(/Android/i.test(navigator.userAgent)) document.documentElement.classList.add('perf');
 loadTheme();
 apiReady();
+applyLangBoot();
+startDeco();
+$('btnLang').onclick = toggleLang;
 (async () => {
   try{
     const { data:{ session: s } } = await sb.auth.getSession();
