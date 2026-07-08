@@ -497,6 +497,19 @@
   .bar i.goalbar{background:linear-gradient(90deg,var(--primary),color-mix(in srgb,var(--primary) 55%,#7DD3C0))}
   .goal-rem{font-size:.66rem;color:var(--muted);margin-top:5px}
 
+  /* ---------- زر الموسيقى + مفتاح الأصوات ---------- */
+  #btnMusic.playing{animation:musicPulse 1.6s ease-in-out infinite}
+  @keyframes musicPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.16)}}
+  .perf #btnMusic.playing{animation:none}
+  .set-toggle{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0}
+  .set-toggle .st-lbl{font-size:.86rem}
+  .switch{position:relative;width:46px;height:26px;flex-shrink:0;cursor:pointer;display:inline-block}
+  .switch input{display:none}
+  .switch .track{position:absolute;inset:0;background:var(--line);border-radius:20px;transition:background .2s}
+  .switch .knob{position:absolute;top:3px;right:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+  .switch input:checked + .track{background:var(--primary)}
+  .switch input:checked + .track + .knob{transform:translateX(-20px)}
+
   /* ---------- لوحة المشرف ---------- */
   .admin-stats{display:flex;gap:10px;margin:6px 0 4px}
   .astat{flex:1;background:var(--primary-soft);border-radius:var(--radius-sm);padding:12px;text-align:center}
@@ -572,6 +585,7 @@
     <div class="head-actions">
       <input type="month" id="monthPick" class="month-pick">
       <button class="icon-btn" id="btnLang" title="English / عربي">🌐</button>
+      <button class="icon-btn" id="btnMusic" title="موسيقى">🎵</button>
       <button class="icon-btn" id="btnChart" title="مقارنة الأشهر">📊</button>
       <button class="icon-btn" id="btnTheme" title="الألوان">🎨</button>
       <button class="icon-btn" id="btnSettings" title="الإعدادات">⚙</button>
@@ -1553,6 +1567,7 @@ window.openDeposit = async (idx) => {
       if(!res.ok) throw new Error(res.error || 'خطأ');
       modalClose();
       toast('انضاف للرصيد ✓ 💰');
+      sndHappy();
       await loadMonth(state.month);
     }catch(err){ toast('ما انضاف: ' + err.message, true); }
     finally{ loading(false); }
@@ -1709,6 +1724,12 @@ $('btnSettings').onclick = () => {
     <input type="password" id="pwNew2" autocomplete="new-password" placeholder="أعد كتابته">
     <button class="btn" id="btnSavePw">تغيير الباسورد</button>
 
+    <div class="set-sec">الأصوات</div>
+    <div class="set-toggle">
+      <span class="st-lbl">🔔 أصوات العمليات (إضافة / صرف / حذف)</span>
+      <label class="switch"><input type="checkbox" id="sndToggle" ${SND.on?'checked':''}><span class="track"></span><span class="knob"></span></label>
+    </div>
+
     <div class="set-sec">التقارير والتصدير</div>
     <button class="btn ghost" id="btnPdf" style="margin-top:0">📄 تحميل تقرير PDF — شهر ${esc(state.month)}</button>
     <button class="btn ghost" id="btnXlsMonth">📊 تصدير إكسل — شهر ${esc(state.month)}</button>
@@ -1751,6 +1772,11 @@ $('btnSettings').onclick = () => {
   $('btnXlsMonth').onclick = () => exportExcel('month');
   $('btnXlsAll').onclick = () => exportExcel('all');
   if($('btnAdmin')) $('btnAdmin').onclick = () => { modalClose(); setTimeout(showAdmin, 200); };
+  if($('sndToggle')) $('sndToggle').onchange = (e) => {
+    SND.on = e.target.checked;
+    localStorage.setItem('mas_snd', SND.on ? 'on' : 'off');
+    if(SND.on) sndHappy();
+  };
 };
 
 /* ---------- لوحة المشرف (سوبر أدمن) ---------- */
@@ -2152,6 +2178,7 @@ window.useQuick = async (id) => {
       if(guardAuth(res)) return;
       if(!res.ok) throw new Error(res.error || 'خطأ');
       toast('انسجّل «' + q.label + '» ✓ ⚡');
+      sndSad();
       if(date.slice(0,7) === state.month) await loadMonth(state.month);
     }catch(err){ toast('ما انسجّل: ' + err.message, true); }
     finally{ loading(false); }
@@ -2222,6 +2249,7 @@ $('btnAddExp').onclick = async () => {
     if(!res.ok) throw new Error(res.error || 'خطأ');
     $('expAmount').value=''; $('expDesc').value='';
     toast('انحفظ المصروف ✓');
+    sndSad();
     if(month === state.month){ await loadMonth(state.month); }
   }catch(err){ toast('ما انحفظ: ' + err.message, true); }
   finally{ loading(false); }
@@ -2235,6 +2263,7 @@ window.delExpense = async (id) => {
     if(guardAuth(res)) return;
     if(!res.ok) throw new Error(res.error || 'خطأ');
     toast('انحذف ✓');
+    sndTick();
     await loadMonth(state.month);
   }catch(err){ toast('ما انحذف: ' + err.message, true); }
   finally{ loading(false); }
@@ -2345,7 +2374,11 @@ const I18N = {
   'تسجيل الخروج':'Log out','متأكد تريد تسجّل خروج؟':'Are you sure you want to log out?','نعم، خروج':'Yes, log out',
   'انتهت الجلسة، سجّل دخول من جديد':'Session expired — please log in again','سجّلنا خروجك تلقائياً لأنك تركت التطبيق فترة 🔒':'Logged you out automatically after inactivity 🔒',
   'الشهر مقفل':'Month is locked','دخّل المبلغ':'Enter the amount','املأ الحقول':'Fill in the fields','انحفظت الميزانية ✓':'Budget saved ✓','انقفل الشهر وانرحّل الباقي ✓ 🎉':'Month closed & carried over ✓ 🎉','انضاف للرصيد ✓ 💰':'Added to balance ✓ 💰','انحذف ✓':'Deleted ✓','انتسخ الكود ✓':'Code copied ✓','انصدّر الإكسل ✓ 📊':'Excel exported ✓ 📊','انحمّل التقرير ✓ 📄':'Report downloaded ✓ 📄','انتغيّر الباسورد ✓':'Password changed ✓','انضاف الزر ✓ ⚡':'Button added ✓ ⚡','عبّي المبلغ واضغط إضافة':'Enter the amount and tap Add','انضاف ✓':'Added ✓','انحفظ ✓':'Saved ✓','انحذف المصروف ✓':'Expense deleted ✓',
-  'الإيميل أو الباسورد غلط':'Wrong email or password','دخّل الإيميل والباسورد':'Enter email and password','املأ الاسم والإيميل والباسورد':'Fill in name, email and password','الباسورد لازم يكون ٦ خانات على الأقل':'Password must be at least 6 characters','كود العائلة غلط — دقق عليه أو خليه فارغ':'Wrong family code — check it or leave empty','هذا الإيميل مسجّل أصلاً — سجّل دخول بيه':'This email is already registered — log in instead','أهلاً بيك بمصاريفنا 🎉':'Welcome to Masareef 🎉','ما كدرت أوصل للخادم':'Could not reach the server'
+  'الإيميل أو الباسورد غلط':'Wrong email or password','دخّل الإيميل والباسورد':'Enter email and password','املأ الاسم والإيميل والباسورد':'Fill in name, email and password','الباسورد لازم يكون ٦ خانات على الأقل':'Password must be at least 6 characters','كود العائلة غلط — دقق عليه أو خليه فارغ':'Wrong family code — check it or leave empty','هذا الإيميل مسجّل أصلاً — سجّل دخول بيه':'This email is already registered — log in instead','أهلاً بيك بمصاريفنا 🎉':'Welcome to Masareef 🎉','ما كدرت أوصل للخادم':'Could not reach the server',
+  '🎵 موسيقى الخلفية':'🎵 Background music','▶ تشغيل':'▶ Play','⏸ إيقاف':'⏸ Pause','اضغط مرة ثانية لتشغيل الموسيقى':'Tap again to start the music',
+  'موزارت — كونشيرتو الكمان رقم ٥، الحركة الثانية (Adagio). هادئة تناسب المتابعة.':'Mozart — Violin Concerto No. 5, 2nd mvt (Adagio). Calm, good for focus.',
+  'اختيارك ينحفظ بالجهاز. الموسيقى تشتغل بهذا الجهاز بس، ما تنسمع عند غيرك.':'Saved on this device. Plays here only, not for others.',
+  'الأصوات':'Sounds','🔔 أصوات العمليات (إضافة / صرف / حذف)':'🔔 Action sounds (add / spend / delete)'
 };
 const I18N_RULES = [
   [/^مرحباً\s*(.*)$/, (m)=>'Welcome ' + m[1]],
@@ -2431,7 +2464,7 @@ function toggleLang(){
    الخروج التلقائي بعد فترة خمول
    ⬇️ غيّر الرقم هنا إذا تريد مدة أطول (بالدقائق) — ننصح بـ 10
    ============================================================ */
-const AUTO_LOGOUT_MIN = 5;
+const AUTO_LOGOUT_MIN = 2;
 let idleTimer = null;
 function resetIdle(){
   if(!session) return;
@@ -2483,6 +2516,82 @@ function startDeco(){
   }, 20000);
 }
 
+/* ============================================================
+   الأصوات — نغمات قصيرة تتولّد بالكود (Web Audio) بلا أي ملفات
+   فرح للإضافات المالية، وحزينة خفيفة للصرف
+   ============================================================ */
+const SND = { on: localStorage.getItem('mas_snd') !== 'off', ctx: null };
+function sndCtx(){
+  if(!SND.ctx){ try{ SND.ctx = new (window.AudioContext || window.webkitAudioContext)(); }catch(_){ SND.ctx = null; } }
+  if(SND.ctx && SND.ctx.state === 'suspended') SND.ctx.resume();
+  return SND.ctx;
+}
+function playTones(notes){
+  if(!SND.on) return;
+  const ctx = sndCtx();
+  if(!ctx) return;
+  const t0 = ctx.currentTime;
+  notes.forEach(n => {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = n.type || 'sine';
+    o.frequency.value = n.f;
+    const st = t0 + n.t, en = st + n.d;
+    g.gain.setValueAtTime(0, st);
+    g.gain.linearRampToValueAtTime(n.v ?? 0.18, st + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, en);
+    o.connect(g); g.connect(ctx.destination);
+    o.start(st); o.stop(en + 0.02);
+  });
+}
+// نغمة فرح صاعدة (دو-مي-صول-دو) — للإضافات المالية والإيداع
+function sndHappy(){ playTones([
+  {f:523.25,t:0,d:0.14},{f:659.25,t:0.10,d:0.14},{f:783.99,t:0.20,d:0.16},{f:1046.5,t:0.32,d:0.28,v:0.2}
+]); }
+// نغمة هابطة خفيفة (مي-ريب) — للصرف
+function sndSad(){ playTones([
+  {f:392,t:0,d:0.18,type:'triangle'},{f:311.13,t:0.14,d:0.30,type:'triangle',v:0.16}
+]); }
+// تكة خفيفة للحذف/الإلغاء
+function sndTick(){ playTones([{f:180,t:0,d:0.12,type:'square',v:0.09}]); }
+
+/* ============================================================
+   موسيقى الخلفية — موزارت (بتحكم صوت، تبدي بأول ضغطة من المستخدم)
+   ============================================================ */
+const MUSIC = { audio: null, on: false, vol: parseFloat(localStorage.getItem('mas_musicvol') || '0.35') };
+function ensureAudio(){
+  if(MUSIC.audio) return MUSIC.audio;
+  const a = new Audio('./mozart-bg.mp3');
+  a.loop = true;
+  a.volume = MUSIC.vol;
+  a.preload = 'none';
+  MUSIC.audio = a;
+  return a;
+}
+function openMusic(){
+  const pct = Math.round(MUSIC.vol * 100);
+  modalOpen(`
+    <h2>🎵 موسيقى الخلفية</h2>
+    <div class="hint" style="margin:0 0 12px">موزارت — كونشيرتو الكمان رقم ٥، الحركة الثانية (Adagio). هادئة تناسب المتابعة.</div>
+    <button class="btn" id="mzToggle">${MUSIC.on ? '⏸ إيقاف' : '▶ تشغيل'}</button>
+    <label style="margin-top:14px">مستوى الصوت — <span id="mzVal">${pct}%</span></label>
+    <input type="range" id="mzVol" min="0" max="100" value="${pct}" style="width:100%">
+    <div class="hint" style="margin-top:6px">اختيارك ينحفظ بالجهاز. الموسيقى تشتغل بهذا الجهاز بس، ما تنسمع عند غيرك.</div>
+    <button class="btn ghost" onclick="modalClose()" style="margin-top:14px">إغلاق</button>
+  `);
+  $('mzToggle').onclick = () => { toggleMusic(); $('mzToggle').textContent = MUSIC.on ? '⏸ إيقاف' : '▶ تشغيل'; };
+  $('mzVol').oninput = (e) => {
+    MUSIC.vol = e.target.value / 100;
+    $('mzVal').textContent = e.target.value + '%';
+    if(MUSIC.audio) MUSIC.audio.volume = MUSIC.vol;
+    localStorage.setItem('mas_musicvol', MUSIC.vol);
+  };
+}
+function toggleMusic(){
+  const a = ensureAudio();
+  if(MUSIC.on){ a.pause(); MUSIC.on = false; $('btnMusic').classList.remove('playing'); }
+  else{ a.play().then(()=>{ MUSIC.on = true; $('btnMusic').classList.add('playing'); }).catch(()=> toast('اضغط مرة ثانية لتشغيل الموسيقى', true)); }
+}
+
 /* ---------- تشغيل ---------- */
 if(/Android/i.test(navigator.userAgent)) document.documentElement.classList.add('perf');
 loadTheme();
@@ -2490,6 +2599,7 @@ apiReady();
 applyLangBoot();
 startDeco();
 $('btnLang').onclick = toggleLang;
+$('btnMusic').onclick = openMusic;
 (async () => {
   try{
     const { data:{ session: s } } = await sb.auth.getSession();
