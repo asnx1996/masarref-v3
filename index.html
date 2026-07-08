@@ -459,13 +459,7 @@
         radial-gradient(circle at 12% 88%, rgba(255,255,255,.10), transparent 45%),
         linear-gradient(160deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 62%, #16222c) 100%);
     }
-    .deco-time{font-size:3.3rem;font-weight:800;letter-spacing:3px;font-variant-numeric:tabular-nums;line-height:1.1;animation:decoPulse 4s ease-in-out infinite}
-    .deco-date{font-size:.9rem;opacity:.85}
-    .deco-sep{width:44px;height:3px;border-radius:2px;background:rgba(255,255,255,.35);margin:16px 0}
     .deco-quote{font-size:1.02rem;line-height:2;max-width:340px;opacity:1;transition:opacity .45s ease;min-height:96px;display:flex;align-items:center;justify-content:center}
-    .deco-mark{font-size:1.5rem;opacity:.5}
-    @keyframes decoPulse{0%,100%{text-shadow:0 0 0 rgba(255,255,255,0)}50%{text-shadow:0 0 26px rgba(255,255,255,.35)}}
-    .perf .deco-time{animation:none}
   }
 
   /* ---------- الأزرار السريعة ---------- */
@@ -496,6 +490,21 @@
   .goal-pct.done{color:var(--primary)}
   .bar i.goalbar{background:linear-gradient(90deg,var(--primary),color-mix(in srgb,var(--primary) 55%,#7DD3C0))}
   .goal-rem{font-size:.66rem;color:var(--muted);margin-top:5px}
+
+    .clock-wrap{filter:drop-shadow(0 8px 24px rgba(0,0,0,.28))}
+    .clock-wrap svg{display:block}
+    .clock-switch{margin-top:14px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;border-radius:12px;padding:9px 16px;font-family:inherit;font-weight:700;font-size:.78rem;cursor:pointer;transition:background .2s}
+    .clock-switch:hover{background:rgba(255,255,255,.24)}
+    .deco-date{font-size:.9rem;opacity:.85;margin-top:14px}
+    .deco-sep{width:44px;height:3px;border-radius:2px;background:rgba(255,255,255,.35);margin:16px 0}
+    .deco-quote{font-size:1.02rem;line-height:2;max-width:340px;opacity:1;transition:opacity .45s ease;min-height:96px;display:flex;align-items:center;justify-content:center}
+    .deco-mark{font-size:1.5rem;opacity:.5}
+  }
+
+  /* ---------- وجه إيموجي يطلع مع الصوت ---------- */
+  #emojiFace{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:400;font-size:8rem;opacity:0}
+  #emojiFace.pop{animation:emojiPop 1s ease both}
+  @keyframes emojiPop{0%{opacity:0;transform:scale(.3) rotate(-12deg)}25%{opacity:1;transform:scale(1.15) rotate(6deg)}45%{transform:scale(1) rotate(0)}75%{opacity:1}100%{opacity:0;transform:scale(1.1)}}
 
   /* ---------- زر الموسيقى + مفتاح الأصوات ---------- */
   #btnMusic.playing{animation:musicPulse 1.6s ease-in-out infinite}
@@ -656,8 +665,9 @@
     </div><!-- /add-col -->
 
     <div class="card" id="decoCard" aria-hidden="true">
-      <div class="deco-time" id="decoTime">--:--:--</div>
+      <div id="clockSkin" class="clock-wrap"></div>
       <div class="deco-date" id="decoDate"></div>
+      <button class="clock-switch" id="btnClockSkin">🎨 غيّر شكل الساعة</button>
       <div class="deco-sep"></div>
       <div class="deco-mark">❝</div>
       <div class="deco-quote" id="decoQuote"></div>
@@ -687,17 +697,12 @@
   <section class="tab" id="tab-budget">
     <button class="btn ghost" id="btnCopyLast" style="margin-top:0">⧉ انسخ تصنيفات الشهر الماضي</button>
     <div class="card" style="margin-top:14px">
-      <h2>رواتب الشهر</h2>
-      <div class="row">
-        <div>
-          <label>راتبي</label>
-          <input type="tel" id="salary1" placeholder="0" inputmode="numeric">
-        </div>
-        <div>
-          <label>راتب زوجتي</label>
-          <input type="tel" id="salary2" placeholder="0" inputmode="numeric">
-        </div>
+      <div class="qh">
+        <h2 style="margin:0">رواتب الشهر</h2>
+        <button class="qh-add" id="btnAddSalary">＋ شخص</button>
       </div>
+      <div class="hint" style="margin:2px 0 12px">أضف راتب كل شخص بالعائلة — تكدر تضيف أو تحذف حسب عدد أفرادكم.</div>
+      <div id="salaryRows"></div>
     </div>
     <div class="card">
       <h2>إيرادات إضافية 💵</h2>
@@ -739,6 +744,7 @@
 
 <div class="modal" id="modal"><div class="modal-card" id="modalCard"></div></div>
 <div class="toast" id="toast"></div>
+<div id="emojiFace"></div>
 <div id="loader"><div class="spin"></div></div>
 <div id="printArea"></div>
 
@@ -957,7 +963,7 @@ async function apiPost(p){
   let call;
   switch(p.action){
     case 'saveBudget':
-      call = sb.rpc('save_budget', { p_month:p.month, p_salary1:p.salary1, p_salary2:p.salary2, p_categories:p.categories, p_incomes:p.incomes });
+      call = sb.rpc('save_budget', { p_month:p.month, p_salaries:p.salaries, p_categories:p.categories, p_incomes:p.incomes });
       break;
     case 'addExpense':
       call = sb.rpc('add_expense', { p_month:p.month, p_date:p.date, p_amount:p.amount, p_descr:p.desc||'', p_category:p.category||'', p_debt_account:p.debtAccount||'' });
@@ -1089,7 +1095,9 @@ function render(){
     else if(e.amount < 0 && String(e.desc||'').indexOf('إيداع') === 0) fundDeposits += -e.amount;
   });
 
-  const totalSalary = (b.salary1||0) + (b.salary2||0);
+  const totalSalary = (b.salaries && b.salaries.length)
+    ? b.salaries.reduce((s,x)=> s + (Number(x.amount)||0), 0)
+    : (b.salary1||0) + (b.salary2||0);
   const extraIncome = ((b.incomes)||[]).reduce((s,x)=> s + (Number(x.amount)||0), 0);
   const totalIncome = totalSalary + extraIncome;
   const remain = totalIncome + spendCarried - saveContrib - spendingSpent - fundDeposits;
@@ -1248,11 +1256,12 @@ function render(){
   sel.value = cur;
 
   /* ===== فورم الميزانية ===== */
-  $('salary1').value = b.salary1 ? b.salary1.toLocaleString('en-US') : '';
-  $('salary2').value = b.salary2 ? b.salary2.toLocaleString('en-US') : '';
+  $('salaryRows').innerHTML = '';
   $('catRows').innerHTML = '';
   $('saveRows').innerHTML = '';
   $('incomeRows').innerHTML = '';
+  ((b.salaries && b.salaries.length) ? b.salaries : [{person:'راتبي', amount:b.salary1||0},{person:'راتب زوجتي', amount:b.salary2||0}]).forEach(s => addSalaryRow(s.person, s.amount));
+  if(!document.querySelector('#salaryRows .cat-row')) addSalaryRow('', '');
   cats.forEach(c => addRow(c.type === 'save' ? 'save' : 'spend', c.name, c.amount, c.carried, c.goal));
   (b.incomes || []).forEach(x => addIncomeRow(x.desc, x.amount));
   if(!document.querySelector('#catRows .cat-row')) addRow('spend','','',0);
@@ -1321,9 +1330,9 @@ function renderExpenseList(){
 function applyLock(locked){
   $('lockBanner').style.display = locked ? 'block' : 'none';
   $('lockBanner').textContent = locked ? ('🔒 شهر ' + state.month + ' مقفل — للعرض فقط، ما تكدر تعدّله') : '';
-  ['btnAddExp','btnSaveBudget','btnAddCat','btnAddSave','btnAddIncome','btnCopyLast','btnCloseMonth','btnClearMonth','salary1','salary2','expAmount','expDesc','expDate','expCat']
+  ['btnAddExp','btnSaveBudget','btnAddCat','btnAddSave','btnAddIncome','btnAddSalary','btnCopyLast','btnCloseMonth','btnClearMonth','expAmount','expDesc','expDate','expCat']
     .forEach(id => { const el = $(id); if(el) el.disabled = locked; });
-  document.querySelectorAll('#catRows input, #catRows .rm, #saveRows input, #saveRows .rm, #saveRows .cgoal, #incomeRows input, #incomeRows .rm').forEach(el => el.disabled = locked);
+  document.querySelectorAll('#salaryRows input, #salaryRows .rm, #catRows input, #catRows .rm, #saveRows input, #saveRows .rm, #saveRows .cgoal, #incomeRows input, #incomeRows .rm').forEach(el => el.disabled = locked);
 }
 
 /* ---------- صفوف التصنيفات والصناديق ---------- */
@@ -1384,6 +1393,32 @@ function readCats(){
   return cats;
 }
 
+/* ---------- صفوف الرواتب ---------- */
+function addSalaryRow(person, amount){
+  const wrap = document.createElement('div');
+  const div = document.createElement('div');
+  div.className = 'cat-row';
+  div.innerHTML = `
+    <input type="text" class="sname" placeholder="اسم الشخص" value="${esc(person||'')}">
+    <input type="tel" class="samt" placeholder="الراتب" inputmode="numeric" value="${amount ? Number(amount).toLocaleString('en-US') : ''}">
+    <button class="rm" aria-label="حذف">✕</button>`;
+  div.querySelector('.rm').onclick = () => { wrap.remove(); updateAlloc(); };
+  const amt = div.querySelector('.samt');
+  liveFormat(amt);
+  amt.addEventListener('input', updateAlloc);
+  wrap.appendChild(div);
+  $('salaryRows').appendChild(wrap);
+}
+function readSalaries(){
+  const out = [];
+  document.querySelectorAll('#salaryRows .cat-row').forEach(r => {
+    const person = r.querySelector('.sname').value.trim();
+    const amount = num(r.querySelector('.samt').value);
+    if(amount > 0 || person) out.push({ person, amount });
+  });
+  return out;
+}
+
 /* ---------- صفوف الإيرادات الإضافية ---------- */
 function addIncomeRow(desc, amount){
   const wrap = document.createElement('div');
@@ -1412,7 +1447,7 @@ function readIncomes(){
 }
 
 function updateAlloc(){
-  const salary = num($('salary1').value) + num($('salary2').value);
+  const salary = readSalaries().reduce((s,x)=> s + (x.amount||0), 0);
   let income = 0;
   document.querySelectorAll('#incomeRows .iamt').forEach(i => income += num(i.value));
   let spend = 0, save = 0;
@@ -1716,7 +1751,12 @@ $('btnSettings').onclick = () => {
     <div class="famcode"><b dir="ltr" id="famCode">…</b><button id="btnCopyCode">نسخ</button></div>
 
     <div class="set-sec">الحساب — ${esc(session && session.name ? session.name : '')}</div>
-    <label>الباسورد الحالي</label>
+    <label>اسمك المعروض</label>
+    <div style="display:flex;gap:8px">
+      <input type="text" id="nmNew" value="${esc(session && session.name ? session.name : '')}" style="flex:1" placeholder="اسمك">
+      <button class="btn" id="btnSaveName" style="margin:0;width:auto;padding:0 18px">حفظ</button>
+    </div>
+    <label style="margin-top:12px">الباسورد الحالي</label>
     <input type="password" id="pwCur" autocomplete="current-password" placeholder="••••••">
     <label>الباسورد الجديد</label>
     <input type="password" id="pwNew" autocomplete="new-password" placeholder="٦ خانات على الأقل">
@@ -1776,6 +1816,20 @@ $('btnSettings').onclick = () => {
     SND.on = e.target.checked;
     localStorage.setItem('mas_snd', SND.on ? 'on' : 'off');
     if(SND.on) sndHappy();
+  };
+  if($('btnSaveName')) $('btnSaveName').onclick = async () => {
+    const nm = $('nmNew').value.trim();
+    if(!nm) return toast('دخّل الاسم', true);
+    if(nm === session.name) return toast('نفس الاسم الحالي');
+    loading(true);
+    try{
+      const { error } = await sb.rpc('change_my_name', { p_name: nm });
+      if(error) throw new Error(error.message);
+      session.name = nm;
+      $('userName').textContent = 'مرحباً ' + nm;
+      toast('انتغيّر الاسم ✓');
+    }catch(err){ toast('ما انتغيّر: ' + err.message, true); }
+    finally{ loading(false); }
   };
 };
 
@@ -1861,7 +1915,9 @@ function buildReportHTML(){
     if(!saveNames.has(e.category)) spendingSpent += e.amount;
     else if(e.amount < 0 && String(e.desc||'').indexOf('إيداع') === 0) fundDeposits += -e.amount;
   });
-  const totalSalary = (b.salary1||0)+(b.salary2||0);
+  const totalSalary = (b.salaries && b.salaries.length)
+    ? b.salaries.reduce((s,x)=> s + (Number(x.amount)||0), 0)
+    : (b.salary1||0)+(b.salary2||0);
   const extraIncome = ((b.incomes)||[]).reduce((s,x)=> s + (Number(x.amount)||0), 0);
   const totalIncome = totalSalary + extraIncome;
   const remain = totalIncome + spendCarried - saveContrib - spendingSpent - fundDeposits;
@@ -1982,7 +2038,9 @@ async function exportExcel(scope){
       const spent = {};
       state.expenses.forEach(e => { const k = e.category || 'بلا تصنيف'; spent[k] = (spent[k]||0) + e.amount; });
 
-      const sum = [['الشهر', state.month], ['راتب 1', money(b.salary1)], ['راتب 2', money(b.salary2)]];
+      const sum = [['الشهر', state.month]];
+      const sList = (b.salaries && b.salaries.length) ? b.salaries : [{person:'راتب 1', amount:b.salary1},{person:'راتب 2', amount:b.salary2}];
+      sList.forEach(s => sum.push([s.person || 'راتب', money(s.amount)]));
       (b.incomes||[]).forEach(x => sum.push(['دخل إضافي: ' + (x.desc||''), money(x.amount)]));
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sum), 'الملخص');
 
@@ -2273,10 +2331,7 @@ $('btnAddCat').onclick = () => addRow('spend','','',0);
 $('btnAddQuick').onclick = openAddQuick;
 $('btnAddSave').onclick = () => addRow('save','','',0);
 $('btnAddIncome').onclick = () => { addIncomeRow('', 0); updateAlloc(); };
-$('salary1').addEventListener('input', updateAlloc);
-$('salary2').addEventListener('input', updateAlloc);
-liveFormat($('salary1'));
-liveFormat($('salary2'));
+$('btnAddSalary').onclick = () => { addSalaryRow('', ''); updateAlloc(); };
 liveFormat($('expAmount'));
 
 $('btnSaveBudget').onclick = async () => {
@@ -2284,8 +2339,7 @@ $('btnSaveBudget').onclick = async () => {
   const payload = {
     action:'saveBudget',
     month: state.month,
-    salary1: num($('salary1').value),
-    salary2: num($('salary2').value),
+    salaries: readSalaries(),
     categories: readCats(),
     incomes: readIncomes()
   };
@@ -2378,7 +2432,11 @@ const I18N = {
   '🎵 موسيقى الخلفية':'🎵 Background music','▶ تشغيل':'▶ Play','⏸ إيقاف':'⏸ Pause','اضغط مرة ثانية لتشغيل الموسيقى':'Tap again to start the music',
   'موزارت — كونشيرتو الكمان رقم ٥، الحركة الثانية (Adagio). هادئة تناسب المتابعة.':'Mozart — Violin Concerto No. 5, 2nd mvt (Adagio). Calm, good for focus.',
   'اختيارك ينحفظ بالجهاز. الموسيقى تشتغل بهذا الجهاز بس، ما تنسمع عند غيرك.':'Saved on this device. Plays here only, not for others.',
-  'الأصوات':'Sounds','🔔 أصوات العمليات (إضافة / صرف / حذف)':'🔔 Action sounds (add / spend / delete)'
+  'الأصوات':'Sounds','🔔 أصوات العمليات (إضافة / صرف / حذف)':'🔔 Action sounds (add / spend / delete)',
+  'رواتب الشهر':'Monthly salaries','＋ شخص':'＋ Person','اسم الشخص':'Person name','الراتب':'Salary',
+  'أضف راتب كل شخص بالعائلة — تكدر تضيف أو تحذف حسب عدد أفرادكم.':'Add each family member\'s salary — add or remove as many as you need.',
+  'اسمك المعروض':'Your display name','اسمك':'Your name','حفظ':'Save','انتغيّر الاسم ✓':'Name changed ✓','دخّل الاسم':'Enter the name','نفس الاسم الحالي':'Same as current name',
+  '🎨 غيّر شكل الساعة':'🎨 Change clock style'
 };
 const I18N_RULES = [
   [/^مرحباً\s*(.*)$/, (m)=>'Welcome ' + m[1]],
@@ -2479,6 +2537,10 @@ function trString2(s){ return LANG.cur === 'en' ? trString(s) : s; }
 ['click','keydown','touchstart','scroll','pointermove'].forEach(ev =>
   document.addEventListener(ev, () => resetIdle(), { passive: true })
 );
+// أول لمسة تشغّل الموسيقى تلقائياً إذا كانت مفعّلة سابقاً
+['click','touchstart','keydown'].forEach(ev =>
+  document.addEventListener(ev, function once(){ musicFirstTouch(); document.removeEventListener(ev, once); }, { passive: true })
+);
 
 /* ============================================================
    بطاقة الساعة والحكمة (كمبيوتر)
@@ -2498,22 +2560,80 @@ const QUOTES = [
   { ar:'الادخار عادة، مو مبلغ.', en:'Saving is a habit, not an amount.' }
 ];
 let quoteIdx = Math.floor(Math.random() * QUOTES.length);
+/* ============================================================
+   ساعة جدارية تناظرية بأشكال عالمية (كمبيوتر)
+   ============================================================ */
+const CLOCK_SKINS = [
+  { id:'classic', name:'كلاسيكية', face:'#fff', ring:'#0D3B33', tick:'#0D3B33', num:'#0D3B33', hour:'#111', min:'#111', sec:'#C0392B', center:'#0D3B33', numerals:'arabic' },
+  { id:'roman',   name:'رومانية فخمة', face:'#FBF7EC', ring:'#8A6D1D', tick:'#8A6D1D', num:'#6B531A', hour:'#3A2E0E', min:'#3A2E0E', sec:'#B8860B', center:'#8A6D1D', numerals:'roman' },
+  { id:'minimal', name:'بسيطة عصرية', face:'#fff', ring:'#E5E7EB', tick:'#9CA3AF', num:'#111', hour:'#111', min:'#111', sec:'#10B981', center:'#111', numerals:'minimal' },
+  { id:'dark',    name:'ليلية سوداء', face:'#1C1C22', ring:'#3A3A44', tick:'#6B7280', num:'#E5E7EB', hour:'#fff', min:'#fff', sec:'#F59E0B', center:'#fff', numerals:'latin' },
+  { id:'london',  name:'بيغ بن (لندن)', face:'#F4ECD8', ring:'#2B2B2B', tick:'#2B2B2B', num:'#1A1A1A', hour:'#1A1A1A', min:'#1A1A1A', sec:'#7A1F1F', center:'#2B2B2B', numerals:'roman' },
+  { id:'gold',    name:'ذهبية ملكية', face:'#12100B', ring:'#D4AF37', tick:'#D4AF37', num:'#D4AF37', hour:'#F5E6A8', min:'#F5E6A8', sec:'#fff', center:'#D4AF37', numerals:'roman' }
+];
+let clockIdx = parseInt(localStorage.getItem('mas_clock') || '0', 10) || 0;
+function romanFor(n){ return ['','I','II','III','IIII','V','VI','VII','VIII','IX','X','XI','XII'][n]; }
+function buildClockFace(sk){
+  const cx=100, cy=100, R=94;
+  let ticks='', nums='';
+  for(let i=0;i<60;i++){
+    const a = (i/60)*2*Math.PI - Math.PI/2;
+    const big = i%5===0;
+    const r1 = big?80:85, r2=90;
+    ticks += `<line x1="${cx+r1*Math.cos(a)}" y1="${cy+r1*Math.sin(a)}" x2="${cx+r2*Math.cos(a)}" y2="${cy+r2*Math.sin(a)}" stroke="${sk.tick}" stroke-width="${big?2.2:1}" opacity="${big?1:.5}"/>`;
+  }
+  if(sk.numerals!=='minimal'){
+    for(let h=1;h<=12;h++){
+      const a=(h/12)*2*Math.PI - Math.PI/2, r=68;
+      let label = h;
+      if(sk.numerals==='roman') label=romanFor(h);
+      else if(sk.numerals==='arabic') label=['','١','٢','٣','٤','٥','٦','٧','٨','٩','١٠','١١','١٢'][h];
+      nums += `<text x="${cx+r*Math.cos(a)}" y="${cy+r*Math.sin(a)}" fill="${sk.num}" font-size="${sk.numerals==='roman'?13:15}" font-weight="700" text-anchor="middle" dominant-baseline="central" font-family="Georgia,serif">${label}</text>`;
+    }
+  }
+  return `<circle cx="${cx}" cy="${cy}" r="${R}" fill="${sk.face}" stroke="${sk.ring}" stroke-width="5"/>${ticks}${nums}`;
+}
+function renderClock(){
+  const sk = CLOCK_SKINS[clockIdx % CLOCK_SKINS.length];
+  const box = $('clockSkin');
+  if(!box) return;
+  box.innerHTML = `
+    <svg viewBox="0 0 200 200" width="200" height="200">
+      ${buildClockFace(sk)}
+      <line id="clkH" x1="100" y1="100" x2="100" y2="55" stroke="${sk.hour}" stroke-width="5" stroke-linecap="round"/>
+      <line id="clkM" x1="100" y1="100" x2="100" y2="35" stroke="${sk.min}" stroke-width="3.4" stroke-linecap="round"/>
+      <line id="clkS" x1="100" y1="112" x2="100" y2="28" stroke="${sk.sec}" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="100" cy="100" r="4.5" fill="${sk.center}"/>
+    </svg>`;
+}
+function tickClock(){
+  const d = new Date();
+  const s = d.getSeconds(), m = d.getMinutes(), h = d.getHours()%12;
+  const sa = s*6, ma = m*6 + s*0.1, ha = h*30 + m*0.5;
+  const H=$('clkH'), M=$('clkM'), S=$('clkS');
+  if(H) H.setAttribute('transform', `rotate(${ha} 100 100)`);
+  if(M) M.setAttribute('transform', `rotate(${ma} 100 100)`);
+  if(S) S.setAttribute('transform', `rotate(${sa} 100 100)`);
+}
 function startDeco(){
-  const tEl = $('decoTime'), dEl = $('decoDate'), qEl = $('decoQuote');
-  if(!tEl) return;
-  const tick = () => {
-    const d = new Date();
-    tEl.textContent = d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
-    dEl.textContent = d.toLocaleDateString(LANG.cur === 'en' ? 'en-GB' : 'ar-IQ-u-nu-latn', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-  };
-  tick();
-  setInterval(tick, 1000);
-  const setQuote = () => { qEl.textContent = QUOTES[quoteIdx][LANG.cur === 'en' ? 'en' : 'ar']; };
+  if(!$('clockSkin')) return;
+  renderClock();
+  tickClock();
+  setInterval(tickClock, 1000);
+  const dEl = $('decoDate');
+  const tickDate = () => { dEl.textContent = new Date().toLocaleDateString(LANG.cur==='en'?'en-GB':'ar-IQ-u-nu-latn', { weekday:'long', year:'numeric', month:'long', day:'numeric' }); };
+  tickDate(); setInterval(tickDate, 60000);
+  const qEl = $('decoQuote');
+  const setQuote = () => { qEl.textContent = QUOTES[quoteIdx][LANG.cur==='en'?'en':'ar']; };
   setQuote();
-  setInterval(() => {
-    qEl.style.opacity = 0;
-    setTimeout(() => { quoteIdx = (quoteIdx + 1) % QUOTES.length; setQuote(); qEl.style.opacity = 1; }, 450);
-  }, 20000);
+  setInterval(() => { qEl.style.opacity=0; setTimeout(()=>{ quoteIdx=(quoteIdx+1)%QUOTES.length; setQuote(); qEl.style.opacity=1; }, 450); }, 20000);
+  const btn = $('btnClockSkin');
+  if(btn) btn.onclick = () => {
+    clockIdx = (clockIdx + 1) % CLOCK_SKINS.length;
+    localStorage.setItem('mas_clock', clockIdx);
+    renderClock(); tickClock();
+    toast('شكل: ' + CLOCK_SKINS[clockIdx].name);
+  };
 }
 
 /* ============================================================
@@ -2543,21 +2663,28 @@ function playTones(notes){
     o.start(st); o.stop(en + 0.02);
   });
 }
+function showFace(emoji){
+  if(!SND.on) return;
+  const el = $('emojiFace');
+  if(!el) return;
+  el.textContent = emoji;
+  el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+}
 // نغمة فرح صاعدة (دو-مي-صول-دو) — للإضافات المالية والإيداع
 function sndHappy(){ playTones([
   {f:523.25,t:0,d:0.14},{f:659.25,t:0.10,d:0.14},{f:783.99,t:0.20,d:0.16},{f:1046.5,t:0.32,d:0.28,v:0.2}
-]); }
+]); showFace('🤑'); }
 // نغمة هابطة خفيفة (مي-ريب) — للصرف
 function sndSad(){ playTones([
   {f:392,t:0,d:0.18,type:'triangle'},{f:311.13,t:0.14,d:0.30,type:'triangle',v:0.16}
-]); }
+]); showFace('😢'); }
 // تكة خفيفة للحذف/الإلغاء
 function sndTick(){ playTones([{f:180,t:0,d:0.12,type:'square',v:0.09}]); }
 
 /* ============================================================
    موسيقى الخلفية — موزارت (بتحكم صوت، تبدي بأول ضغطة من المستخدم)
    ============================================================ */
-const MUSIC = { audio: null, on: false, vol: parseFloat(localStorage.getItem('mas_musicvol') || '0.35') };
+const MUSIC = { audio: null, on: false, vol: parseFloat(localStorage.getItem('mas_musicvol') || '0.18'), want: localStorage.getItem('mas_music') === 'on' };
 function ensureAudio(){
   if(MUSIC.audio) return MUSIC.audio;
   const a = new Audio('./mozart-bg.mp3');
@@ -2588,8 +2715,15 @@ function openMusic(){
 }
 function toggleMusic(){
   const a = ensureAudio();
-  if(MUSIC.on){ a.pause(); MUSIC.on = false; $('btnMusic').classList.remove('playing'); }
-  else{ a.play().then(()=>{ MUSIC.on = true; $('btnMusic').classList.add('playing'); }).catch(()=> toast('اضغط مرة ثانية لتشغيل الموسيقى', true)); }
+  if(MUSIC.on){ a.pause(); MUSIC.on = false; MUSIC.want = false; localStorage.setItem('mas_music','off'); $('btnMusic').classList.remove('playing'); }
+  else{ a.play().then(()=>{ MUSIC.on = true; MUSIC.want = true; localStorage.setItem('mas_music','on'); $('btnMusic').classList.add('playing'); }).catch(()=> toast('اضغط مرة ثانية لتشغيل الموسيقى', true)); }
+}
+// تشغيل تلقائي بأول لمسة إذا المستخدم مفعّلها من قبل (سياسة المتصفح تمنع بلا لمسة)
+function musicFirstTouch(){
+  if(MUSIC.want && !MUSIC.on){
+    const a = ensureAudio();
+    a.play().then(()=>{ MUSIC.on = true; $('btnMusic') && $('btnMusic').classList.add('playing'); }).catch(()=>{});
+  }
 }
 
 /* ---------- تشغيل ---------- */
