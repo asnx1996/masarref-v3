@@ -434,7 +434,7 @@
       border-radius:26px;padding:22px 24px;
     }
     main{max-width:1080px;padding:20px 24px}
-    #tab-add,#tab-budget{max-width:620px;margin:0 auto}
+    #tab-add,#tab-budget,#tab-settings{max-width:620px;margin:0 auto}
     #tab-dash.active{display:grid;grid-template-columns:1.05fr .95fr;gap:0 20px;align-items:start}
     .dash-col{display:block;min-width:0}
     .modal{align-items:center}
@@ -593,11 +593,6 @@
     <div class="brand">مصاريفنا<small>ميزانية البيت الشهرية</small></div>
     <div class="head-actions">
       <input type="month" id="monthPick" class="month-pick">
-      <button class="icon-btn" id="btnLang" title="English / عربي">🌐</button>
-      <button class="icon-btn" id="btnMusic" title="موسيقى">🎵</button>
-      <button class="icon-btn" id="btnChart" title="مقارنة الأشهر">📊</button>
-      <button class="icon-btn" id="btnTheme" title="الألوان">🎨</button>
-      <button class="icon-btn" id="btnSettings" title="الإعدادات">⚙</button>
     </div>
   </div>
   <div class="head-stats">
@@ -628,7 +623,7 @@
   <div id="lockBanner" class="lock-banner"></div>
 
   <!-- تبويب: مصروف جديد -->
-  <section class="tab active" id="tab-add">
+  <section class="tab" id="tab-add">
     <div class="add-col">
     <div class="card">
       <h2>سجّل مصروف</h2>
@@ -675,7 +670,7 @@
   </section>
 
   <!-- تبويب: اللوحة -->
-  <section class="tab" id="tab-dash">
+  <section class="tab active" id="tab-dash">
     <div class="dash-col">
       <div id="summaryCard"></div>
       <div id="envList"></div>
@@ -734,12 +729,18 @@
     <button class="btn danger" id="btnClearMonth">🗑 تفريغ ميزانية هذا الشهر</button>
     <div class="hint">الإقفال يخلّي الشهر للعرض فقط (ما تكدر تعدّله بعدها)، ويرحّل باقي كل تصنيف وكل صندوق ادخار للشهر الجاي. التفريغ يمسح الرواتب والتصنيفات (المصاريف المسجلة تبقى).</div>
   </section>
+
+  <!-- تبويب: الإعدادات -->
+  <section class="tab" id="tab-settings">
+    <div id="settingsBody"></div>
+  </section>
 </main>
 
 <nav id="appNav" style="display:none">
-  <button data-tab="tab-add" class="active"><span class="ic">＋</span>مصروف</button>
-  <button data-tab="tab-dash"><span class="ic">◫</span>اللوحة</button>
+  <button data-tab="tab-dash" class="active"><span class="ic">◫</span>اللوحة</button>
+  <button data-tab="tab-add"><span class="ic">＋</span>مصروف</button>
   <button data-tab="tab-budget"><span class="ic">⚖</span>الميزانية</button>
+  <button data-tab="tab-settings"><span class="ic">⚙</span>الإعدادات</button>
 </nav>
 
 <div class="modal" id="modal"><div class="modal-card" id="modalCard"></div></div>
@@ -1710,26 +1711,9 @@ $('btnClearMonth').onclick = async () => {
   finally{ loading(false); }
 };
 
-/* ---------- منتقي الألوان (الثيم) ---------- */
-$('btnTheme').onclick = () => {
-  let cur = '';
-  try{ cur = localStorage.getItem('mas_theme') || THEMES[0].primary; }catch(_){ cur = THEMES[0].primary; }
-  const sw = THEMES.map(t => `<div class="sw ${t.primary.toLowerCase()===cur.toLowerCase()?'sel':''}" style="background:${t.primary}" title="${t.name}" onclick="pickTheme('${t.primary}')"></div>`).join('');
-  modalOpen(`
-    <h2>🎨 لون الواجهة</h2>
-    <div class="hint" style="margin:0 0 12px">اختر اللون الي يعجبك — يتطبّق فوراً وينحفظ بجهازك.</div>
-    <div class="swatches">
-      ${sw}
-      <label class="sw sw-custom" title="لون مخصص">＋<input type="color" id="customColor" value="${cur}"></label>
-    </div>
-    <button class="btn ghost" onclick="modalClose()" style="margin-top:18px">تمام</button>
-  `);
-  $('customColor').addEventListener('input', e => pickTheme(e.target.value, true));
-};
+/* ---------- تطبيق لون (الثيم) ---------- */
 window.pickTheme = (primary, keepOpen) => {
   saveTheme(primary);
-  if(!keepOpen){ document.querySelectorAll('.sw').forEach(s=>s.classList.remove('sel')); }
-  // حدّث علامة الاختيار
   document.querySelectorAll('.sw').forEach(s=>{
     const bg = s.style.background;
     s.classList.toggle('sel', !s.classList.contains('sw-custom') && rgbEq(bg, primary));
@@ -1741,44 +1725,74 @@ function rgbEq(a,b){
   return norm(a) === norm(b);
 }
 
-/* ---------- الإعدادات (تغيير الباسورد + الطباعة) ---------- */
-$('btnSettings').onclick = () => {
-  modalOpen(`
-    <h2>⚙ الإعدادات</h2>
+/* ---------- تبويب الإعدادات (كل إعدادات الموقع بمكان واحد) ---------- */
+function renderSettings(){
+  let curColor = '';
+  try{ curColor = localStorage.getItem('mas_theme') || THEMES[0].primary; }catch(_){ curColor = THEMES[0].primary; }
+  const sw = THEMES.map(t => `<div class="sw ${t.primary.toLowerCase()===curColor.toLowerCase()?'sel':''}" style="background:${t.primary}" title="${t.name}" onclick="pickTheme('${t.primary}')"></div>`).join('');
+  const clockName = CLOCK_SKINS[clockIdx % CLOCK_SKINS.length].name;
 
-    <div class="set-sec">العائلة</div>
-    <div class="hint" style="margin:0">كود عائلتك — انطيه لزوجك/زوجتك يدخّله وقت التسجيل حتى تصيرون بنفس المساحة وتشوفون نفس البيانات:</div>
-    <div class="famcode"><b dir="ltr" id="famCode">…</b><button id="btnCopyCode">نسخ</button></div>
-
-    <div class="set-sec">الحساب — ${esc(session && session.name ? session.name : '')}</div>
-    <label>اسمك المعروض</label>
-    <div style="display:flex;gap:8px">
-      <input type="text" id="nmNew" value="${esc(session && session.name ? session.name : '')}" style="flex:1" placeholder="اسمك">
-      <button class="btn" id="btnSaveName" style="margin:0;width:auto;padding:0 18px">حفظ</button>
-    </div>
-    <label style="margin-top:12px">الباسورد الحالي</label>
-    <input type="password" id="pwCur" autocomplete="current-password" placeholder="••••••">
-    <label>الباسورد الجديد</label>
-    <input type="password" id="pwNew" autocomplete="new-password" placeholder="٦ خانات على الأقل">
-    <label>تأكيد الباسورد الجديد</label>
-    <input type="password" id="pwNew2" autocomplete="new-password" placeholder="أعد كتابته">
-    <button class="btn" id="btnSavePw">تغيير الباسورد</button>
-
-    <div class="set-sec">الأصوات</div>
-    <div class="set-toggle">
-      <span class="st-lbl">🔔 أصوات العمليات (إضافة / صرف / حذف)</span>
-      <label class="switch"><input type="checkbox" id="sndToggle" ${SND.on?'checked':''}><span class="track"></span><span class="knob"></span></label>
+  $('settingsBody').innerHTML = `
+    <div class="card">
+      <div class="set-sec" style="margin-top:0">العائلة</div>
+      <div class="hint" style="margin:0">كود عائلتك — انطيه لزوجك/زوجتك يدخّله وقت التسجيل حتى تصيرون بنفس المساحة وتشوفون نفس البيانات:</div>
+      <div class="famcode"><b dir="ltr" id="famCode">…</b><button id="btnCopyCode">نسخ</button></div>
     </div>
 
-    <div class="set-sec">التقارير والتصدير</div>
-    <button class="btn ghost" id="btnPdf" style="margin-top:0">📄 تحميل تقرير PDF — شهر ${esc(state.month)}</button>
-    <button class="btn ghost" id="btnXlsMonth">📊 تصدير إكسل — شهر ${esc(state.month)}</button>
-    <button class="btn ghost" id="btnXlsAll">🗂 تصدير إكسل — كل الأشهر</button>
-    <button class="btn ghost" id="btnPrint">🖨 طباعة مباشرة (للكمبيوتر)</button>
-    ${session && session.admin ? `<div class="set-sec">المشرف</div><button class="btn ghost" id="btnAdmin" style="margin-top:0">🛡 لوحة المشرف</button>` : ''}
+    <div class="card">
+      <div class="set-sec" style="margin-top:0">الحساب — ${esc(session && session.name ? session.name : '')}</div>
+      <label>اسمك المعروض</label>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="nmNew" value="${esc(session && session.name ? session.name : '')}" style="flex:1" placeholder="اسمك">
+        <button class="btn" id="btnSaveName" style="margin:0;width:auto;padding:0 18px">حفظ</button>
+      </div>
+      <label style="margin-top:12px">الباسورد الحالي</label>
+      <input type="password" id="pwCur" autocomplete="current-password" placeholder="••••••">
+      <label>الباسورد الجديد</label>
+      <input type="password" id="pwNew" autocomplete="new-password" placeholder="٦ خانات على الأقل">
+      <label>تأكيد الباسورد الجديد</label>
+      <input type="password" id="pwNew2" autocomplete="new-password" placeholder="أعد كتابته">
+      <button class="btn" id="btnSavePw">تغيير الباسورد</button>
+    </div>
 
-    <button class="btn ghost" onclick="modalClose()" style="margin-top:16px">إغلاق</button>
-  `);
+    <div class="card">
+      <div class="set-sec" style="margin-top:0">المظهر</div>
+      <label>🎨 لون الواجهة</label>
+      <div class="swatches">
+        ${sw}
+        <label class="sw sw-custom" title="لون مخصص">＋<input type="color" id="customColor" value="${curColor}"></label>
+      </div>
+      <div class="set-toggle" style="margin-top:10px">
+        <span class="st-lbl">🌐 اللغة — ${LANG.cur==='en'?'English':'العربية'}</span>
+        <button class="btn ghost" id="btnLangS" style="margin:0;width:auto;padding:8px 16px">${LANG.cur==='en'?'حوّل للعربية':'Switch to English'}</button>
+      </div>
+      <div class="set-toggle">
+        <span class="st-lbl">🕰 شكل الساعة (بالكمبيوتر) — ${clockName}</span>
+        <button class="btn ghost" id="btnClockS" style="margin:0;width:auto;padding:8px 16px">غيّر الشكل</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="set-sec" style="margin-top:0">الصوت</div>
+      <div class="set-toggle">
+        <span class="st-lbl">🔔 أصوات العمليات (إضافة / صرف / حذف)</span>
+        <label class="switch"><input type="checkbox" id="sndToggle" ${SND.on?'checked':''}><span class="track"></span><span class="knob"></span></label>
+      </div>
+      <button class="btn ghost" id="btnMusicS" style="margin-top:8px">🎵 موسيقى الخلفية</button>
+    </div>
+
+    <div class="card">
+      <div class="set-sec" style="margin-top:0">التقارير والتصدير</div>
+      <button class="btn ghost" id="btnChartS" style="margin-top:0">📊 مقارنة الأشهر</button>
+      <button class="btn ghost" id="btnPdf">📄 تحميل تقرير PDF — شهر ${esc(state.month)}</button>
+      <button class="btn ghost" id="btnXlsMonth">📊 تصدير إكسل — شهر ${esc(state.month)}</button>
+      <button class="btn ghost" id="btnXlsAll">🗂 تصدير إكسل — كل الأشهر</button>
+      <button class="btn ghost" id="btnPrint">🖨 طباعة مباشرة (للكمبيوتر)</button>
+    </div>
+
+    ${session && session.admin ? `<div class="card"><div class="set-sec" style="margin-top:0">المشرف</div><button class="btn ghost" id="btnAdmin" style="margin-top:0">🛡 لوحة المشرف</button></div>` : ''}
+  `;
+
   /* كود العائلة */
   sb.from('households').select('join_code').single().then(({ data }) => {
     $('famCode') && ($('famCode').textContent = (data && data.join_code) || '—');
@@ -1802,16 +1816,26 @@ $('btnSettings').onclick = () => {
       if(e1) throw new Error('الباسورد الحالي غلط');
       const { error: e2 } = await sb.auth.updateUser({ password: np });
       if(e2) throw new Error(e2.message);
-      modalClose();
+      $('pwCur').value=''; $('pwNew').value=''; $('pwNew2').value='';
       toast('انتغيّر الباسورد ✓');
     }catch(err){ toast('ما انتغيّر: ' + err.message, true); }
     finally{ loading(false); }
   };
-  $('btnPrint').onclick = () => { modalClose(); setTimeout(printReport, 250); };
-  $('btnPdf').onclick = () => { modalClose(); setTimeout(pdfReport, 250); };
+  $('customColor').addEventListener('input', e => pickTheme(e.target.value, true));
+  $('btnLangS').onclick = toggleLang;
+  $('btnClockS').onclick = () => {
+    clockIdx = (clockIdx + 1) % CLOCK_SKINS.length;
+    localStorage.setItem('mas_clock', clockIdx);
+    renderClock(); tickClock();
+    renderSettings();
+  };
+  $('btnMusicS').onclick = openMusic;
+  $('btnChartS').onclick = showMonthsChart;
+  $('btnPrint').onclick = () => setTimeout(printReport, 100);
+  $('btnPdf').onclick = () => pdfReport();
   $('btnXlsMonth').onclick = () => exportExcel('month');
   $('btnXlsAll').onclick = () => exportExcel('all');
-  if($('btnAdmin')) $('btnAdmin').onclick = () => { modalClose(); setTimeout(showAdmin, 200); };
+  if($('btnAdmin')) $('btnAdmin').onclick = () => showAdmin();
   if($('sndToggle')) $('sndToggle').onchange = (e) => {
     SND.on = e.target.checked;
     localStorage.setItem('mas_snd', SND.on ? 'on' : 'off');
@@ -1831,7 +1855,7 @@ $('btnSettings').onclick = () => {
     }catch(err){ toast('ما انتغيّر: ' + err.message, true); }
     finally{ loading(false); }
   };
-};
+}
 
 /* ---------- لوحة المشرف (سوبر أدمن) ---------- */
 async function showAdmin(){
@@ -2166,6 +2190,8 @@ document.querySelectorAll('nav button').forEach(btn => {
     document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
     btn.classList.add('active');
     $(btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab === 'tab-settings') renderSettings();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 });
 
@@ -2185,8 +2211,6 @@ $('lnkSignup').onclick = () => toggleAuth(true);
 $('lnkLogin').onclick = () => toggleAuth(false);
 $('btnSignup').onclick = doSignup;
 $('suCode').addEventListener('keydown', e => { if(e.key === 'Enter') doSignup(); });
-
-$('btnChart').onclick = showMonthsChart;
 
 $('monthPick').onchange = e => loadMonth(e.target.value || thisMonth());
 
@@ -2715,14 +2739,14 @@ function openMusic(){
 }
 function toggleMusic(){
   const a = ensureAudio();
-  if(MUSIC.on){ a.pause(); MUSIC.on = false; MUSIC.want = false; localStorage.setItem('mas_music','off'); $('btnMusic').classList.remove('playing'); }
-  else{ a.play().then(()=>{ MUSIC.on = true; MUSIC.want = true; localStorage.setItem('mas_music','on'); $('btnMusic').classList.add('playing'); }).catch(()=> toast('اضغط مرة ثانية لتشغيل الموسيقى', true)); }
+  if(MUSIC.on){ a.pause(); MUSIC.on = false; MUSIC.want = false; localStorage.setItem('mas_music','off'); }
+  else{ a.play().then(()=>{ MUSIC.on = true; MUSIC.want = true; localStorage.setItem('mas_music','on'); }).catch(()=> toast('اضغط مرة ثانية لتشغيل الموسيقى', true)); }
 }
 // تشغيل تلقائي بأول لمسة إذا المستخدم مفعّلها من قبل (سياسة المتصفح تمنع بلا لمسة)
 function musicFirstTouch(){
   if(MUSIC.want && !MUSIC.on){
     const a = ensureAudio();
-    a.play().then(()=>{ MUSIC.on = true; $('btnMusic') && $('btnMusic').classList.add('playing'); }).catch(()=>{});
+    a.play().then(()=>{ MUSIC.on = true; }).catch(()=>{});
   }
 }
 
@@ -2732,8 +2756,6 @@ loadTheme();
 apiReady();
 applyLangBoot();
 startDeco();
-$('btnLang').onclick = toggleLang;
-$('btnMusic').onclick = openMusic;
 (async () => {
   try{
     const { data:{ session: s } } = await sb.auth.getSession();
