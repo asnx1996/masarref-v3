@@ -44,6 +44,39 @@
     -webkit-font-smoothing:antialiased;
     letter-spacing:-.1px;
   }
+  body.sky-on{background:transparent}
+
+  /* ---------- خلفية السماء المتدرّجة (شمس/قمر/نجوم) ---------- */
+  #sky{position:fixed;inset:0;z-index:-2;overflow:hidden;transition:background 3s ease;pointer-events:none;background:var(--bg)}
+  #sky .sky-body{
+    position:absolute;width:120px;height:120px;border-radius:50%;
+    top:12%;left:50%;transform:translateX(-50%);
+    transition:top 3s ease,left 3s ease,background 3s ease,box-shadow 3s ease,opacity 2s ease;
+    will-change:transform;
+  }
+  #sky.is-sun .sky-body{
+    background:radial-gradient(circle at 38% 38%, #FFF6D8, #FFD24D 55%, #FFB020 100%);
+    box-shadow:0 0 70px 24px rgba(255,197,61,.55),0 0 140px 60px rgba(255,170,40,.28);
+  }
+  #sky.is-moon .sky-body{
+    background:radial-gradient(circle at 62% 38%, #FCFCF4, #DDE3EC 60%, #AEB7C6 100%);
+    box-shadow:0 0 46px 12px rgba(220,228,240,.4),inset -12px -8px 0 -2px rgba(150,160,175,.35);
+  }
+  #sky .stars{position:absolute;inset:0;opacity:0;transition:opacity 3s ease}
+  #sky.is-moon .stars{opacity:1}
+  #sky .star{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;animation:twinkle 3.5s ease-in-out infinite}
+  #sky .cloud{position:absolute;border-radius:100px;background:rgba(255,255,255,.5);filter:blur(6px);transition:opacity 3s ease}
+  @keyframes twinkle{0%,100%{opacity:.25}50%{opacity:1}}
+  @keyframes floatCloud{from{transform:translateX(-8%)}to{transform:translateX(8%)}}
+  .perf #sky .sky-body{box-shadow:none}
+  .perf #sky .star{animation:none;opacity:.7}
+  .perf #sky .cloud{animation:none}
+
+  /* ---------- عمق خفيف (parallax بالماوس) — كمبيوتر فقط ---------- */
+  @media (hover:hover) and (min-width:1000px){
+    .depth{transition:transform .3s cubic-bezier(.22,.61,.36,1);transform-style:preserve-3d;will-change:transform}
+  }
+  .perf .depth{transition:none!important;transform:none!important}
 
   /* ---------- شاشة الدخول ---------- */
   #loginScreen{
@@ -552,6 +585,10 @@
 </style>
 </head>
 <body>
+<div id="sky" aria-hidden="true">
+  <div class="stars" id="skyStars"></div>
+  <div class="sky-body" id="skyBody"></div>
+</div>
 
 <!-- ============ شاشة الدخول ============ -->
 <div id="loginScreen">
@@ -659,7 +696,7 @@
     </div>
     </div><!-- /add-col -->
 
-    <div class="card" id="decoCard" aria-hidden="true">
+    <div class="card depth" id="decoCard" aria-hidden="true">
       <div id="clockSkin" class="clock-wrap"></div>
       <div class="deco-date" id="decoDate"></div>
       <button class="clock-switch" id="btnClockSkin">🎨 غيّر شكل الساعة</button>
@@ -1122,7 +1159,7 @@ function render(){
   const legend = donutParts.map((p,i)=>`<span class="lg-item"><span class="lg-dot" style="background:${PALETTE[i%PALETTE.length]}"></span><b>${esc(p.label)}</b>${fmt(p.value)}</span>`).join('');
 
   $('summaryCard').innerHTML = `
-    <div class="card sum-card">
+    <div class="card sum-card depth">
       <div class="sum-top">
         <div class="donut">${donutSVG(donutParts)}</div>
         <div class="sum-stats">
@@ -2661,6 +2698,84 @@ function startDeco(){
 }
 
 /* ============================================================
+   خلفية السماء — تتدرّج مع ساعة اليوم (فجر/نهار/غروب/ليل)
+   ============================================================ */
+const SKY_PHASES = [
+  // فجر مبكر 5-7
+  { h:[5,7],   grad:'linear-gradient(160deg,#FCE7C8 0%,#F6C9A8 45%,#E9A6A0 100%)', sun:true,  x:14, y:70 },
+  // صباح 7-11
+  { h:[7,11],  grad:'linear-gradient(160deg,#BFE3F5 0%,#DCEEFA 55%,#F3F8FC 100%)', sun:true,  x:30, y:34 },
+  // ظهر 11-15
+  { h:[11,15], grad:'linear-gradient(160deg,#8FD0F2 0%,#BFE6FA 55%,#EAF6FE 100%)', sun:true,  x:50, y:14 },
+  // عصر 15-18
+  { h:[15,18], grad:'linear-gradient(160deg,#A6D5EE 0%,#E6D9C2 60%,#F3E4CE 100%)', sun:true,  x:72, y:32 },
+  // غروب 18-20
+  { h:[18,20], grad:'linear-gradient(160deg,#5E6E9E 0%,#C57B77 55%,#F0A968 100%)', sun:true,  x:86, y:72 },
+  // ليل 20-5
+  { h:[20,5],  grad:'linear-gradient(170deg,#0E1430 0%,#1C2650 55%,#2A2A55 100%)', sun:false, x:64, y:20 }
+];
+function skyPhaseFor(hr){
+  for(const p of SKY_PHASES){
+    const [a,b] = p.h;
+    if(a < b){ if(hr >= a && hr < b) return p; }
+    else { if(hr >= a || hr < b) return p; } // يمر عبر منتصف الليل
+  }
+  return SKY_PHASES[SKY_PHASES.length-1];
+}
+let skyStarsBuilt = false;
+function buildStars(){
+  if(skyStarsBuilt) return;
+  const box = $('skyStars');
+  if(!box) return;
+  let html = '';
+  for(let i=0;i<40;i++){
+    const x = Math.random()*100, y = Math.random()*62, d = (Math.random()*3).toFixed(1), s = (1+Math.random()*1.6).toFixed(1);
+    html += `<span class="star" style="left:${x}%;top:${y}%;width:${s}px;height:${s}px;animation-delay:${d}s"></span>`;
+  }
+  box.innerHTML = html;
+  skyStarsBuilt = true;
+}
+function updateSky(){
+  const sky = $('sky'), bodyEl = $('skyBody');
+  if(!sky || !bodyEl) return;
+  document.body.classList.add('sky-on');
+  buildStars();
+  const p = skyPhaseFor(new Date().getHours());
+  sky.style.background = p.grad;
+  sky.classList.toggle('is-sun', p.sun);
+  sky.classList.toggle('is-moon', !p.sun);
+  bodyEl.style.left = p.x + '%';
+  bodyEl.style.top = p.y + '%';
+  bodyEl.style.transform = 'translateX(-50%)';
+}
+
+/* ============================================================
+   عمق خفيف بالماوس (Apple-style) — كمبيوتر فقط
+   ============================================================ */
+function initDepth(){
+  if(document.documentElement.classList.contains('perf')) return;
+  if(!window.matchMedia || !window.matchMedia('(hover:hover) and (min-width:1000px)').matches) return;
+  let raf = null, tx = 0, ty = 0;
+  window.addEventListener('pointermove', (e) => {
+    const cx = (e.clientX / window.innerWidth - 0.5);
+    const cy = (e.clientY / window.innerHeight - 0.5);
+    tx = cx; ty = cy;
+    if(raf) return;
+    raf = requestAnimationFrame(() => {
+      raf = null;
+      // الخلفية (الشمس/القمر) تتحرك أبطأ = عمق
+      const sb = $('skyBody');
+      if(sb) sb.style.transform = `translateX(-50%) translate(${tx*-18}px, ${ty*-12}px)`;
+      // الكروت المعلّمة depth تميل ميلان خفيف جداً
+      document.querySelectorAll('.tab.active .depth').forEach((el, i) => {
+        const k = 1 + (i % 3) * 0.35;
+        el.style.transform = `translate(${tx*6*k}px, ${ty*5*k}px)`;
+      });
+    });
+  }, { passive: true });
+}
+
+/* ============================================================
    الأصوات — نغمات قصيرة تتولّد بالكود (Web Audio) بلا أي ملفات
    فرح للإضافات المالية، وحزينة خفيفة للصرف
    ============================================================ */
@@ -2756,6 +2871,9 @@ loadTheme();
 apiReady();
 applyLangBoot();
 startDeco();
+updateSky();
+setInterval(updateSky, 5 * 60 * 1000);
+initDepth();
 (async () => {
   try{
     const { data:{ session: s } } = await sb.auth.getSession();
