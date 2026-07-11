@@ -63,6 +63,17 @@
     box-shadow:0 0 46px 12px rgba(220,228,240,.4),inset -12px -8px 0 -2px rgba(150,160,175,.35);
   }
   #sky .stars{position:absolute;inset:0;opacity:0;transition:opacity 3s ease}
+  #sky .sky-scene{position:absolute;left:-4%;bottom:0;width:108%;height:52%;transition:opacity 3s ease}
+  #sky .mtn{transition:fill 3s ease}
+  #sky .mtn-far{fill:#6E7BB0}
+  #sky .mtn-mid{fill:#54608F}
+  #sky .mtn-near{fill:#3C466B}
+  #sky .trees path{fill:#2A2E4A}
+  #sky.is-moon .mtn-far{fill:#2E3556}
+  #sky.is-moon .mtn-mid{fill:#232948}
+  #sky.is-moon .mtn-near{fill:#191E38}
+  #sky.is-moon .trees path{fill:#12152A}
+  #sky .sky-scene .mtn,#sky .sky-scene .trees{will-change:transform}
   #sky.is-moon .stars{opacity:1}
   #sky .star{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;animation:twinkle 3.5s ease-in-out infinite}
   #sky .cloud{position:absolute;border-radius:100px;background:rgba(255,255,255,.5);filter:blur(6px);transition:opacity 3s ease}
@@ -588,6 +599,14 @@
 <div id="sky" aria-hidden="true">
   <div class="stars" id="skyStars"></div>
   <div class="sky-body" id="skyBody"></div>
+  <svg class="sky-scene" id="skyScene" viewBox="0 0 1440 500" preserveAspectRatio="xMidYMax slice">
+    <path class="mtn mtn-far" data-depth="6"  d="M0,330 L120,270 L240,310 L380,240 L520,300 L680,230 L820,300 L980,250 L1140,300 L1300,255 L1440,300 L1440,500 L0,500 Z"/>
+    <path class="mtn mtn-mid" data-depth="12" d="M0,380 L160,300 L320,360 L480,285 L640,355 L820,290 L1000,360 L1180,300 L1360,360 L1440,320 L1440,500 L0,500 Z"/>
+    <g class="trees" data-depth="22">
+      <path d="M0,470 L70,470 L60,455 L66,455 L54,438 L60,438 L48,420 L40,420 L28,438 L34,438 L22,455 L28,455 L18,470 Z"/>
+    </g>
+    <path class="mtn mtn-near" data-depth="20" d="M0,440 L200,370 L400,435 L620,360 L840,435 L1060,365 L1280,435 L1440,395 L1440,500 L0,500 Z"/>
+  </svg>
 </div>
 
 <!-- ============ شاشة الدخول ============ -->
@@ -1790,6 +1809,15 @@ function renderSettings(){
       <label>تأكيد الباسورد الجديد</label>
       <input type="password" id="pwNew2" autocomplete="new-password" placeholder="أعد كتابته">
       <button class="btn" id="btnSavePw">تغيير الباسورد</button>
+      <label style="margin-top:14px">⏱ تسجيل الخروج التلقائي عند الخمول</label>
+      <select id="idleSel">
+        <option value="0">لا يطلّع أبداً</option>
+        <option value="2">بعد دقيقتين</option>
+        <option value="5">بعد ٥ دقائق</option>
+        <option value="10">بعد ١٠ دقائق</option>
+        <option value="30">بعد ٣٠ دقيقة</option>
+        <option value="60">بعد ساعة</option>
+      </select>
     </div>
 
     <div class="card">
@@ -1859,6 +1887,13 @@ function renderSettings(){
     finally{ loading(false); }
   };
   $('customColor').addEventListener('input', e => pickTheme(e.target.value, true));
+  if($('idleSel')){
+    $('idleSel').value = String(autoLogoutMin);
+    $('idleSel').onchange = (e) => {
+      setAutoLogout(parseInt(e.target.value, 10));
+      toast('انحفظ ✓');
+    };
+  }
   $('btnLangS').onclick = toggleLang;
   $('btnClockS').onclick = () => {
     clockIdx = (clockIdx + 1) % CLOCK_SKINS.length;
@@ -2497,7 +2532,8 @@ const I18N = {
   'رواتب الشهر':'Monthly salaries','＋ شخص':'＋ Person','اسم الشخص':'Person name','الراتب':'Salary',
   'أضف راتب كل شخص بالعائلة — تكدر تضيف أو تحذف حسب عدد أفرادكم.':'Add each family member\'s salary — add or remove as many as you need.',
   'اسمك المعروض':'Your display name','اسمك':'Your name','حفظ':'Save','انتغيّر الاسم ✓':'Name changed ✓','دخّل الاسم':'Enter the name','نفس الاسم الحالي':'Same as current name',
-  '🎨 غيّر شكل الساعة':'🎨 Change clock style'
+  '🎨 غيّر شكل الساعة':'🎨 Change clock style',
+  '⏱ تسجيل الخروج التلقائي عند الخمول':'⏱ Auto-logout when idle','لا يطلّع أبداً':'Never','بعد دقيقتين':'After 2 minutes','بعد ٥ دقائق':'After 5 minutes','بعد ١٠ دقائق':'After 10 minutes','بعد ٣٠ دقيقة':'After 30 minutes','بعد ساعة':'After 1 hour'
 };
 const I18N_RULES = [
   [/^مرحباً\s*(.*)$/, (m)=>'Welcome ' + m[1]],
@@ -2580,19 +2616,26 @@ function toggleLang(){
 }
 
 /* ============================================================
-   الخروج التلقائي بعد فترة خمول
-   ⬇️ غيّر الرقم هنا إذا تريد مدة أطول (بالدقائق) — ننصح بـ 10
+   الخروج التلقائي بعد فترة خمول — يتحكم بيه المستخدم من الإعدادات
+   القيمة بالدقائق، و0 معناها ما يطلّع أبداً
    ============================================================ */
-const AUTO_LOGOUT_MIN = 2;
+let autoLogoutMin = parseInt(localStorage.getItem('mas_idle') ?? '10', 10);
+if(isNaN(autoLogoutMin)) autoLogoutMin = 10;
 let idleTimer = null;
 function resetIdle(){
   if(!session) return;
   clearTimeout(idleTimer);
+  if(autoLogoutMin <= 0) return; // معطّل
   idleTimer = setTimeout(() => {
     if(!session) return;
     doLogout();
     toast(trString2('سجّلنا خروجك تلقائياً لأنك تركت التطبيق فترة 🔒'), true);
-  }, AUTO_LOGOUT_MIN * 60 * 1000);
+  }, autoLogoutMin * 60 * 1000);
+}
+function setAutoLogout(min){
+  autoLogoutMin = min;
+  localStorage.setItem('mas_idle', String(min));
+  resetIdle();
 }
 function trString2(s){ return LANG.cur === 'en' ? trString(s) : s; }
 ['click','keydown','touchstart','scroll','pointermove'].forEach(ev =>
@@ -2722,7 +2765,26 @@ function skyPhaseFor(hr){
   }
   return SKY_PHASES[SKY_PHASES.length-1];
 }
-let skyStarsBuilt = false;
+let skyStarsBuilt = false, treesBuilt = false;
+function buildTrees(){
+  if(treesBuilt) return;
+  const g = document.querySelector('#skyScene .trees');
+  if(!g) return;
+  // شجرة صنوبر واحدة نكررها بأحجام ومواقع مختلفة على طول الأفق
+  const tree = (x, s, baseY) => {
+    const p = (dx,dy)=>`${(x+dx*s).toFixed(1)},${(baseY+dy*s).toFixed(1)}`;
+    return `<path d="M${p(0,0)} L${p(3.5,0)} L${p(3,-0.75)} L${p(3.3,-0.75)} L${p(2.7,-1.6)} L${p(3,-1.6)} L${p(2.4,-2.5)} L${p(2,-2.5)} L${p(1.4,-1.6)} L${p(1.7,-1.6)} L${p(1.1,-0.75)} L${p(1.4,-0.75)} L${p(0.9,0)} Z"/>`;
+  };
+  let html = '';
+  for(let i=0;i<26;i++){
+    const x = 10 + i*56 + (Math.random()*20-10);
+    const s = 7 + Math.random()*6;
+    const y = 472 + Math.random()*4;
+    html += tree(x, s, y);
+  }
+  g.innerHTML = html;
+  treesBuilt = true;
+}
 function buildStars(){
   if(skyStarsBuilt) return;
   const box = $('skyStars');
@@ -2740,6 +2802,7 @@ function updateSky(){
   if(!sky || !bodyEl) return;
   document.body.classList.add('sky-on');
   buildStars();
+  buildTrees();
   const p = skyPhaseFor(new Date().getHours());
   sky.style.background = p.grad;
   sky.classList.toggle('is-sun', p.sun);
@@ -2766,6 +2829,11 @@ function initDepth(){
       // الخلفية (الشمس/القمر) تتحرك أبطأ = عمق
       const sb = $('skyBody');
       if(sb) sb.style.transform = `translateX(-50%) translate(${tx*-18}px, ${ty*-12}px)`;
+      // طبقات الجبال والأشجار — كل طبقة تتحرك بمقدار مختلف (parallax)
+      document.querySelectorAll('#skyScene [data-depth]').forEach(el => {
+        const d = parseFloat(el.dataset.depth) || 0;
+        el.style.transform = `translate(${tx*d}px, ${ty*d*0.4}px)`;
+      });
       // الكروت المعلّمة depth تميل ميلان خفيف جداً
       document.querySelectorAll('.tab.active .depth').forEach((el, i) => {
         const k = 1 + (i % 3) * 0.35;
