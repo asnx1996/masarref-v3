@@ -46,6 +46,26 @@
   }
   body.sky-on{background:transparent}
 
+  /* ---------- شاشة الافتتاح (Splash) ---------- */
+  #splash{
+    position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(160deg,#0F7A69 0%,#0D6E5F 55%,#0A5A4D 100%);
+    animation:splashOut .7s cubic-bezier(.5,0,.75,0) 1.9s forwards;
+  }
+  #splash.done{display:none}
+  .splash-inner{display:flex;flex-direction:column;align-items:center;gap:14px;animation:splashIn .8s cubic-bezier(.18,.9,.32,1.2) both}
+  .splash-logo{filter:drop-shadow(0 12px 30px rgba(0,0,0,.3));animation:splashFloat 2s ease-in-out infinite}
+  .splash-name{font-size:2.4rem;font-weight:800;color:#fff;letter-spacing:1px;animation:splashText .7s ease .35s both}
+  .splash-tag{font-size:1rem;color:rgba(255,255,255,.8);animation:splashText .7s ease .5s both}
+  @keyframes splashIn{0%{opacity:0;transform:scale(.4)}60%{opacity:1}100%{opacity:1;transform:scale(1)}}
+  @keyframes splashText{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  @keyframes splashFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  @keyframes splashOut{to{opacity:0;transform:translateY(-100vh)}}
+  .perf .splash-logo{animation:none}
+  .perf #splash{animation-delay:1.4s}
+  @media (prefers-reduced-motion:reduce){#splash{animation:splashFade .4s ease 1.2s forwards}.splash-inner{animation:none}}
+  @keyframes splashFade{to{opacity:0;visibility:hidden}}
+
   /* ---------- خلفية السماء المتدرّجة (شمس/قمر/نجوم) ---------- */
   #sky{position:fixed;inset:0;z-index:-2;overflow:hidden;transition:background 3s ease;pointer-events:none;background:var(--bg)}
   #sky .sky-body{
@@ -599,6 +619,20 @@
 </style>
 </head>
 <body>
+<div id="splash">
+  <div class="splash-inner">
+    <svg class="splash-logo" viewBox="0 0 120 120" width="120" height="120" aria-hidden="true">
+      <rect width="120" height="120" rx="27" fill="#0D6E5F"/>
+      <g fill="#F5F0E1">
+        <path d="M60 30 L92 56 L84 64 L82 62 L82 88 L38 88 L38 62 L36 64 L28 56 Z M44 46 L44 34 L52 34 L52 40 Z"/>
+      </g>
+      <circle cx="60" cy="66" r="15" fill="#0D6E5F" stroke="#F5F0E1" stroke-width="4"/>
+      <text x="60" y="73" font-size="20" font-weight="800" fill="#F5F0E1" text-anchor="middle" font-family="Georgia,serif">$</text>
+    </svg>
+    <div class="splash-name">Pocky</div>
+    <div class="splash-tag">مصاريفنا</div>
+  </div>
+</div>
 <div id="sky" aria-hidden="true">
   <div class="stars" id="skyStars"></div>
   <div class="sky-body" id="skyBody"></div>
@@ -3055,6 +3089,12 @@ function musicFirstTouch(){
 
 /* ---------- تشغيل ---------- */
 if(/Android/i.test(navigator.userAgent)) document.documentElement.classList.add('perf');
+// شيل شاشة الافتتاح بعد ما تخلص حركتها (حتى ما تعيق الضغط)
+(function(){
+  const sp = document.getElementById('splash');
+  if(sp){ const t = document.documentElement.classList.contains('perf') ? 2300 : 2900;
+    setTimeout(() => sp.classList.add('done'), t); }
+})();
 loadTheme();
 apiReady();
 applyLangBoot();
