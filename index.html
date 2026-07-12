@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<title>مصاريفنا</title>
+<title>Pocky — مصاريفنا</title>
 <meta name="theme-color" content="#0D6E5F">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="مصاريفنا">
+<meta name="apple-mobile-web-app-title" content="Pocky">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -394,6 +394,9 @@
   .lg-switch a{color:var(--primary);font-weight:700;cursor:pointer;text-decoration:none}
 
   /* ---------- أزرار الصندوق (سحب / إيداع / سجل) ---------- */
+  .env-transfer{margin-top:9px;width:100%;border:1px dashed var(--line);background:transparent;color:var(--muted);border-radius:10px;padding:8px;font-family:inherit;font-size:.76rem;font-weight:600;cursor:pointer;transition:all .18s}
+  .env-transfer:hover{border-color:var(--primary);color:var(--primary)}
+  .fa-del2{flex:0 0 auto;width:42px;border:1px solid var(--red-soft,#f3d0d0);background:transparent;color:var(--red,#c0392b);border-radius:12px;cursor:pointer;font-size:.9rem}
   .fund-actions{display:flex;gap:8px;margin-top:11px}
   .fund-actions button{
     flex:1;border-radius:12px;padding:10px 6px;font-family:inherit;font-weight:600;font-size:.78rem;cursor:pointer;
@@ -612,7 +615,7 @@
 <!-- ============ شاشة الدخول ============ -->
 <div id="loginScreen">
   <div class="login-card">
-    <div class="lg-brand">مصاريفنا</div>
+    <div class="lg-brand">Pocky</div>
     <div class="lg-sub">سجّل الدخول للمتابعة</div>
     <div id="liSetupWarn" class="lock-banner">⚠️ الموقع غير مربوط بقاعدة البيانات — عدّل SUPABASE_URL بالملف.</div>
 
@@ -646,7 +649,7 @@
 <!-- ============ التطبيق ============ -->
 <header id="appHeader" style="display:none">
   <div class="head-top">
-    <div class="brand">مصاريفنا<small>ميزانية البيت الشهرية</small></div>
+    <div class="brand">Pocky<small>مصاريفنا · ميزانية البيت</small></div>
     <div class="head-actions">
       <input type="month" id="monthPick" class="month-pick">
     </div>
@@ -1046,6 +1049,18 @@ async function apiPost(p){
     case 'cancelDebt':
       call = sb.rpc('cancel_debt', { p_id:p.id });
       break;
+    case 'transferCategory':
+      call = sb.rpc('transfer_category', { p_month:p.month, p_from:p.from, p_to:p.to, p_amount:p.amount });
+      break;
+    case 'deleteFund':
+      call = sb.rpc('delete_fund', { p_name:p.name });
+      break;
+    case 'unlockMonth':
+      call = sb.rpc('unlock_month', { p_month:p.month });
+      break;
+    case 'closeMonthCarry':
+      call = sb.rpc('close_month_carry', { p_month:p.month });
+      break;
     default:
       return { ok:false, error:'إجراء غير معروف' };
   }
@@ -1158,6 +1173,7 @@ function render(){
   const extraIncome = ((b.incomes)||[]).reduce((s,x)=> s + (Number(x.amount)||0), 0);
   const totalIncome = totalSalary + extraIncome;
   const remain = totalIncome + spendCarried - saveContrib - spendingSpent - fundDeposits;
+  state._surplus = Math.max(0, remain);
 
   $('hSalary') && setStat($('hSalary'), totalIncome);
   setStat($('hSpent'), spendingSpent);
@@ -1208,6 +1224,7 @@ function render(){
         <div class="bar"><i class="${cls}" style="width:${pct}%"></i></div>
         <div class="env-sub"><span>صرفت ${fmt(spent)}</span><span>المتاح ${fmt(effective)}</span></div>
         ${carried ? `<div class="env-carry">↩ منها مرحّل من الشهر الماضي: ${fmt(carried)}</div>` : ''}
+        ${(!state.locked && left>0) ? `<button class="env-transfer" onclick="openTransfer('${esc(c.name).replace(/'/g,"\\'")}', ${left})">⇄ نقل من هذا التصنيف</button>` : ''}
       </div>`;
     delete spentByCat[c.name];
   });
@@ -1254,6 +1271,7 @@ function render(){
             <button class="fa-wd" onclick="openWithdraw(${i})" ${state.locked?'disabled':''}>سحب −</button>
             <button class="fa-dep" onclick="openDeposit(${i})" ${state.locked?'disabled':''}>إيداع +</button>
             <button class="fa-log" onclick="openFundLog(${i})" title="سجل الحركات">☰</button>
+            ${(!state.locked && bal===0) ? `<button class="fa-del2" onclick="deleteFund('${esc(c.name).replace(/'/g,"\\'")}')" title="إلغاء الصندوق">🗑</button>` : ''}
           </div>
         </div>`;
       delete spentByCat[c.name];
@@ -1385,8 +1403,24 @@ function renderExpenseList(){
 
 /* ---------- القفل ---------- */
 function applyLock(locked){
-  $('lockBanner').style.display = locked ? 'block' : 'none';
-  $('lockBanner').textContent = locked ? ('🔒 شهر ' + state.month + ' مقفل — للعرض فقط، ما تكدر تعدّله') : '';
+  const lb = $('lockBanner');
+  lb.style.display = locked ? 'block' : 'none';
+  if(locked){
+    lb.innerHTML = '🔒 شهر ' + esc(state.month) + ' مقفل — للعرض فقط. <button id="btnUnlock" style="margin-inline-start:8px;border:none;background:var(--primary);color:#fff;border-radius:8px;padding:5px 12px;font-family:inherit;font-weight:700;font-size:.72rem;cursor:pointer">🔓 فك القفل</button>';
+    const ub = $('btnUnlock');
+    if(ub) ub.onclick = async () => {
+      if(!confirm('فك قفل شهر ' + state.month + '؟\n\nراح تكدر تعدّله من جديد، ويتلغى ترحيل باقيه للشهر الجاي.')) return;
+      loading(true);
+      try{
+        const res = await apiPost({ action:'unlockMonth', month: state.month });
+        if(guardAuth(res)) return;
+        if(!res.ok) throw new Error(res.error || 'خطأ');
+        toast('انفك القفل ✓ 🔓');
+        await loadMonth(state.month);
+      }catch(err){ toast('ما انفك: ' + err.message, true); }
+      finally{ loading(false); }
+    };
+  }
   ['btnAddExp','btnSaveBudget','btnAddCat','btnAddSave','btnAddIncome','btnAddSalary','btnCopyLast','btnCloseMonth','btnClearMonth','expAmount','expDesc','expDate','expCat']
     .forEach(id => { const el = $(id); if(el) el.disabled = locked; });
   document.querySelectorAll('#salaryRows input, #salaryRows .rm, #catRows input, #catRows .rm, #saveRows input, #saveRows .rm, #saveRows .cgoal, #incomeRows input, #incomeRows .rm').forEach(el => el.disabled = locked);
@@ -1556,6 +1590,57 @@ window.openEdit = (id) => {
     }catch(err){ toast('ما انعدّل: ' + err.message, true); }
     finally{ loading(false); }
   };
+};
+
+/* ---------- نقل مبلغ بين تصنيفات المصاريف ---------- */
+window.openTransfer = (fromName, available) => {
+  if(state.locked) return;
+  const others = (state.budget.categories||[]).filter(c => c.type !== 'save' && c.name !== fromName);
+  if(!others.length) return toast('ماكو تصنيف ثاني تنقل له', true);
+  const opts = others.map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
+  modalOpen(`
+    <h2>⇄ نقل من «${esc(fromName)}»</h2>
+    <div class="hint" style="margin:0 0 8px">تنقل مبلغ لتصنيف مصروف ثاني بنفس الشهر. المتاح للنقل: <b style="color:var(--primary)">${fmt(available)}</b></div>
+    <label>إلى تصنيف</label>
+    <select id="trTo">${opts}</select>
+    <label style="margin-top:10px">المبلغ</label>
+    <input type="tel" id="trAmount" inputmode="numeric" placeholder="0">
+    <button class="btn" id="trSave">نقل</button>
+    <button class="btn ghost" onclick="modalClose()">إلغاء</button>
+  `);
+  liveFormat($('trAmount'));
+  $('trSave').onclick = async () => {
+    const amount = num($('trAmount').value);
+    if(amount <= 0) return toast('دخّل المبلغ', true);
+    if(amount > available) return toast('المبلغ أكثر من المتاح (' + fmt(available) + ')', true);
+    loading(true);
+    try{
+      const res = await apiPost({ action:'transferCategory', month:state.month, from:fromName, to:$('trTo').value, amount });
+      if(guardAuth(res)) return;
+      if(!res.ok) throw new Error(res.error || 'خطأ');
+      modalClose();
+      toast('انتقل المبلغ ✓ ⇄');
+      await loadMonth(state.month);
+    }catch(err){ toast('ما انتقل: ' + err.message, true); }
+    finally{ loading(false); }
+  };
+};
+
+/* ---------- إلغاء صندوق ادخار فاضي ---------- */
+window.deleteFund = (name) => {
+  if(state.locked) return;
+  if(!confirm('إلغاء صندوق «' + name + '»؟\n\nلازم رصيده يكون صفر. راح ينشال من الميزانية وما يظهر بالأشهر الجاية.')) return;
+  (async () => {
+    loading(true);
+    try{
+      const res = await apiPost({ action:'deleteFund', name });
+      if(guardAuth(res)) return;
+      if(!res.ok) throw new Error(res.error || 'خطأ');
+      toast('انلغى الصندوق ✓');
+      await loadMonth(state.month);
+    }catch(err){ toast('ما انلغى: ' + err.message, true); }
+    finally{ loading(false); }
+  })();
 };
 
 /* ---------- سحب من صندوق ادخار (مع خيار تسجيله كدين) ---------- */
@@ -1853,6 +1938,7 @@ function renderSettings(){
       <button class="btn ghost" id="btnXlsMonth">📊 تصدير إكسل — شهر ${esc(state.month)}</button>
       <button class="btn ghost" id="btnXlsAll">🗂 تصدير إكسل — كل الأشهر</button>
       <button class="btn ghost" id="btnPrint">🖨 طباعة مباشرة (للكمبيوتر)</button>
+      <button class="btn ghost" id="btnBackup">💾 نسخة احتياطية كاملة (ملف)</button>
     </div>
 
     ${session && session.admin ? `<div class="card"><div class="set-sec" style="margin-top:0">المشرف</div><button class="btn ghost" id="btnAdmin" style="margin-top:0">🛡 لوحة المشرف</button></div>` : ''}
@@ -1907,6 +1993,7 @@ function renderSettings(){
   $('btnPdf').onclick = () => pdfReport();
   $('btnXlsMonth').onclick = () => exportExcel('month');
   $('btnXlsAll').onclick = () => exportExcel('all');
+  if($('btnBackup')) $('btnBackup').onclick = downloadBackup;
   if($('btnAdmin')) $('btnAdmin').onclick = () => showAdmin();
   if($('sndToggle')) $('sndToggle').onchange = (e) => {
     SND.on = e.target.checked;
@@ -2120,6 +2207,23 @@ async function pdfReport(){
 }
 
 /* ---------- تصدير إكسل ---------- */
+async function downloadBackup(){
+  loading(true);
+  try{
+    const { data, error } = await sb.rpc('backup_all');
+    if(error) throw new Error(error.message);
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type:'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'مصاريفنا-نسخة-احتياطية-' + todayISO() + '.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    toast('انحملت النسخة الاحتياطية ✓ 💾');
+  }catch(err){ toast('ما انحملت: ' + err.message, true); }
+  finally{ loading(false); }
+}
+
 async function exportExcel(scope){
   loading(true);
   try{
@@ -2450,20 +2554,35 @@ $('btnSaveBudget').onclick = async () => {
   finally{ loading(false); }
 };
 
-$('btnCloseMonth').onclick = async () => {
+$('btnCloseMonth').onclick = () => {
   if(!apiReady()) return toast('اربط الموقع بالـ API أول', true);
   if(state.locked) return;
-  if(!confirm('إقفال شهر ' + state.month + '؟\n\nراح ينقفل نهائياً (ما تكدر تعدّله بعدها)، ويتم ترحيل باقي كل تصنيف وكل صندوق ادخار للشهر الجاي.\nمتأكد؟')) return;
-  loading(true);
-  try{
-    const res = await apiPost({ action:'closeMonth', month: state.month });
-    if(guardAuth(res)) return;
-    if(!res.ok) throw new Error(res.error || 'خطأ');
-    toast('انقفل الشهر وانرحّل الباقي ✓ 🎉');
-    confetti();
-    await loadMonth(state.month);
-  }catch(err){ toast('ما انقفل: ' + err.message, true); }
-  finally{ loading(false); }
+  const surplus = state._surplus || 0;
+  modalOpen(`
+    <h2>إقفال شهر ${esc(state.month)}</h2>
+    <div class="hint" style="margin:0 0 12px">راح ينقفل الشهر للعرض فقط (تكدر تفتحه بعدين)، ويترحّل باقي كل تصنيف وصندوق للشهر الجاي.</div>
+    ${surplus > 0 ? `
+    <label class="set-toggle" style="cursor:pointer">
+      <span class="st-lbl">↪ رحّل الفائض غير الموزّع (${fmt(surplus)}) كرصيد مبدئي للشهر الجاي</span>
+      <span class="switch"><input type="checkbox" id="carrySurplus" checked><span class="track"></span><span class="knob"></span></span>
+    </label>` : ''}
+    <button class="btn" id="doClose">إقفال الشهر ✓</button>
+    <button class="btn ghost" onclick="modalClose()">إلغاء</button>
+  `);
+  $('doClose').onclick = async () => {
+    const carry = surplus > 0 && $('carrySurplus') && $('carrySurplus').checked;
+    modalClose();
+    loading(true);
+    try{
+      const res = await apiPost({ action: carry ? 'closeMonthCarry' : 'closeMonth', month: state.month });
+      if(guardAuth(res)) return;
+      if(!res.ok) throw new Error(res.error || 'خطأ');
+      toast('انقفل الشهر وانرحّل الباقي ✓ 🎉');
+      confetti();
+      await loadMonth(state.month);
+    }catch(err){ toast('ما انقفل: ' + err.message, true); }
+    finally{ loading(false); }
+  };
 };
 
 /* ============================================================
@@ -2472,7 +2591,7 @@ $('btnCloseMonth').onclick = async () => {
    ============================================================ */
 const LANG = { cur: localStorage.getItem('mas_lang') || 'ar' };
 const I18N = {
-  'مصاريفنا':'Masareef','ميزانية البيت الشهرية':'Monthly home budget',
+  'مصاريفنا':'Masareef','ميزانية البيت الشهرية':'Monthly home budget','مصاريفنا · ميزانية البيت':'Masareef · Home budget',
   'الباقي للصرف':'Left to spend','الدخل':'Income','المصروف':'Spent','خروج':'Logout',
   'اللوحة':'Dashboard','الميزانية':'Budget','مصروف':'Expense',
   'سجّل مصروف':'Log an expense','المبلغ':'Amount','المبلغ (د.ع)':'Amount (IQD)','التاريخ':'Date',
@@ -2533,7 +2652,8 @@ const I18N = {
   'أضف راتب كل شخص بالعائلة — تكدر تضيف أو تحذف حسب عدد أفرادكم.':'Add each family member\'s salary — add or remove as many as you need.',
   'اسمك المعروض':'Your display name','اسمك':'Your name','حفظ':'Save','انتغيّر الاسم ✓':'Name changed ✓','دخّل الاسم':'Enter the name','نفس الاسم الحالي':'Same as current name',
   '🎨 غيّر شكل الساعة':'🎨 Change clock style',
-  '⏱ تسجيل الخروج التلقائي عند الخمول':'⏱ Auto-logout when idle','لا يطلّع أبداً':'Never','بعد دقيقتين':'After 2 minutes','بعد ٥ دقائق':'After 5 minutes','بعد ١٠ دقائق':'After 10 minutes','بعد ٣٠ دقيقة':'After 30 minutes','بعد ساعة':'After 1 hour'
+  '⏱ تسجيل الخروج التلقائي عند الخمول':'⏱ Auto-logout when idle','لا يطلّع أبداً':'Never','بعد دقيقتين':'After 2 minutes','بعد ٥ دقائق':'After 5 minutes','بعد ١٠ دقائق':'After 10 minutes','بعد ٣٠ دقيقة':'After 30 minutes','بعد ساعة':'After 1 hour',
+  '💾 نسخة احتياطية كاملة (ملف)':'💾 Full backup (file)','⇄ نقل من هذا التصنيف':'⇄ Transfer from this category','إلى تصنيف':'To category','نقل':'Transfer','🔓 فك القفل':'🔓 Unlock','إقفال الشهر ✓':'Close month ✓'
 };
 const I18N_RULES = [
   [/^مرحباً\s*(.*)$/, (m)=>'Welcome ' + m[1]],
