@@ -52,7 +52,7 @@
     background:linear-gradient(160deg,#0F7A69 0%,#0D6E5F 55%,#0A5A4D 100%);
     animation:splashOut .7s cubic-bezier(.5,0,.75,0) 1.9s forwards;
   }
-  #splash.done{display:none}
+  #splash.done{display:none!important}
   .splash-inner{display:flex;flex-direction:column;align-items:center;gap:14px;animation:splashIn .8s cubic-bezier(.18,.9,.32,1.2) both}
   .splash-logo{filter:drop-shadow(0 12px 30px rgba(0,0,0,.3));animation:splashFloat 2s ease-in-out infinite}
   .splash-name{font-size:2.4rem;font-weight:800;color:#fff;letter-spacing:1px;animation:splashText .7s ease .35s both}
@@ -60,7 +60,7 @@
   @keyframes splashIn{0%{opacity:0;transform:scale(.4)}60%{opacity:1}100%{opacity:1;transform:scale(1)}}
   @keyframes splashText{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
   @keyframes splashFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-  @keyframes splashOut{to{opacity:0;transform:translateY(-100vh)}}
+  @keyframes splashOut{to{opacity:0;transform:translateY(-100vh);visibility:hidden;pointer-events:none}}
   .perf .splash-logo{animation:none}
   .perf #splash{animation-delay:1.4s}
   @media (prefers-reduced-motion:reduce){#splash{animation:splashFade .4s ease 1.2s forwards}.splash-inner{animation:none}}
@@ -85,14 +85,24 @@
   #sky .stars{position:absolute;inset:0;opacity:0;transition:opacity 3s ease}
   #sky .sky-scene{position:absolute;left:-4%;bottom:0;width:108%;height:52%;transition:opacity 3s ease}
   #sky .mtn{transition:fill 3s ease}
-  #sky .mtn-far{fill:#6E7BB0}
-  #sky .mtn-mid{fill:#54608F}
-  #sky .mtn-near{fill:#3C466B}
-  #sky .trees path{fill:#2A2E4A}
-  #sky.is-moon .mtn-far{fill:#2E3556}
-  #sky.is-moon .mtn-mid{fill:#232948}
-  #sky.is-moon .mtn-near{fill:#191E38}
-  #sky.is-moon .trees path{fill:#12152A}
+  #sky .mtn-far{fill:var(--mtn1,#6E7BB0);transition:fill 3s ease}
+  #sky .mtn-mid{fill:var(--mtn2,#54608F);transition:fill 3s ease}
+  #sky .mtn-near{fill:var(--mtn3,#3C466B);transition:fill 3s ease}
+  #sky .trees path{fill:var(--mtn4,#2A2E4A);transition:fill 3s ease}
+
+  /* ---------- ذرات الفصول (ثلج / بتلات / أوراق) ---------- */
+  #skyParticles{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+  #skyParticles i{position:absolute;top:-6%;display:block;animation:fall linear infinite}
+  #skyParticles i.snow{width:7px;height:7px;border-radius:50%;background:#fff;opacity:.85}
+  #skyParticles i.petal{width:9px;height:7px;border-radius:60% 20% 60% 20%;background:#F8C6DA;opacity:.9}
+  #skyParticles i.leaf{width:10px;height:8px;border-radius:70% 20% 70% 20%;background:#D98A3B;opacity:.9}
+  @keyframes fall{
+    0%{transform:translateY(0) translateX(0) rotate(0);opacity:0}
+    10%{opacity:.95}
+    100%{transform:translateY(112vh) translateX(var(--drift,30px)) rotate(540deg);opacity:.15}
+  }
+  .perf #skyParticles{display:none}
+  @media (prefers-reduced-motion:reduce){#skyParticles{display:none}}
   #sky .sky-scene .mtn,#sky .sky-scene .trees{will-change:transform}
   #sky.is-moon .stars{opacity:1}
   #sky .star{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;animation:twinkle 3.5s ease-in-out infinite}
@@ -586,6 +596,26 @@
   .switch input:checked + .track{background:var(--primary)}
   .switch input:checked + .track + .knob{transform:translateX(-20px)}
 
+  /* ---------- فواتيري ---------- */
+  .bill{display:flex;align-items:center;gap:11px;padding:12px 2px;border-bottom:1px solid var(--line)}
+  .bill:last-child{border-bottom:none}
+  .bill .bl-chk{width:26px;height:26px;flex-shrink:0;border-radius:8px;border:2px solid var(--line);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.85rem;color:#fff;transition:all .18s}
+  .bill.paid .bl-chk{background:var(--primary);border-color:var(--primary)}
+  .bill .bl-main{flex:1;min-width:0}
+  .bill .bl-name{font-weight:700;font-size:.9rem}
+  .bill.paid .bl-name{text-decoration:line-through;color:var(--muted)}
+  .bill .bl-meta{font-size:.66rem;color:var(--muted);margin-top:2px}
+  .bill .bl-amt{font-weight:800;white-space:nowrap;font-size:.9rem}
+  .bill .bl-del{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:.85rem;padding:4px 6px;border-radius:8px}
+  .bill .bl-del:hover{background:var(--red-soft,#f9e6e6);color:var(--red,#c0392b)}
+  .bill.due-soon .bl-meta{color:#D99A2B;font-weight:700}
+  .bill.overdue .bl-meta{color:var(--red,#c0392b);font-weight:700}
+  .bl-stat{display:flex;justify-content:space-between;font-size:.82rem;padding:5px 0}
+  .bl-stat b{font-weight:800}
+  .bl-verdict{margin-top:10px;border-radius:var(--radius-sm);padding:12px 14px;font-size:.84rem;font-weight:700;text-align:center}
+  .bl-verdict.good{background:var(--primary-soft);color:var(--primary)}
+  .bl-verdict.bad{background:var(--red-soft,#f9e6e6);color:var(--red,#c0392b)}
+
   /* ---------- لوحة المشرف ---------- */
   .admin-stats{display:flex;gap:10px;margin:6px 0 4px}
   .astat{flex:1;background:var(--primary-soft);border-radius:var(--radius-sm);padding:12px;text-align:center}
@@ -636,6 +666,7 @@
 <div id="sky" aria-hidden="true">
   <div class="stars" id="skyStars"></div>
   <div class="sky-body" id="skyBody"></div>
+  <div id="skyParticles"></div>
   <svg class="sky-scene" id="skyScene" viewBox="0 0 1440 500" preserveAspectRatio="xMidYMax slice">
     <path class="mtn mtn-far" data-depth="6"  d="M0,330 L120,270 L240,310 L380,240 L520,300 L680,230 L820,300 L980,250 L1140,300 L1300,255 L1440,300 L1440,500 L0,500 Z"/>
     <path class="mtn mtn-mid" data-depth="12" d="M0,380 L160,300 L320,360 L480,285 L640,355 L820,290 L1000,360 L1180,300 L1360,360 L1440,320 L1440,500 L0,500 Z"/>
@@ -824,6 +855,29 @@
   </section>
 
   <!-- تبويب: الإعدادات -->
+  <!-- تبويب: فواتيري -->
+  <section class="tab" id="tab-bills">
+    <div class="card" id="billsSummary"></div>
+    <div class="card">
+      <div class="qh">
+        <h2 style="margin:0">🧾 فواتير الشهر</h2>
+        <button class="qh-add" id="btnCopyBills">⧉ انسخ الشهر الماضي</button>
+      </div>
+      <div class="hint" style="margin:2px 0 12px">اكتب فواتيرك المطلوبة هالشهر، وأشّر ✓ على اللي دفعته. الموقع يراقب إذا الباقي يكفّي للفواتير الباقية.</div>
+      <div id="billsList"></div>
+    </div>
+    <div class="card">
+      <h2>➕ إضافة فاتورة</h2>
+      <label>اسم الفاتورة</label>
+      <input type="text" id="blName" placeholder="مثلاً: كهرباء / إيجار / نت">
+      <div class="row" style="margin-top:10px">
+        <div><label>المبلغ</label><input type="tel" id="blAmount" inputmode="numeric" placeholder="0"></div>
+        <div><label>يوم الاستحقاق (اختياري)</label><input type="number" id="blDay" min="1" max="31" placeholder="مثلاً: 10"></div>
+      </div>
+      <button class="btn" id="btnAddBill">إضافة</button>
+    </div>
+  </section>
+
   <section class="tab" id="tab-settings">
     <div id="settingsBody"></div>
   </section>
@@ -833,6 +887,7 @@
   <button data-tab="tab-dash" class="active"><span class="ic">◫</span>اللوحة</button>
   <button data-tab="tab-add"><span class="ic">＋</span>مصروف</button>
   <button data-tab="tab-budget"><span class="ic">⚖</span>الميزانية</button>
+  <button data-tab="tab-bills" id="navBills"><span class="ic">🧾</span>فواتيري</button>
   <button data-tab="tab-settings"><span class="ic">⚙</span>الإعدادات</button>
 </nav>
 
@@ -1006,7 +1061,7 @@ function startRealtime(){
   if(!session || !session.hh) return;
   try{
     rtChannel = sb.channel('hh-' + session.hh);
-    ['expenses','budgets','categories','budget_incomes','debts','quick_buttons'].forEach(tbl => {
+    ['expenses','budgets','categories','budget_incomes','debts','quick_buttons','bills'].forEach(tbl => {
       rtChannel.on('postgres_changes',
         { event:'*', schema:'public', table:tbl, filter:'household_id=eq.' + session.hh },
         onRemoteChange);
@@ -1030,6 +1085,8 @@ function onRemoteChange(){
         state.debts = res.debts || [];
         render();
         loadQuick();
+        const bt = $('tab-bills');
+        if(bt && bt.classList.contains('active')) loadBills();
       }
     }catch(_){}
   }, 450);
@@ -1078,7 +1135,10 @@ async function apiPost(p){
       call = sb.rpc('return_debt', { p_id:p.id, p_date:p.date||'' });
       break;
     case 'addDeposit':
-      call = sb.rpc('add_deposit', { p_fund:p.fund, p_amount:p.amount, p_date:p.date||'', p_descr:p.desc||'' });
+      call = sb.rpc('add_deposit', { p_fund:p.fund, p_amount:p.amount, p_date:p.date||'', p_descr:p.desc||'', p_from_category:p.fromCategory||'' });
+      break;
+    case 'withdrawFund':
+      call = sb.rpc('withdraw_fund', { p_month:p.month, p_date:p.date, p_amount:p.amount, p_descr:p.desc||'', p_fund:p.fund, p_debt_account:p.debtAccount||'', p_to_category:p.toCategory||'' });
       break;
     case 'cancelDebt':
       call = sb.rpc('cancel_debt', { p_id:p.id });
@@ -1149,6 +1209,9 @@ async function loadMonth(month){
     state.expenses = res.expenses;
     state.debts = res.debts || [];
     render();
+    // الفواتير تعتمد على «الباقي للصرف» فنحدّثها بعد الرسم
+    const bt = $('tab-bills');
+    if(bt && bt.classList.contains('active')) loadBills();
   }catch(err){
     toast('ما كدرت أوصل للبيانات: ' + err.message, true);
   }finally{
@@ -1198,7 +1261,7 @@ function render(){
   let spendingSpent=0, fundDeposits=0;
   state.expenses.forEach(e => {
     if(!saveNames.has(e.category)) spendingSpent += e.amount;
-    else if(e.amount < 0 && String(e.desc||'').indexOf('إيداع') === 0) fundDeposits += -e.amount;
+    else if(e.amount < 0 && String(e.desc||'').indexOf('إيداع:') === 0) fundDeposits += -e.amount;
   });
 
   const totalSalary = (b.salaries && b.salaries.length)
@@ -1417,10 +1480,12 @@ function renderExpenseList(){
     const isWd  = saveNames.has(e.category);
     const isRet = e.amount < 0;
     const isDep = isRet && String(e.desc||'').indexOf('إيداع') === 0;
+    const isFund = isRet && !isWd && String(e.desc||'').indexOf('تمويل من صندوق') === 0;
+    const isToFund = !isRet && !isWd && String(e.desc||'').indexOf('إيداع لصندوق') === 0;
     const dotCls = isRet ? 'ret' : (isWd ? 'wd' : '');
-    const icon = isDep ? '💰' : (isRet ? '↩' : (isWd ? '🏦' : esc((e.category||'؟').charAt(0))));
+    const icon = isFund ? '💸' : (isToFund ? '🏦' : (isDep ? '💰' : (isRet ? '↩' : (isWd ? '🏦' : esc((e.category||'؟').charAt(0))))));
     const label = e.desc || (isDep ? 'إيداع' : (isRet ? 'إرجاع' : (isWd ? 'سحب' : 'بدون تفاصيل')));
-    const tag = isDep ? ' · إيداع' : (isRet ? ' · إرجاع' : (isWd ? ' · سحب' : ''));
+    const tag = isFund ? ' · تمويل' : (isToFund ? ' · لصندوق' : (isDep ? ' · إيداع' : (isRet ? ' · إرجاع' : (isWd ? ' · سحب' : ''))));
     expHtml += `
       <div class="exp" onclick="openEdit('${e.id}')">
         <div class="cat-dot ${dotCls}">${icon}</div>
@@ -1682,6 +1747,8 @@ window.openWithdraw = (idx) => {
   if(state.locked) return;
   const c = (state.budget.categories||[])[idx];
   if(!c) return;
+  const spendCats = (state.budget.categories||[]).filter(x => x.type !== 'save');
+  const catOpts = '<option value="">— بلا (بس اسحب) —</option>' + spendCats.map(x => `<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');
   modalOpen(`
     <h2>سحب من «${esc(c.name)}»</h2>
     <div class="hint" style="margin:0 0 8px">السحب ينقص رصيد الصندوق. لو سجّلته على حساب، يبقى مطلوب للصندوق لين ترجعه أو تشطبه.</div>
@@ -1689,7 +1756,10 @@ window.openWithdraw = (idx) => {
       <div><label>المبلغ</label><input type="tel" id="wdAmount" inputmode="numeric" placeholder="0"></div>
       <div><label>التاريخ</label><input type="date" id="wdDate" value="${todayISO()}"></div>
     </div>
-    <label>على حساب منو؟ (اختياري — للسحب كدين)</label>
+    <label>💸 أضف المبلغ لتصنيف مصروف (اختياري)</label>
+    <select id="wdTo">${catOpts}</select>
+    <div class="hint" style="margin:4px 0 0">لو اخترت تصنيف، المبلغ ينضاف لميزانيته وتصرفه منه وتسجّل وين راح.</div>
+    <label style="margin-top:10px">على حساب منو؟ (اختياري — للسحب كدين)</label>
     <input type="text" id="wdAcc" placeholder="مثلاً: سلفة لأخوي / حساب الراتب">
     <label>السبب (اختياري)</label><input type="text" id="wdDesc" placeholder="شنو الغرض؟">
     <button class="btn" id="wdSave">سحب</button>
@@ -1702,25 +1772,35 @@ window.openWithdraw = (idx) => {
     const date = $('wdDate').value || todayISO();
     const reason = $('wdDesc').value.trim();
     const acc = $('wdAcc').value.trim();
+    const toCat = $('wdTo').value;
     loading(true);
     try{
       const res = await apiPost({
-        action:'addExpense', month:date.slice(0,7), date, amount,
-        desc: reason ? ('سحب: '+reason) : (acc ? ('سحب على: '+acc) : 'سحب'),
-        category:c.name,
-        debtAccount: acc
+        action:'withdrawFund', month:date.slice(0,7), date, amount,
+        desc: reason ? ('سحب: '+reason) : (toCat ? ('سحب لـ'+toCat) : (acc ? ('سحب على: '+acc) : 'سحب')),
+        fund: c.name,
+        debtAccount: acc,
+        toCategory: toCat
       });
       if(guardAuth(res)) return;
       if(!res.ok) throw new Error(res.error || 'خطأ');
       modalClose();
-      toast(acc ? 'انسحب وانسجّل كدين ✓' : 'انسحب ✓');
+      toast(toCat ? ('انسحب وانضاف لـ«'+toCat+'» ✓ 💸') : (acc ? 'انسحب وانسجّل كدين ✓' : 'انسحب ✓'));
       await loadMonth(state.month);
     }catch(err){ toast('ما انسحب: ' + err.message, true); }
     finally{ loading(false); }
   };
 };
 
-/* ---------- إيداع بصندوق ادخار (محدود بالفائض المتاح) ---------- */
+/* ---------- المتاح بتصنيف مصروف (المخصص + المرحّل − المصروف) ---------- */
+function catAvailable(name){
+  const c = (state.budget.categories||[]).find(x => x.name === name && x.type !== 'save');
+  if(!c) return 0;
+  const spent = (state.expenses||[]).filter(e => e.category === name).reduce((a,e) => a + e.amount, 0);
+  return (Number(c.amount)||0) + (Number(c.carried)||0) - spent;
+}
+
+/* ---------- إيداع بصندوق ادخار — من الفائض أو من تصنيف مصروف ---------- */
 window.openDeposit = async (idx) => {
   if(state.locked) return;
   const c = (state.budget.categories||[])[idx];
@@ -1734,50 +1814,73 @@ window.openDeposit = async (idx) => {
   }catch(err){ loading(false); return toast('ما كدرت أحسب الفائض: ' + (err.message||''), true); }
   loading(false);
 
-  if(surplus <= 0){
+  // التصنيفات اللي عدها متاح موجب
+  const srcCats = (state.budget.categories||[])
+    .filter(x => x.type !== 'save')
+    .map(x => ({ name:x.name, avail: catAvailable(x.name) }))
+    .filter(x => x.avail > 0);
+
+  if(surplus <= 0 && !srcCats.length){
     modalOpen(`
       <h2>إيداع بـ «${esc(c.name)}» 💰</h2>
-      <div class="empty" style="padding:20px 6px">ماكو فائض متاح تودّعه هالشهر 🚫<br>كل فلوسك موزّعة على المصاريف والادخار.<br><br>حتى تودّع، لازم يكون عندك فائض: زيّد دخلك من «الإيرادات الإضافية» بتبويب الميزانية، أو قلّل التوزيع.</div>
+      <div class="empty" style="padding:20px 6px">ماكو فلوس متاحة تودّعها هالشهر 🚫<br>لا فائض ولا باقي بأي تصنيف.<br><br>زيّد دخلك من «الإيرادات الإضافية» بتبويب الميزانية، أو قلّل التوزيع.</div>
       <button class="btn ghost" onclick="modalClose()">تمام</button>
     `);
     return;
   }
 
+  const srcOpts = (surplus > 0 ? `<option value="">الفائض غير الموزّع (${fmt(surplus)})</option>` : '')
+    + srcCats.map(x => `<option value="${esc(x.name)}">من «${esc(x.name)}» (${fmt(x.avail)})</option>`).join('');
+
   modalOpen(`
     <h2>إيداع بـ «${esc(c.name)}» 💰</h2>
-    <div class="hint" style="margin:0 0 6px">تودّع من فائض فلوسك غير الموزّعة — الحد الأقصى هالشهر: <b style="color:var(--primary)">${fmt(surplus)}</b>. المبلغ يزيد رصيد الصندوق وما يأثر على صرفك.</div>
-    <div class="row">
+    <label>مصدر الفلوس</label>
+    <select id="dpSrc">${srcOpts}</select>
+    <div class="hint" id="dpHint" style="margin:6px 0 0"></div>
+    <div class="row" style="margin-top:10px">
       <div><label>المبلغ</label><input type="tel" id="dpAmount" inputmode="numeric" placeholder="0"></div>
       <div><label>التاريخ</label><input type="date" id="dpDate" value="${todayISO()}"></div>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
-      <button class="btn ghost" id="dpMax" style="margin:0;width:auto;padding:8px 14px;font-size:.75rem">إيداع كل الفائض (${fmt(surplus)})</button>
+      <button class="btn ghost" id="dpMax" style="margin:0;width:auto;padding:8px 14px;font-size:.75rem">كل المتاح</button>
       <span class="hint" id="dpLeft" style="margin:0"></span>
     </div>
-    <label>المصدر / السبب (اختياري)</label>
-    <input type="text" id="dpDesc" placeholder="مثلاً: من بيع غرض / رجعتلي سلفة">
+    <label>السبب (اختياري)</label>
+    <input type="text" id="dpDesc" placeholder="مثلاً: من بيع غرض / وفّرت من الأكل">
     <button class="btn" id="dpSave">إيداع</button>
     <button class="btn ghost" onclick="modalClose()">إلغاء</button>
   `);
   liveFormat($('dpAmount'));
-  const updateLeft = () => {
-    const v = num($('dpAmount').value);
-    $('dpLeft').textContent = v > surplus ? '⚠ أكثر من الفائض' : (v > 0 ? 'يتبقى ' + fmt(surplus - v) : '');
-    $('dpLeft').style.color = v > surplus ? 'var(--red)' : 'var(--muted)';
+
+  const capNow = () => {
+    const s = $('dpSrc').value;
+    return s === '' ? surplus : (srcCats.find(x => x.name === s)?.avail || 0);
   };
-  $('dpAmount').addEventListener('input', updateLeft);
-  $('dpMax').onclick = () => { $('dpAmount').value = surplus.toLocaleString('en-US'); updateLeft(); };
+  const refresh = () => {
+    const s = $('dpSrc').value, cap = capNow();
+    $('dpHint').innerHTML = s === ''
+      ? `تودّع من فلوسك غير الموزّعة — المتاح: <b style="color:var(--primary)">${fmt(cap)}</b>. الصندوق يزيد و«الباقي للصرف» ينقص.`
+      : `تودّع من ميزانية «${esc(s)}» — المتاح: <b style="color:var(--primary)">${fmt(cap)}</b>. ميزانية التصنيف تنقص والصندوق يزيد.`;
+    const v = num($('dpAmount').value);
+    $('dpLeft').textContent = v > cap ? '⚠ أكثر من المتاح' : (v > 0 ? 'يتبقى ' + fmt(cap - v) : '');
+    $('dpLeft').style.color = v > cap ? 'var(--red)' : 'var(--muted)';
+  };
+  refresh();
+  $('dpSrc').addEventListener('change', refresh);
+  $('dpAmount').addEventListener('input', refresh);
+  $('dpMax').onclick = () => { $('dpAmount').value = capNow().toLocaleString('en-US'); refresh(); };
   $('dpSave').onclick = async () => {
     const amount = num($('dpAmount').value);
+    const cap = capNow(), from = $('dpSrc').value;
     if(amount <= 0) return toast('دخّل المبلغ', true);
-    if(amount > surplus) return toast('المبلغ أكثر من الفائض المتاح (' + fmt(surplus) + ')', true);
+    if(amount > cap) return toast('المبلغ أكثر من المتاح (' + fmt(cap) + ')', true);
     loading(true);
     try{
-      const res = await apiPost({ action:'addDeposit', fund:c.name, amount, date: $('dpDate').value || todayISO(), desc: $('dpDesc').value.trim() });
+      const res = await apiPost({ action:'addDeposit', fund:c.name, amount, date: $('dpDate').value || todayISO(), desc: $('dpDesc').value.trim(), fromCategory: from });
       if(guardAuth(res)) return;
       if(!res.ok) throw new Error(res.error || 'خطأ');
       modalClose();
-      toast('انضاف للرصيد ✓ 💰');
+      toast(from ? ('انتقل من «'+from+'» للصندوق ✓ 💰') : 'انضاف للرصيد ✓ 💰');
       sndHappy();
       await loadMonth(state.month);
     }catch(err){ toast('ما انضاف: ' + err.message, true); }
@@ -1954,6 +2057,15 @@ function renderSettings(){
         <span class="st-lbl">🕰 شكل الساعة (بالكمبيوتر) — ${clockName}</span>
         <button class="btn ghost" id="btnClockS" style="margin:0;width:auto;padding:8px 16px">غيّر الشكل</button>
       </div>
+      <div class="set-toggle">
+        <span class="st-lbl">🧾 أظهر تبويب «فواتيري»</span>
+        <label class="switch"><input type="checkbox" id="billsToggle" ${BILLS_ON?'checked':''}><span class="track"></span><span class="knob"></span></label>
+      </div>
+      <label style="margin-top:12px">🌤 ثيم الخلفية (الفصول)</label>
+      <select id="seasonSel">
+        ${Object.keys(SKY_THEMES).map(k => `<option value="${k}">${SKY_THEMES[k].name}</option>`).join('')}
+      </select>
+      <div class="hint" style="margin-top:4px">«تلقائي» يغيّر السماء مع ساعة اليوم (شمس وقمر ونجوم). باقي الثيمات ثابتة بمزاج الفصل.</div>
     </div>
 
     <div class="card">
@@ -2015,6 +2127,16 @@ function renderSettings(){
     };
   }
   $('btnLangS').onclick = toggleLang;
+  if($('seasonSel')){
+    $('seasonSel').value = skySeason;
+    $('seasonSel').onchange = (e) => { setSeason(e.target.value); toast('انتغيّر الثيم ✓ 🌤'); };
+  }
+  if($('billsToggle')) $('billsToggle').onchange = (e) => {
+    BILLS_ON = e.target.checked;
+    localStorage.setItem('mas_bills', BILLS_ON ? 'on' : 'off');
+    applyBillsVisible();
+    toast(BILLS_ON ? 'ظهر تبويب فواتيري ✓' : 'انخفى تبويب فواتيري');
+  };
   $('btnClockS').onclick = () => {
     clockIdx = (clockIdx + 1) % CLOCK_SKINS.length;
     localStorage.setItem('mas_clock', clockIdx);
@@ -2130,7 +2252,7 @@ function buildReportHTML(){
   cats.forEach(c => { if(c.type==='save') saveContrib+=(c.amount||0); else spendCarried+=(c.carried||0); });
   state.expenses.forEach(e => {
     if(!saveNames.has(e.category)) spendingSpent += e.amount;
-    else if(e.amount < 0 && String(e.desc||'').indexOf('إيداع') === 0) fundDeposits += -e.amount;
+    else if(e.amount < 0 && String(e.desc||'').indexOf('إيداع:') === 0) fundDeposits += -e.amount;
   });
   const totalSalary = (b.salaries && b.salaries.length)
     ? b.salaries.reduce((s,x)=> s + (Number(x.amount)||0), 0)
@@ -2401,6 +2523,7 @@ document.querySelectorAll('nav button').forEach(btn => {
     btn.classList.add('active');
     $(btn.dataset.tab).classList.add('active');
     if(btn.dataset.tab === 'tab-settings') renderSettings();
+    if(btn.dataset.tab === 'tab-bills') loadBills();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 });
@@ -2431,6 +2554,103 @@ $('fltBy').addEventListener('change', renderExpenseList);
 
 /* ---------- الأزرار السريعة ---------- */
 let quickItems = [], quickEditing = false;
+/* ============================================================
+   فواتيري — فواتير الشهر ومتابعة الدفع
+   ============================================================ */
+let billsItems = [];
+let BILLS_ON = localStorage.getItem('mas_bills') !== 'off';   // ظاهر افتراضياً
+function applyBillsVisible(){
+  const nb = $('navBills');
+  if(nb) nb.style.display = BILLS_ON ? '' : 'none';
+  // لو كان مفتوح وانطفى، رجّعه للوحة
+  if(!BILLS_ON){
+    const bt = $('tab-bills');
+    if(bt && bt.classList.contains('active')){
+      document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      const db = document.querySelector('nav button[data-tab="tab-dash"]');
+      if(db) db.classList.add('active');
+      const dt = $('tab-dash'); if(dt) dt.classList.add('active');
+    }
+  }
+}
+async function loadBills(){
+  try{
+    const { data, error } = await sb.rpc('list_bills', { p_month: state.month });
+    if(error) throw error;
+    billsItems = data || [];
+  }catch(_){ billsItems = []; }
+  renderBills();
+}
+function renderBills(){
+  const list = $('billsList'), sum = $('billsSummary');
+  if(!list || !sum) return;
+
+  const total  = billsItems.reduce((a,b)=> a + (Number(b.amount)||0), 0);
+  const paid   = billsItems.filter(b=>b.paid).reduce((a,b)=> a + (Number(b.amount)||0), 0);
+  const unpaid = total - paid;
+  const avail  = state._surplus || 0;
+  const diff   = avail - unpaid;
+  const today  = new Date().getDate();
+
+  sum.innerHTML = `
+    <h2 style="margin-top:0">🧾 ملخص فواتير ${esc(state.month)}</h2>
+    <div class="bl-stat"><span>إجمالي الفواتير</span><b>${fmt(total)}</b></div>
+    <div class="bl-stat"><span>✓ المدفوع</span><b style="color:var(--primary)">${fmt(paid)}</b></div>
+    <div class="bl-stat"><span>⏳ الباقي عليك</span><b style="color:${unpaid>0?'var(--red,#c0392b)':'var(--primary)'}">${fmt(unpaid)}</b></div>
+    <div class="bl-stat"><span>💵 الباقي للصرف عندك</span><b>${fmt(avail)}</b></div>
+    ${billsItems.length ? (unpaid <= 0
+      ? `<div class="bl-verdict good">🎉 دفعت كل فواتير الشهر — عاشت إيدك!</div>`
+      : (diff >= 0
+        ? `<div class="bl-verdict good">✅ فلوسك تكفّي الفواتير الباقية، ويظل عندك ${fmt(diff)}</div>`
+        : `<div class="bl-verdict bad">⚠️ الفلوس ما تكفّي — ناقصك ${fmt(-diff)} للفواتير الباقية</div>`)) : ''}
+  `;
+
+  if(!billsItems.length){
+    list.innerHTML = '<div class="empty" style="padding:14px">ماكو فواتير مسجلة هالشهر — أضف وحدة من تحت، أو انسخ فواتير الشهر الماضي.</div>';
+    return;
+  }
+  list.innerHTML = billsItems.map(b => {
+    let cls = b.paid ? 'paid' : '';
+    let meta = '';
+    if(b.dueDay){
+      const left = b.dueDay - today;
+      if(!b.paid && left < 0){ cls += ' overdue'; meta = 'فات موعدها (يوم ' + b.dueDay + ')'; }
+      else if(!b.paid && left <= 3){ cls += ' due-soon'; meta = left === 0 ? 'تستحق اليوم!' : 'باقي ' + left + ' يوم (يوم ' + b.dueDay + ')'; }
+      else meta = 'يوم ' + b.dueDay + ' بالشهر';
+    }
+    return `
+      <div class="bill ${cls}">
+        <button class="bl-chk" onclick="toggleBill('${b.id}', ${!b.paid})">${b.paid ? '✓' : ''}</button>
+        <div class="bl-main">
+          <div class="bl-name">${esc(b.name)}</div>
+          ${meta ? `<div class="bl-meta">${esc(meta)}</div>` : ''}
+        </div>
+        <div class="bl-amt">${fmt(b.amount)}</div>
+        <button class="bl-del" onclick="deleteBill('${b.id}','${esc(b.name).replace(/'/g,"\\'")}')" aria-label="حذف">✕</button>
+      </div>`;
+  }).join('');
+}
+window.toggleBill = async (id, paid) => {
+  const b = billsItems.find(x=>x.id===id);
+  if(b){ b.paid = paid; renderBills(); }   // تحديث فوري بالواجهة
+  try{
+    const { error } = await sb.rpc('toggle_bill', { p_id:id, p_paid:paid });
+    if(error) throw error;
+    if(paid) sndHappy();
+  }catch(err){ toast('ما انحفظ: ' + err.message, true); loadBills(); }
+};
+window.deleteBill = async (id, name) => {
+  if(!confirm('حذف فاتورة «' + name + '»؟')) return;
+  try{
+    const { error } = await sb.rpc('delete_bill', { p_id:id });
+    if(error) throw error;
+    billsItems = billsItems.filter(x=>x.id!==id);
+    renderBills();
+    toast('انحذفت ✓'); sndTick();
+  }catch(err){ toast('ما انحذفت: ' + err.message, true); }
+};
+
 async function loadQuick(){
   try{
     const { data, error } = await sb.rpc('list_quick');
@@ -2563,6 +2783,35 @@ window.delExpense = async (id) => {
 
 $('btnAddCat').onclick = () => addRow('spend','','',0);
 $('btnAddQuick').onclick = openAddQuick;
+liveFormat($('blAmount'));
+$('btnAddBill').onclick = async () => {
+  const name = $('blName').value.trim();
+  const amount = num($('blAmount').value);
+  const day = parseInt($('blDay').value, 10) || null;
+  if(!name) return toast('دخّل اسم الفاتورة', true);
+  loading(true);
+  try{
+    const { error } = await sb.rpc('add_bill', { p_month: state.month, p_name: name, p_amount: amount, p_due_day: day });
+    if(error) throw new Error(error.message);
+    $('blName').value=''; $('blAmount').value=''; $('blDay').value='';
+    toast('انضافت الفاتورة ✓ 🧾');
+    await loadBills();
+  }catch(err){ toast('ما انضافت: ' + err.message, true); }
+  finally{ loading(false); }
+};
+$('btnCopyBills').onclick = async () => {
+  const [y,m] = state.month.split('-').map(Number);
+  const d = new Date(y, m-2, 1);
+  const prev = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  loading(true);
+  try{
+    const { data, error } = await sb.rpc('copy_bills', { p_from: prev, p_to: state.month });
+    if(error) throw new Error(error.message);
+    toast(data ? ('انتسخت ' + data + ' فاتورة ✓') : 'ماكو فواتير جديدة تنتسخ', !data);
+    await loadBills();
+  }catch(err){ toast('ما انتسخت: ' + err.message, true); }
+  finally{ loading(false); }
+};
 $('btnAddSave').onclick = () => addRow('save','','',0);
 $('btnAddIncome').onclick = () => { addIncomeRow('', 0); updateAlloc(); };
 $('btnAddSalary').onclick = () => { addSalaryRow('', ''); updateAlloc(); };
@@ -2686,6 +2935,12 @@ const I18N = {
   'أضف راتب كل شخص بالعائلة — تكدر تضيف أو تحذف حسب عدد أفرادكم.':'Add each family member\'s salary — add or remove as many as you need.',
   'اسمك المعروض':'Your display name','اسمك':'Your name','حفظ':'Save','انتغيّر الاسم ✓':'Name changed ✓','دخّل الاسم':'Enter the name','نفس الاسم الحالي':'Same as current name',
   '🎨 غيّر شكل الساعة':'🎨 Change clock style',
+  'فواتيري':'My Bills','🧾 فواتير الشهر':'🧾 This month\'s bills','➕ إضافة فاتورة':'➕ Add a bill','اسم الفاتورة':'Bill name','يوم الاستحقاق (اختياري)':'Due day (optional)','⧉ انسخ الشهر الماضي':'⧉ Copy last month','إضافة':'Add',
+  'إجمالي الفواتير':'Total bills','✓ المدفوع':'✓ Paid','⏳ الباقي عليك':'⏳ Still owed','💵 الباقي للصرف عندك':'💵 Your left to spend',
+  '🧾 أظهر تبويب «فواتيري»':'🧾 Show the "My Bills" tab','🌤 ثيم الخلفية (الفصول)':'🌤 Background theme (seasons)',
+  'تلقائي (حسب الوقت) ☀️🌙':'Auto (by time of day) ☀️🌙','ربيع 🌸':'Spring 🌸','صيف ☀️':'Summer ☀️','خريف 🍂':'Autumn 🍂','شتاء ❄️':'Winter ❄️',
+  '💸 أضف المبلغ لتصنيف مصروف (اختياري)':'💸 Add the amount to a spending category (optional)','— بلا (بس اسحب) —':'— None (just withdraw) —',
+  'مصدر الفلوس':'Money source','كل المتاح':'All available','انتغيّر الثيم ✓ 🌤':'Theme changed ✓ 🌤',
   '⏱ تسجيل الخروج التلقائي عند الخمول':'⏱ Auto-logout when idle','لا يطلّع أبداً':'Never','بعد دقيقتين':'After 2 minutes','بعد ٥ دقائق':'After 5 minutes','بعد ١٠ دقائق':'After 10 minutes','بعد ٣٠ دقيقة':'After 30 minutes','بعد ساعة':'After 1 hour',
   '💾 نسخة احتياطية كاملة (ملف)':'💾 Full backup (file)','⇄ نقل من هذا التصنيف':'⇄ Transfer from this category','إلى تصنيف':'To category','نقل':'Transfer','🔓 فك القفل':'🔓 Unlock','إقفال الشهر ✓':'Close month ✓'
 };
@@ -2951,19 +3206,79 @@ function buildStars(){
   box.innerHTML = html;
   skyStarsBuilt = true;
 }
+/* ============================================================
+   ثيمات الفصول — «تلقائي» يتبع ساعة اليوم، وباقي الثيمات ثابتة
+   ============================================================ */
+const SKY_THEMES = {
+  auto:   { name:'تلقائي (حسب الوقت) ☀️🌙' },
+  spring: { name:'ربيع 🌸', grad:'linear-gradient(160deg,#A9E3F7 0%,#DCF3E4 55%,#FDEAF2 100%)',
+            body:'sun',  x:38, y:20, mtn:['#8FBE93','#6C9E76','#4E7A58','#36573E'], particles:'petal' },
+  summer: { name:'صيف ☀️',  grad:'linear-gradient(160deg,#63C8F0 0%,#B6E7FB 50%,#FFF3C9 100%)',
+            body:'sun',  x:52, y:11, mtn:['#7BA3B8','#587F98','#3E5F76','#2A4657'], particles:null },
+  autumn: { name:'خريف 🍂', grad:'linear-gradient(160deg,#F4CE93 0%,#E9A96B 50%,#C87E55 100%)',
+            body:'sun',  x:72, y:40, mtn:['#B4855A','#8E6444','#6B4832','#4A3122'], particles:'leaf' },
+  winter: { name:'شتاء ❄️', grad:'linear-gradient(160deg,#BFD8E8 0%,#E1EDF6 55%,#F7FBFD 100%)',
+            body:'sun',  x:64, y:26, mtn:['#C3D3DF','#9BB0C1','#75899C','#566A7C'], particles:'snow' }
+};
+// ألوان الجبال بالوضع التلقائي (نهار / ليل)
+const AUTO_MTN_DAY   = ['#6E7BB0','#54608F','#3C466B','#2A2E4A'];
+const AUTO_MTN_NIGHT = ['#2E3556','#232948','#191E38','#12152A'];
+
+let skySeason = localStorage.getItem('mas_season') || 'auto';
+let particlesKind = null;
+function buildParticles(kind){
+  const box = $('skyParticles');
+  if(!box) return;
+  if(particlesKind === kind) return;   // ما نعيد البناء بلا داعي
+  particlesKind = kind;
+  if(!kind){ box.innerHTML = ''; return; }
+  let html = '';
+  for(let i=0;i<26;i++){
+    const left = (Math.random()*100).toFixed(1);
+    const dur = (7 + Math.random()*9).toFixed(1);
+    const delay = (Math.random()*10).toFixed(1);
+    const drift = (Math.random()*90 - 45).toFixed(0);
+    const sc = (0.6 + Math.random()*0.8).toFixed(2);
+    html += `<i class="${kind}" style="left:${left}%;animation-duration:${dur}s;animation-delay:-${delay}s;--drift:${drift}px;scale:${sc}"></i>`;
+  }
+  box.innerHTML = html;
+}
+function setSeason(s){
+  skySeason = s;
+  localStorage.setItem('mas_season', s);
+  updateSky();
+}
 function updateSky(){
   const sky = $('sky'), bodyEl = $('skyBody');
   if(!sky || !bodyEl) return;
   document.body.classList.add('sky-on');
   buildStars();
   buildTrees();
-  const p = skyPhaseFor(new Date().getHours());
-  sky.style.background = p.grad;
-  sky.classList.toggle('is-sun', p.sun);
-  sky.classList.toggle('is-moon', !p.sun);
-  bodyEl.style.left = p.x + '%';
-  bodyEl.style.top = p.y + '%';
+
+  const th = SKY_THEMES[skySeason];
+  let grad, isSun, x, y, mtn, parts;
+
+  if(!th || skySeason === 'auto'){
+    const p = skyPhaseFor(new Date().getHours());
+    grad = p.grad; isSun = p.sun; x = p.x; y = p.y;
+    mtn = p.sun ? AUTO_MTN_DAY : AUTO_MTN_NIGHT;
+    parts = null;
+  }else{
+    grad = th.grad; isSun = th.body !== 'moon'; x = th.x; y = th.y;
+    mtn = th.mtn; parts = th.particles;
+  }
+
+  sky.style.background = grad;
+  sky.classList.toggle('is-sun', isSun);
+  sky.classList.toggle('is-moon', !isSun);
+  bodyEl.style.left = x + '%';
+  bodyEl.style.top = y + '%';
   bodyEl.style.transform = 'translateX(-50%)';
+  sky.style.setProperty('--mtn1', mtn[0]);
+  sky.style.setProperty('--mtn2', mtn[1]);
+  sky.style.setProperty('--mtn3', mtn[2]);
+  sky.style.setProperty('--mtn4', mtn[3]);
+  buildParticles(parts);
 }
 
 /* ============================================================
@@ -3092,16 +3407,20 @@ if(/Android/i.test(navigator.userAgent)) document.documentElement.classList.add(
 // شيل شاشة الافتتاح بعد ما تخلص حركتها (حتى ما تعيق الضغط)
 (function(){
   const sp = document.getElementById('splash');
-  if(sp){ const t = document.documentElement.classList.contains('perf') ? 2300 : 2900;
-    setTimeout(() => sp.classList.add('done'), t); }
+  if(!sp) return;
+  const kill = () => sp.classList.add('done');
+  const t = document.documentElement.classList.contains('perf') ? 2300 : 2900;
+  setTimeout(kill, t);
+  setTimeout(kill, 4000);
+  window.addEventListener('load', () => setTimeout(kill, t));
 })();
 loadTheme();
 apiReady();
-applyLangBoot();
-startDeco();
-updateSky();
-setInterval(updateSky, 5 * 60 * 1000);
-initDepth();
+try{ applyLangBoot(); }catch(e){}
+try{ applyBillsVisible(); }catch(e){}
+try{ startDeco(); }catch(e){}
+try{ updateSky(); setInterval(updateSky, 5 * 60 * 1000); }catch(e){}
+try{ initDepth(); }catch(e){}
 (async () => {
   try{
     const { data:{ session: s } } = await sb.auth.getSession();
