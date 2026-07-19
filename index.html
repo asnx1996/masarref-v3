@@ -40,13 +40,14 @@
     --bg:#101216;
     --bg-2:#15181D;
     --card:#1B1F26;
-    --ink:#ECEDEF;
-    --muted:#98A0AB;
+    --ink:#FFFFFF;
+    --muted:#C9CFD8;
     --line:#2B3039;
-    --primary-soft:color-mix(in srgb, var(--primary) 20%, #1B1F26);
+    --primary-soft:color-mix(in srgb, var(--primary) 24%, #1B1F26);
     --red-soft:#3A2527;
     --shadow:0 1px 2px rgba(0,0,0,.35), 0 4px 16px rgba(0,0,0,.30);
     --shadow-lg:0 8px 40px rgba(0,0,0,.55);
+    color:#fff;
   }
   body.dark input,body.dark select{background:#232830;color:var(--ink);border-color:var(--line)}
   body.dark input::placeholder{color:#6E7580}
@@ -55,6 +56,9 @@
   body.dark .hstat.main .lbl{opacity:.75}
   body.dark .warn-btn{background:var(--card)}
   body.dark ::-webkit-calendar-picker-indicator{filter:invert(1)}
+  body.dark .rc-diff.warn,body.dark .rc-badge.extra{background:#3A3320;color:#F0C063}
+  body.dark .save-head span{color:color-mix(in srgb, var(--primary) 55%, #fff)}
+  body.dark .lg-item:hover,body.dark .lg-item.on{outline-color:color-mix(in srgb, var(--primary) 60%, #fff)}
   html{-webkit-text-size-adjust:100%}
   body{
     font-family:'Alexandria',-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;
@@ -267,6 +271,13 @@
   .legend{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:14px;font-size:.72rem;color:var(--muted)}
   .lg-item{display:flex;align-items:center;gap:5px}
   .lg-item b{color:var(--ink);font-weight:700;margin-right:2px}
+  .dseg{cursor:pointer;transition:opacity .18s}
+  .donut:not(.has-filter) .dseg:hover{opacity:.75}
+  .lg-item{cursor:pointer;border-radius:9px;padding:3px 7px;margin:-3px -7px;transition:background .15s}
+  .lg-item:hover{background:var(--primary-soft)}
+  .lg-item.on{background:var(--primary-soft);outline:1.5px solid var(--primary)}
+  .lg-clear{margin-top:12px;border:1.5px solid var(--line);background:var(--card);color:var(--muted);border-radius:11px;padding:8px 14px;font-family:inherit;font-weight:700;font-size:.72rem;cursor:pointer}
+  .lg-clear:hover{border-color:var(--red);color:var(--red)}
   .lg-dot{width:9px;height:9px;border-radius:3px;display:inline-block}
 
   /* ---------- ظروف الميزانية (الداشبورد) ---------- */
@@ -1338,7 +1349,7 @@ function donutSVG(parts){
   let off = 0, segs = '';
   parts.forEach((p,i) => {
     const len = (p.value/total) * c;
-    segs += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${PALETTE[i%PALETTE.length]}" stroke-width="18" stroke-dasharray="${len.toFixed(2)} ${(c-len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"/>`;
+    segs += `<circle class="dseg" data-cat="${esc(p.label)}" cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${PALETTE[i%PALETTE.length]}" stroke-width="18" stroke-dasharray="${len.toFixed(2)} ${(c-len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"><title>${esc(p.label)} — ${p.value.toLocaleString('en-US')}</title></circle>`;
     off += len;
   });
   return `<svg viewBox="0 0 128 128" width="100%" height="100%">${segs}`+
@@ -1399,12 +1410,13 @@ function render(){
   const prog = monthProgress(state.month);
   const dailyAvg = prog.elapsed > 0 ? Math.round(spendingSpent / prog.elapsed) : 0;
   const canDaily = prog.left > 0 ? Math.max(0, Math.round(remain / prog.left)) : 0;
-  const legend = donutParts.map((p,i)=>`<span class="lg-item"><span class="lg-dot" style="background:${PALETTE[i%PALETTE.length]}"></span><b>${esc(p.label)}</b>${fmt(p.value)}</span>`).join('');
+  const activeCat = ($('fltCat') && $('fltCat').value) || '';
+  const legend = donutParts.map((p,i)=>`<span class="lg-item${activeCat===p.label?' on':''}" data-cat="${esc(p.label)}"><span class="lg-dot" style="background:${PALETTE[i%PALETTE.length]}"></span><b>${esc(p.label)}</b>${fmt(p.value)}</span>`).join('');
 
   $('summaryCard').innerHTML = `
     <div class="card sum-card depth">
       <div class="sum-top">
-        <div class="donut">${donutSVG(donutParts)}</div>
+        <div class="donut${activeCat?' has-filter':''}" ${activeCat?`data-active="${esc(activeCat)}"`:''}>${donutSVG(donutParts)}</div>
         <div class="sum-stats">
           <div class="ss"><span>المعدل اليومي</span><b>${fmt(dailyAvg)}</b></div>
           <div class="ss"><span>باقي بالشهر</span><b>${prog.left} يوم</b></div>
@@ -1412,7 +1424,20 @@ function render(){
         </div>
       </div>
       ${legend ? `<div class="legend">${legend}</div>` : ''}
+      ${activeCat ? `<button class="lg-clear" onclick="filterByCat('')">✕ إلغاء الفلتر «${esc(activeCat)}»</button>` : ''}
     </div>`;
+  // الرسم تفاعلي — دوس على قطعة أو اسم بالمفتاح حتى تنفلتر المصاريف
+  $('summaryCard').onclick = (ev) => {
+    const t = ev.target.closest('[data-cat]');
+    if(!t) return;
+    filterByCat(t.dataset.cat);
+  };
+  const dn = document.querySelector('.donut.has-filter');
+  if(dn){
+    dn.querySelectorAll('.dseg').forEach(sg => {
+      if(sg.dataset.cat !== dn.dataset.active) sg.style.opacity = '.25';
+    });
+  }
 
   /* ===== ظروف المصاريف ===== */
   let envHtml = '';
@@ -1583,6 +1608,26 @@ function buildFilterOptions(){
   fb.value = curB;
   $('filterBar').style.display = state.expenses.length ? 'flex' : 'none';
 }
+
+/* ---------- فلترة من الرسم الدائري ---------- */
+window.filterByCat = (name) => {
+  const fc = $('fltCat');
+  if(!fc) return;
+  if(name === 'أخرى'){ toast('«أخرى» تجمع كذا تصنيف — اختار التصنيف من قائمة الفلتر', true); return; }
+  if(name && fc.value === name) name = '';   // دوس مرة ثانية = إلغاء
+  if(name && ![...fc.options].some(o => o.value === name)){
+    toast('ماكو مصاريف بهذا التصنيف حتى تنفلتر', true); return;
+  }
+  fc.value = name || '';
+  render();   // يعيد رسم اللوحة + القائمة مع تظليل التصنيف المختار
+  if(name){
+    toast('مفلتر على «' + name + '» 🔎');
+    const el = $('expList');
+    if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+  }else{
+    toast('انلغى الفلتر ✓');
+  }
+};
 
 /* ---------- قائمة المصاريف (مع الفلتر) ---------- */
 function renderExpenseList(){
@@ -1782,8 +1827,19 @@ window.openEdit = (id) => {
   if(state.locked) return;
   const e = state.expenses.find(x => x.id === id);
   if(!e) return;
-  if(e.amount < 0){ toast('حركة صندوق (إيداع/إرجاع) — تكدر تحذفها من زر ✕ بس ما تنعدّل', true); return; }
   const cats = (state.budget.categories||[]);
+  const saveNames = new Set(cats.filter(c=>c.type==='save').map(c=>c.name));
+  // سحب أو قرض على صندوق → المحرر المتزامن (يضبط الدين والتمويل)
+  if(e.amount > 0 && saveNames.has(e.category)) return openEditWithdraw(e.id);
+  // حركة «تمويل من صندوق» → نلكه السحب الأصلي ونفتحه — تعديله يعدّل التمويل تلقائياً
+  const fm = e.amount < 0 ? String(e.desc||'').match(/^تمويل من صندوق «(.+)»/) : null;
+  if(fm){
+    const w = state.expenses.find(x => x.id !== e.id && x.category === fm[1] && x.amount === -e.amount && x.date === e.date);
+    if(w) return openEditWithdraw(w.id);
+    toast('هاي حركة تمويل مرتبطة بسحب — عدّل السحب نفسه من سجل الصندوق ☰', true);
+    return;
+  }
+  if(e.amount < 0){ toast('حركة صندوق (إيداع/إرجاع) — تكدر تحذفها من زر ✕ بس ما تنعدّل', true); return; }
   const opts = '<option value="">— بلا تصنيف —</option>' +
     cats.map(c => `<option value="${esc(c.name)}" ${c.name===e.category?'selected':''}>${esc(c.name)}${c.type==='save'?' (ادخار)':''}</option>`).join('');
   modalOpen(`
@@ -2104,6 +2160,9 @@ window.openEditWithdraw = (id, fundIdx) => {
   const e = (state.expenses||[]).find(x => x.id === id);
   if(!e) return;
   const isLoan = String(e.desc||'').indexOf('قرض') === 0;
+  const backBtn = (fundIdx == null)
+    ? `<button class="btn ghost" onclick="modalClose()">إلغاء</button>`
+    : `<button class="btn ghost" onclick="openFundLog(${fundIdx})">رجوع</button>`;
   modalOpen(`
     <h2>تعديل ${isLoan?'القرض':'السحب'} ✎</h2>
     <div class="hint" style="margin:0 0 8px">أي تغيير هنا ينضبط تلقائياً على: رصيد الصندوق، والدين/القرض المرتبط، وتمويل التصنيف إذا موجود.</div>
@@ -2113,7 +2172,7 @@ window.openEditWithdraw = (id, fundIdx) => {
     </div>
     <label>التفاصيل</label><input type="text" id="ewDesc" value="${esc(e.desc||'')}">
     <button class="btn" id="ewSave">حفظ التعديل</button>
-    <button class="btn ghost" onclick="openFundLog(${fundIdx})">رجوع</button>
+    ${backBtn}
   `);
   liveFormat($('ewAmount'));
   setTimeout(() => { try{ $('ewAmount').focus(); }catch(_){} }, 260);
@@ -2814,7 +2873,7 @@ $('monthPick').onchange = e => loadMonth(e.target.value || thisMonth());
 
 /* فلتر المصاريف */
 $('fltText').addEventListener('input', renderExpenseList);
-$('fltCat').addEventListener('change', renderExpenseList);
+$('fltCat').addEventListener('change', () => render());   // يحدّث القائمة + تظليل الرسم
 $('fltBy').addEventListener('change', renderExpenseList);
 
 /* ---------- الأزرار السريعة ---------- */
@@ -3148,6 +3207,18 @@ $('btnAddExp').onclick = async () => {
 };
 
 window.delExpense = async (id) => {
+  const e = state.expenses.find(x => x.id === id);
+  if(e){
+    const saveNames = new Set(((state.budget&&state.budget.categories)||[]).filter(c=>c.type==='save').map(c=>c.name));
+    // سحب/قرض على صندوق → الحذف المتزامن (يشيل الدين والتمويل وياه)
+    if(e.amount > 0 && saveNames.has(e.category)) return deleteWithdraw(e.id);
+    // حركة «تمويل من صندوق» → نحذف السحب الأصلي حتى ما يبقى مبلغ معلّق
+    const fm = e.amount < 0 ? String(e.desc||'').match(/^تمويل من صندوق «(.+)»/) : null;
+    if(fm){
+      const w = state.expenses.find(x => x.id !== e.id && x.category === fm[1] && x.amount === -e.amount && x.date === e.date);
+      if(w) return deleteWithdraw(w.id);
+    }
+  }
   if(!confirm('متأكد تريد تحذف هذا المصروف؟')) return;
   loading(true);
   try{
