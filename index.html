@@ -34,6 +34,27 @@
     --header-grad:linear-gradient(160deg, var(--primary), color-mix(in srgb, var(--primary) 78%, #000 22%));
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+
+  /* ---------- الوضع الداكن (دارك مود) ---------- */
+  body.dark{
+    --bg:#101216;
+    --bg-2:#15181D;
+    --card:#1B1F26;
+    --ink:#ECEDEF;
+    --muted:#98A0AB;
+    --line:#2B3039;
+    --primary-soft:color-mix(in srgb, var(--primary) 20%, #1B1F26);
+    --red-soft:#3A2527;
+    --shadow:0 1px 2px rgba(0,0,0,.35), 0 4px 16px rgba(0,0,0,.30);
+    --shadow-lg:0 8px 40px rgba(0,0,0,.55);
+  }
+  body.dark input,body.dark select{background:#232830;color:var(--ink);border-color:var(--line)}
+  body.dark input::placeholder{color:#6E7580}
+  body.dark .month-pick{background:rgba(255,255,255,.10)}
+  body.dark .hstat.main{background:#232830;color:#fff}
+  body.dark .hstat.main .lbl{opacity:.75}
+  body.dark .warn-btn{background:var(--card)}
+  body.dark ::-webkit-calendar-picker-indicator{filter:invert(1)}
   html{-webkit-text-size-adjust:100%}
   body{
     font-family:'Alexandria',-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;
@@ -438,6 +459,9 @@
   .fa-dep{border:none;background:var(--primary);color:#fff}
   .fa-log{flex:0 0 auto;width:44px;border:1px solid var(--line);background:var(--card);color:var(--muted)}
   .fa-loan{border:1.5px solid var(--amber);background:transparent;color:var(--amber)}
+  .fl-edit,.fl-del{border:1px solid var(--line);background:var(--card);border-radius:9px;width:30px;height:30px;cursor:pointer;font-size:.78rem;color:var(--muted);flex-shrink:0;transition:all .15s}
+  .fl-edit:hover{border-color:var(--primary);color:var(--primary)}
+  .fl-del:hover{border-color:var(--red);color:var(--red);background:var(--red-soft)}
 
   /* ---------- القرض (شارة الموعد) ---------- */
   .debt.loan{border-right-color:var(--primary)}
@@ -522,6 +546,7 @@
 
   /* ---------- واجهة الكمبيوتر ---------- */
   .dash-col{display:contents}
+  .dash-full{min-width:0}
   @media (min-width:1000px){
     body{padding-bottom:32px;padding-right:104px}
     nav{
@@ -536,14 +561,22 @@
       border-radius:26px;padding:22px 24px;
     }
     main{max-width:1080px;padding:20px 24px}
-    #tab-add,#tab-budget,#tab-settings,#tab-bills,#tab-recon{max-width:620px;margin:0 auto}
-    #tab-dash.active{display:grid;grid-template-columns:1.05fr .95fr;gap:0 20px;align-items:start}
+    #tab-add,#tab-settings,#tab-bills,#tab-recon{max-width:620px;margin:0 auto}
+    #tab-dash.active,#tab-budget.active{display:grid;grid-template-columns:1.05fr .95fr;gap:0 20px;align-items:start}
+    .dash-full{grid-column:1/-1;min-width:0}
+    #tab-budget.active{grid-template-columns:1fr 1fr;max-width:1080px}
+    /* لوحة أوضح: رسم أكبر + إحصائيات على شكل بطاقات */
+    .donut{width:215px;height:215px}
+    .sum-top{gap:30px;align-items:center}
+    .sum-stats{flex-direction:row;gap:13px}
+    .ss{flex:1;flex-direction:column;align-items:center;justify-content:center;gap:7px;background:var(--primary-soft);border-radius:15px;padding:15px 10px;font-size:.78rem;text-align:center}
+    .ss b{font-size:1.06rem}
+    .legend{font-size:.79rem;gap:10px 20px;margin-top:18px}
+    .lg-dot{width:11px;height:11px}
     .dash-col{display:block;min-width:0}
     .modal{align-items:center}
     .modal-card{border-radius:24px;max-height:86vh}
     .head-stats .hstat .val{font-size:1.25rem}
-    .donut{width:150px;height:150px}
-    .donut svg{width:150px;height:150px}
   }
 
   /* ---------- بطاقة الساعة والحكمة (كمبيوتر فقط) ---------- */
@@ -658,11 +691,12 @@
     body{background:#fff;padding:0}
     header,nav,main,.modal,.toast,#loader,#loginScreen{display:none!important}
     #printArea{display:block!important;padding:24px;color:#000}
-    #printArea h1{font-size:1.4rem;margin-bottom:4px;color:var(--primary)}
+    #printArea h1{font-size:1.4rem;margin-bottom:4px;color:#111;border-bottom:3px solid #222;padding-bottom:8px}
     #printArea .p-sub{color:#555;font-size:.85rem;margin-bottom:16px}
     #printArea table{width:100%;border-collapse:collapse;margin:10px 0 22px}
     #printArea th,#printArea td{border:1px solid #ccc;padding:7px 9px;font-size:.82rem;text-align:right}
-    #printArea th{background:#f0f0f0}
+    #printArea th{background:#e9e9e9}
+    #printArea h3{background:#f1f1f1;border-right:4px solid #444;padding:6px 10px}
     #printArea h3{font-size:1rem;margin:18px 0 6px}
     #printArea .p-row{display:flex;justify-content:space-between;font-size:.9rem;padding:4px 0;border-bottom:1px solid #eee}
     #printArea .p-row b{font-weight:700}
@@ -820,13 +854,15 @@
 
   <!-- تبويب: اللوحة -->
   <section class="tab active" id="tab-dash">
+    <div class="dash-full"><div id="summaryCard"></div></div>
     <div class="dash-col">
-      <div id="summaryCard"></div>
       <div id="envList"></div>
     </div>
     <div class="dash-col">
       <div id="saveList"></div>
       <div id="debtList"></div>
+    </div>
+    <div class="dash-full">
       <h2 style="margin:18px 4px 10px">آخر المصاريف</h2>
       <div class="filter-bar" id="filterBar" style="display:none">
         <input type="text" id="fltText" placeholder="🔎 دوّر بالتفاصيل...">
@@ -839,7 +875,8 @@
 
   <!-- تبويب: الميزانية -->
   <section class="tab" id="tab-budget">
-    <button class="btn ghost" id="btnCopyLast" style="margin-top:0">⧉ انسخ تصنيفات الشهر الماضي</button>
+    <div class="dash-full"><button class="btn ghost" id="btnCopyLast" style="margin-top:0">⧉ انسخ تصنيفات الشهر الماضي</button></div>
+    <div class="dash-col">
     <div class="card" style="margin-top:14px">
       <div class="qh">
         <h2 style="margin:0">رواتب الشهر</h2>
@@ -855,6 +892,16 @@
       <div class="hint">أي فلوس تجيك غير الراتب — سلفة، هدية، بيع غرض… تنضاف فوق مجموع الرواتب ويصير عندك رقم واحد توزّعه.</div>
     </div>
     <div class="card">
+      <div class="alloc-line"><span>الرواتب</span><b id="aSalary">0 د.ع</b></div>
+      <div class="alloc-line"><span>إيرادات إضافية</span><b id="aIncome">0 د.ع</b></div>
+      <div class="alloc-line"><span>توزيع المصاريف</span><b id="aSpend">0 د.ع</b></div>
+      <div class="alloc-line"><span>محجوز للادخار</span><b id="aSave">0 د.ع</b></div>
+      <div class="alloc-line"><span>الباقي بلا توزيع</span><b id="allocLeft">0 د.ع</b></div>
+      <div class="alloc-line"><span>مرحّل من الشهر الماضي</span><b id="allocCarry">0 د.ع</b></div>
+    </div>
+    </div>
+    <div class="dash-col">
+    <div class="card" style="margin-top:14px">
       <h2>توزيع المصاريف</h2>
       <div id="catRows"></div>
       <button class="btn ghost" id="btnAddCat">+ إضافة تصنيف مصروف</button>
@@ -865,18 +912,13 @@
       <button class="btn ghost" id="btnAddSave">+ إضافة صندوق ادخار</button>
       <div class="hint">المبلغ الي تحطه = المبلغ الي تدّخره شهرياً. الصندوق يتراكم تلقائياً، والسحب منه من تبويب «اللوحة».</div>
     </div>
-    <div class="card">
-      <div class="alloc-line"><span>الرواتب</span><b id="aSalary">0 د.ع</b></div>
-      <div class="alloc-line"><span>إيرادات إضافية</span><b id="aIncome">0 د.ع</b></div>
-      <div class="alloc-line"><span>توزيع المصاريف</span><b id="aSpend">0 د.ع</b></div>
-      <div class="alloc-line"><span>محجوز للادخار</span><b id="aSave">0 د.ع</b></div>
-      <div class="alloc-line"><span>الباقي بلا توزيع</span><b id="allocLeft">0 د.ع</b></div>
-      <div class="alloc-line"><span>مرحّل من الشهر الماضي</span><b id="allocCarry">0 د.ع</b></div>
     </div>
+    <div class="dash-full">
     <button class="btn" id="btnSaveBudget">حفظ ميزانية الشهر</button>
     <button class="btn warn-btn" id="btnCloseMonth">إقفال الشهر وترحيل الباقي ✓</button>
     <button class="btn danger" id="btnClearMonth">🗑 تفريغ ميزانية هذا الشهر</button>
     <div class="hint">الإقفال يخلّي الشهر للعرض فقط (ما تكدر تعدّله بعدها)، ويرحّل باقي كل تصنيف وكل صندوق ادخار للشهر الجاي. التفريغ يمسح الرواتب والتصنيفات (المصاريف المسجلة تبقى).</div>
+    </div>
   </section>
 
   <!-- تبويب: الإعدادات -->
@@ -1200,6 +1242,12 @@ async function apiPost(p){
     case 'addLoan':
       call = sb.rpc('add_loan', { p_month:p.month, p_date:p.date, p_amount:p.amount, p_fund:p.fund, p_account:p.account, p_due_date:p.dueDate||'', p_descr:p.desc||'' });
       break;
+    case 'editWithdraw':
+      call = sb.rpc('edit_withdrawal', { p_id:p.id, p_amount:p.amount, p_date:p.date, p_descr:p.desc||'' });
+      break;
+    case 'deleteWithdraw':
+      call = sb.rpc('delete_withdrawal', { p_id:p.id });
+      break;
     case 'cancelDebt':
       call = sb.rpc('cancel_debt', { p_id:p.id });
       break;
@@ -1293,9 +1341,9 @@ function donutSVG(parts){
     segs += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${PALETTE[i%PALETTE.length]}" stroke-width="18" stroke-dasharray="${len.toFixed(2)} ${(c-len).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"/>`;
     off += len;
   });
-  return `<svg viewBox="0 0 128 128" width="128" height="128">${segs}`+
-    `<text x="64" y="61" text-anchor="middle" font-size="9" fill="#7A8784">صرفت</text>`+
-    `<text x="64" y="76" text-anchor="middle" font-size="11" font-weight="700" fill="#1E2A28">${(total).toLocaleString('en-US')}</text></svg>`;
+  return `<svg viewBox="0 0 128 128" width="100%" height="100%">${segs}`+
+    `<text x="64" y="61" text-anchor="middle" font-size="9" fill="var(--muted)">صرفت</text>`+
+    `<text x="64" y="76" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink)">${(total).toLocaleString('en-US')}</text></svg>`;
 }
 
 /* ---------- العرض ---------- */
@@ -2024,24 +2072,85 @@ window.openFundLog = (idx) => {
   moves.forEach(e => {
     const isDep = e.amount < 0 && String(e.desc||'').indexOf('إيداع') === 0;
     const isRet = e.amount < 0 && !isDep;
+    const isLoan = e.amount > 0 && String(e.desc||'').indexOf('قرض') === 0;
     const sign = e.amount < 0 ? '+' : '−';
     const cls = e.amount < 0 ? 'plus' : 'minus';
-    const kind = isDep ? 'إيداع' : (isRet ? 'إرجاع دين' : 'سحب');
+    const kind = isDep ? 'إيداع' : (isRet ? 'إرجاع دين' : (isLoan ? 'قرض' : 'سحب'));
+    const canEdit = e.amount > 0 && !state.locked;   // سحب أو قرض
     rows += `
       <div class="flog">
         <div>
           <div>${esc(e.desc || kind)}</div>
           <div class="fl-meta">${esc(e.date)} · ${kind}${e.by ? ' · ' + esc(e.by) : ''}</div>
         </div>
-        <div class="fl-amt ${cls}">${sign}${fmt(Math.abs(e.amount))}</div>
+        <div style="display:flex;align-items:center;gap:7px">
+          ${canEdit ? `<button class="fl-edit" onclick="openEditWithdraw('${e.id}', ${idx})" title="تعديل">✎</button>
+          <button class="fl-del" onclick="deleteWithdraw('${e.id}', ${idx})" title="حذف">🗑</button>` : ''}
+          <div class="fl-amt ${cls}">${sign}${fmt(Math.abs(e.amount))}</div>
+        </div>
       </div>`;
   });
   modalOpen(`
     <h2>سجل «${esc(c.name)}» ☰</h2>
-    <div class="hint" style="margin:0 0 8px">حركات شهر ${esc(state.month)} — بدّل الشهر من فوق حتى تشوف أشهر ثانية. الأخضر يزيد الرصيد والأحمر ينقصه.</div>
+    <div class="hint" style="margin:0 0 8px">حركات شهر ${esc(state.month)} — بدّل الشهر من فوق حتى تشوف أشهر ثانية. الأخضر يزيد الرصيد والأحمر ينقصه. تكدر تعدّل ✎ أو تحذف 🗑 السحب والقرض — والتعديل يضبط الدين وتمويل التصنيف المرتبطين تلقائياً.</div>
     ${rows || '<div class="empty">ماكو حركات على هذا الصندوق بهذا الشهر.</div>'}
     <button class="btn ghost" onclick="modalClose()" style="margin-top:14px">إغلاق</button>
   `);
+};
+
+/* ---------- تعديل / حذف سحب أو قرض (متزامن مع الدين والتمويل) ---------- */
+window.openEditWithdraw = (id, fundIdx) => {
+  if(state.locked) return;
+  const e = (state.expenses||[]).find(x => x.id === id);
+  if(!e) return;
+  const isLoan = String(e.desc||'').indexOf('قرض') === 0;
+  modalOpen(`
+    <h2>تعديل ${isLoan?'القرض':'السحب'} ✎</h2>
+    <div class="hint" style="margin:0 0 8px">أي تغيير هنا ينضبط تلقائياً على: رصيد الصندوق، والدين/القرض المرتبط، وتمويل التصنيف إذا موجود.</div>
+    <div class="row">
+      <div><label>المبلغ</label><input type="tel" id="ewAmount" inputmode="numeric" value="${Math.abs(e.amount).toLocaleString('en-US')}"></div>
+      <div><label>التاريخ</label><input type="date" id="ewDate" value="${esc(e.date)}"></div>
+    </div>
+    <label>التفاصيل</label><input type="text" id="ewDesc" value="${esc(e.desc||'')}">
+    <button class="btn" id="ewSave">حفظ التعديل</button>
+    <button class="btn ghost" onclick="openFundLog(${fundIdx})">رجوع</button>
+  `);
+  liveFormat($('ewAmount'));
+  setTimeout(() => { try{ $('ewAmount').focus(); }catch(_){} }, 260);
+  $('ewSave').onclick = async () => {
+    const amount = num($('ewAmount').value);
+    if(amount <= 0) return toast('دخّل المبلغ', true);
+    const date = $('ewDate').value || e.date;
+    if(date.slice(0,7) !== state.month) return toast('التاريخ لازم يبقى بنفس الشهر', true);
+    loading(true);
+    try{
+      const res = await apiPost({ action:'editWithdraw', id, amount, date, desc: $('ewDesc').value.trim() });
+      if(guardAuth(res)) return;
+      if(!res.ok) throw new Error(res.error || 'خطأ');
+      modalClose();
+      toast('انعدّل ويا كلشي مرتبط بيه ✓ ✎');
+      await loadMonth(state.month);
+    }catch(err){ toast('ما انعدّل: ' + err.message, true); }
+    finally{ loading(false); }
+  };
+};
+
+window.deleteWithdraw = async (id, fundIdx) => {
+  if(state.locked) return;
+  const e = (state.expenses||[]).find(x => x.id === id);
+  if(!e) return;
+  const isLoan = String(e.desc||'').indexOf('قرض') === 0;
+  if(!confirm('حذف ' + (isLoan?'القرض':'السحب') + ' (' + fmt(e.amount) + ')؟\nراح ينحذف وياه الدين المرتبط وتمويل التصنيف إذا موجود، ويرجع المبلغ لرصيد الصندوق.')) return;
+  loading(true);
+  try{
+    const res = await apiPost({ action:'deleteWithdraw', id });
+    if(guardAuth(res)) return;
+    if(!res.ok) throw new Error(res.error || 'خطأ');
+    modalClose();
+    toast('انحذف ويا كلشي مرتبط بيه ✓');
+    await loadMonth(state.month);
+  }catch(err){ toast('ما انحذف: ' + err.message, true); }
+  finally{ loading(false); }
 };
 
 /* ---------- إرجاع / شطب دين صندوق ---------- */
@@ -2171,6 +2280,10 @@ function renderSettings(){
 
     <div class="card">
       <div class="set-sec" style="margin-top:0">المظهر</div>
+      <div class="set-toggle" style="margin-top:0">
+        <span class="st-lbl">🌙 الوضع الداكن (دارك مود)</span>
+        <label class="switch"><input type="checkbox" id="darkToggle" ${DARK_ON?'checked':''}><span class="track"></span><span class="knob"></span></label>
+      </div>
       <label>🎨 لون الواجهة</label>
       <div class="swatches">
         ${sw}
@@ -2211,10 +2324,9 @@ function renderSettings(){
     <div class="card">
       <div class="set-sec" style="margin-top:0">التقارير والتصدير</div>
       <button class="btn ghost" id="btnChartS" style="margin-top:0">📊 مقارنة الأشهر</button>
-      <button class="btn ghost" id="btnPdf">📄 تحميل تقرير PDF — شهر ${esc(state.month)}</button>
+      <button class="btn ghost" id="btnPdf">🖨 طباعة / حفظ PDF — شهر ${esc(state.month)}</button>
       <button class="btn ghost" id="btnXlsMonth">📊 تصدير إكسل — شهر ${esc(state.month)}</button>
       <button class="btn ghost" id="btnXlsAll">🗂 تصدير إكسل — كل الأشهر</button>
-      <button class="btn ghost" id="btnPrint">🖨 طباعة مباشرة (للكمبيوتر)</button>
       <button class="btn ghost" id="btnBackup">💾 نسخة احتياطية كاملة (ملف)</button>
     </div>
 
@@ -2274,6 +2386,12 @@ function renderSettings(){
     applyReconVisible();
     toast(RECON_ON ? 'ظهر تبويب المطابقة ✓' : 'انخفى تبويب المطابقة');
   };
+  if($('darkToggle')) $('darkToggle').onchange = (e) => {
+    DARK_ON = e.target.checked;
+    localStorage.setItem('mas_dark', DARK_ON ? 'on' : 'off');
+    applyDark();
+    toast(DARK_ON ? 'الوضع الداكن 🌙 — عيونك ترتاح' : 'رجعنا للوضع الفاتح ☀️');
+  };
   $('btnClockS').onclick = () => {
     clockIdx = (clockIdx + 1) % CLOCK_SKINS.length;
     localStorage.setItem('mas_clock', clockIdx);
@@ -2282,7 +2400,6 @@ function renderSettings(){
   };
   $('btnMusicS').onclick = openMusic;
   $('btnChartS').onclick = showMonthsChart;
-  $('btnPrint').onclick = () => setTimeout(printReport, 100);
   $('btnPdf').onclick = () => pdfReport();
   $('btnXlsMonth').onclick = () => exportExcel('month');
   $('btnXlsAll').onclick = () => exportExcel('all');
@@ -2441,11 +2558,55 @@ function buildReportHTML(){
   `;
 }
 
-/* ---------- الطباعة المباشرة (كمبيوتر) ---------- */
+/* ---------- الطباعة / حفظ PDF — ورقة نظيفة محايدة (ما تاخذ شكل الثيم)
+     نبني التقرير بصفحة مستقلة داخل iframe بألوان طباعة ثابتة، والمتصفح
+     يرسم العربي بنفسه (بدون jsPDF) فما يتخربط بالتلفون. لحفظ PDF:
+     من نافذة الطباعة اختار «حفظ كـ PDF». ---------- */
+const REPORT_CSS = `
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Tahoma,'Noto Sans Arabic',Arial,sans-serif;color:#1a1a1a;background:#fff;direction:rtl;padding:26px 30px;font-size:13px;line-height:1.7}
+  .rp-head{display:flex;justify-content:space-between;align-items:baseline;border-bottom:3px solid #222;padding-bottom:10px;margin-bottom:4px}
+  h1{font-size:20px;font-weight:800;color:#111}
+  .rp-brand{font-size:12px;color:#555;font-weight:700}
+  .p-sub{color:#666;font-size:11px;margin:6px 0 18px}
+  h3{font-size:14px;font-weight:800;margin:22px 0 8px;background:#f1f1f1;border-right:4px solid #444;padding:6px 10px;color:#222;page-break-after:avoid}
+  table{width:100%;border-collapse:collapse;margin:6px 0 14px;font-size:12px}
+  th,td{border:1px solid #aaa;padding:6px 9px;text-align:right;vertical-align:top}
+  th{background:#e9e9e9;font-weight:800;color:#222}
+  tr:nth-child(even) td{background:#f8f8f8}
+  tr{page-break-inside:avoid}
+  .p-row{display:flex;justify-content:space-between;padding:5px 2px;border-bottom:1px dashed #ccc;font-size:13px}
+  .p-row b{font-weight:800}
+  .rp-foot{margin-top:26px;padding-top:10px;border-top:1px solid #bbb;color:#777;font-size:10px;display:flex;justify-content:space-between}
+  @page{size:A4;margin:12mm}
+  @media print{ body{padding:0} }
+`;
+let _printFrame = null;
 function printReport(){
-  $('printArea').innerHTML = buildReportHTML();
-  translateNode($('printArea'));
-  window.print();
+  // نترجم النص (لو الواجهة إنكليزي) على نسخة مؤقتة بالصفحة الرئيسية
+  const stage = document.createElement('div');
+  stage.innerHTML = buildReportHTML();
+  try{ translateNode(stage); }catch(_){}
+  const doc = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
+    <title>Pocky — ${esc(state.month)}</title><style>${REPORT_CSS}</style></head>
+    <body>
+      <div class="rp-head"><h1>تقرير شهر ${esc(state.month)}</h1><span class="rp-brand">Pocky · مصاريفنا</span></div>
+      ${stage.innerHTML.replace(/<h1>[\s\S]*?<\/h1>/, '')}
+      <div class="rp-foot"><span>Pocky — إدارة مصاريف العائلة</span><span>طُبع ${todayISO()}</span></div>
+    </body></html>`;
+  if(_printFrame){ try{ _printFrame.remove(); }catch(_){} _printFrame = null; }
+  const f = document.createElement('iframe');
+  f.style.cssText = 'position:fixed;left:-99999px;top:0;width:900px;height:1200px;border:0;visibility:hidden';
+  document.body.appendChild(f);
+  _printFrame = f;
+  f.onload = () => {
+    setTimeout(() => {
+      try{ f.contentWindow.focus(); f.contentWindow.print(); }
+      catch(err){ toast('ما كدرت أفتح الطباعة: ' + err.message, true); }
+    }, 350);
+  };
+  f.srcdoc = doc;
+  toast('من نافذة الطباعة اختار «حفظ كـ PDF» إذا تريده ملف 📄');
 }
 
 /* ---------- تحميل مكتبة خارجية عند الحاجة بس (حتى يظل الفتح سريع) ---------- */
@@ -2462,42 +2623,8 @@ function loadScript(src){
   return _libs[src];
 }
 
-/* ---------- تقرير PDF (يشتغل تلفون وكمبيوتر) ---------- */
-async function pdfReport(){
-  loading(true);
-  try{
-    await loadScript('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js');
-    await loadScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js');
-
-    const stage = document.createElement('div');
-    stage.id = 'pdfStage';
-    stage.className = 'report-doc';
-    stage.dir = 'rtl';
-    stage.innerHTML = buildReportHTML();
-    translateNode(stage);
-    document.body.appendChild(stage);
-    const canvas = await html2canvas(stage, { scale: 2, backgroundColor: '#ffffff' });
-    stage.remove();
-
-    const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4');
-    const pw = 210, ph = 297, margin = 8, iw = pw - margin*2;
-    const pagePx = Math.floor((ph - margin*2) * canvas.width / iw);
-    let done = 0, first = true;
-    while(done < canvas.height){
-      const slice = document.createElement('canvas');
-      slice.width = canvas.width;
-      slice.height = Math.min(pagePx, canvas.height - done);
-      slice.getContext('2d').drawImage(canvas, 0, done, canvas.width, slice.height, 0, 0, canvas.width, slice.height);
-      if(!first) pdf.addPage();
-      pdf.addImage(slice.toDataURL('image/jpeg', .92), 'JPEG', margin, margin, iw, slice.height * iw / canvas.width);
-      done += slice.height;
-      first = false;
-    }
-    pdf.save('مصاريفنا-' + state.month + '.pdf');
-    toast('انحمّل التقرير ✓ 📄');
-  }catch(err){ toast('ما كدرت أسوي الـ PDF: ' + err.message, true); }
-  finally{ loading(false); }
-}
+/* ---------- تقرير PDF — نفس ورقة الطباعة النظيفة (المتصفح يحفظها PDF) ---------- */
+async function pdfReport(){ printReport(); }
 
 /* ---------- تصدير إكسل ---------- */
 async function downloadBackup(){
@@ -2794,6 +2921,12 @@ window.deleteBill = async (id, name) => {
    ============================================================ */
 let reconItems = [];
 let RECON_ON = localStorage.getItem('mas_recon') !== 'off';   // ظاهر افتراضياً
+let DARK_ON = localStorage.getItem('mas_dark') === 'on';      // فاتح افتراضياً
+function applyDark(){
+  document.body.classList.toggle('dark', DARK_ON);
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if(meta) meta.content = DARK_ON ? '#101216' : (getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#0D6E5F');
+}
 function applyReconVisible(){
   const nb = $('navRecon');
   if(nb) nb.style.display = RECON_ON ? '' : 'none';
@@ -3218,6 +3351,10 @@ const I18N = {
   'الديون والقروض المفتوحة مو محسوبة — لأنها فلوس طالعة من إيدك وراجعة للصناديق بعدين.':'Open debts and loans are excluded — that money already left your hands and returns to the funds later.',
   'قرض 🤝':'Loan 🤝','لمن القرض؟':'Who is the loan for?','⏰ موعد الإرجاع المتوقع (اختياري)':'⏰ Expected return date (optional)','سجّل القرض':'Record loan','مثلاً: أخوي أحمد / صديقي':'e.g. My brother / a friend','شنو المناسبة؟':'What\'s it for?',
   'تلقائي (حسب الوقت) ☀️🌙':'Auto (by time of day) ☀️🌙','ربيع 🌸':'Spring 🌸','صيف ☀️':'Summer ☀️','خريف 🍂':'Autumn 🍂','شتاء ❄️':'Winter ❄️',
+  'ليل ونجوم 🌌':'Night & stars 🌌','غروب 🌇':'Sunset 🌇','بحر 🌊':'Sea 🌊',
+  '🌙 الوضع الداكن (دارك مود)':'🌙 Dark mode',
+  'تعديل السحب ✎':'Edit withdrawal ✎','تعديل القرض ✎':'Edit loan ✎','حفظ التعديل':'Save changes','رجوع':'Back',
+  'أي تغيير هنا ينضبط تلقائياً على: رصيد الصندوق، والدين/القرض المرتبط، وتمويل التصنيف إذا موجود.':'Any change here automatically syncs the fund balance, the linked debt/loan, and the linked category funding.',
   '💸 أضف المبلغ لتصنيف مصروف (اختياري)':'💸 Add the amount to a spending category (optional)','— بلا (بس اسحب) —':'— None (just withdraw) —',
   'مصدر الفلوس':'Money source','كل المتاح':'All available','انتغيّر الثيم ✓ 🌤':'Theme changed ✓ 🌤',
   '⏱ تسجيل الخروج التلقائي عند الخمول':'⏱ Auto-logout when idle','لا يطلّع أبداً':'Never','بعد دقيقتين':'After 2 minutes','بعد ٥ دقائق':'After 5 minutes','بعد ١٠ دقائق':'After 10 minutes','بعد ٣٠ دقيقة':'After 30 minutes','بعد ساعة':'After 1 hour',
@@ -3497,7 +3634,13 @@ const SKY_THEMES = {
   autumn: { name:'خريف 🍂', grad:'linear-gradient(160deg,#F4CE93 0%,#E9A96B 50%,#C87E55 100%)',
             body:'sun',  x:72, y:40, mtn:['#B4855A','#8E6444','#6B4832','#4A3122'], particles:'leaf' },
   winter: { name:'شتاء ❄️', grad:'linear-gradient(160deg,#BFD8E8 0%,#E1EDF6 55%,#F7FBFD 100%)',
-            body:'sun',  x:64, y:26, mtn:['#C3D3DF','#9BB0C1','#75899C','#566A7C'], particles:'snow' }
+            body:'sun',  x:64, y:26, mtn:['#C3D3DF','#9BB0C1','#75899C','#566A7C'], particles:'snow' },
+  night:  { name:'ليل ونجوم 🌌', grad:'linear-gradient(160deg,#0D1128 0%,#1A2044 55%,#2A2F55 100%)',
+            body:'moon', x:70, y:15, mtn:['#2E3556','#232948','#191E38','#12152A'], particles:null },
+  sunset: { name:'غروب 🌇', grad:'linear-gradient(160deg,#F7B267 0%,#F0855C 48%,#7D5BA6 100%)',
+            body:'sun',  x:50, y:44, mtn:['#8A5A83','#6C4470','#4E3158','#352043'], particles:null },
+  sea:    { name:'بحر 🌊', grad:'linear-gradient(160deg,#4FB3E8 0%,#84CEEB 45%,#C9EAF8 100%)',
+            body:'sun',  x:30, y:14, mtn:['#4A7FA5','#356287','#254B6B','#183750'], particles:null }
 };
 // ألوان الجبال بالوضع التلقائي (نهار / ليل)
 const AUTO_MTN_DAY   = ['#6E7BB0','#54608F','#3C466B','#2A2E4A'];
@@ -3698,6 +3841,13 @@ apiReady();
 try{ applyLangBoot(); }catch(e){}
 try{ applyBillsVisible(); }catch(e){}
 try{ applyReconVisible(); }catch(e){}
+try{ applyDark(); }catch(e){}
+window.addEventListener('beforeprint', () => {
+  try{
+    const pa = $('printArea');
+    if(pa && session){ pa.innerHTML = buildReportHTML(); translateNode(pa); }
+  }catch(_){}
+});
 try{ startDeco(); }catch(e){}
 try{ updateSky(); setInterval(updateSky, 5 * 60 * 1000); }catch(e){}
 try{ initDepth(); }catch(e){}
