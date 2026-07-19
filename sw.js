@@ -3,7 +3,7 @@
 
    ⚠️ مهم: كل ما تعدّل index.html، غيّر رقم النسخة بالسطر التحت
    (مثلاً masareef-v1 ← masareef-v2) حتى يوصل التحديث للتلفون. */
-const CACHE = 'masareef-v19';
+const CACHE = 'masareef-v20';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {
