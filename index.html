@@ -436,7 +436,32 @@
   .fund-actions button:disabled{opacity:.5}
   .fa-wd{border:1.5px solid var(--primary);background:var(--primary-soft);color:var(--primary)}
   .fa-dep{border:none;background:var(--primary);color:#fff}
-  .fa-log{flex:0 0 auto;width:52px;border:1px solid var(--line);background:var(--card);color:var(--muted)}
+  .fa-log{flex:0 0 auto;width:44px;border:1px solid var(--line);background:var(--card);color:var(--muted)}
+  .fa-loan{border:1.5px solid var(--amber);background:transparent;color:var(--amber)}
+
+  /* ---------- القرض (شارة الموعد) ---------- */
+  .debt.loan{border-right-color:var(--primary)}
+  .debt.loan .debt-amt{color:var(--primary)}
+  .debt-kind{font-size:.62rem;font-weight:800;border-radius:8px;padding:2px 8px;margin-left:6px;background:var(--primary-soft);color:var(--primary);vertical-align:2px}
+  .debt-due{font-size:.66rem;font-weight:700;color:var(--muted);margin-top:4px}
+  .debt-due.soon{color:var(--amber)}
+  .debt-due.overdue{color:var(--red,#c0392b)}
+
+  /* ---------- المطابقة ---------- */
+  .rc-diff{margin-top:10px;border-radius:var(--radius-sm);padding:12px 14px;font-size:.84rem;font-weight:700;text-align:center;background:var(--primary-soft);color:var(--primary)}
+  .rc-diff.bad{background:var(--red-soft,#f9e6e6);color:var(--red,#c0392b)}
+  .rc-diff.warn{background:#FBF3E2;color:#B07A16}
+  .rc-item{padding:11px 2px;border-bottom:1px solid var(--line)}
+  .rc-item:last-child{border-bottom:none}
+  .rc-line{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .rc-date{font-weight:700;font-size:.84rem}
+  .rc-badge{font-size:.7rem;font-weight:800;border-radius:8px;padding:3px 9px;white-space:nowrap}
+  .rc-badge.ok{background:var(--primary-soft);color:var(--primary)}
+  .rc-badge.miss{background:var(--red-soft,#f9e6e6);color:var(--red,#c0392b)}
+  .rc-badge.extra{background:#FBF3E2;color:#B07A16}
+  .rc-sub{font-size:.66rem;color:var(--muted);margin-top:4px;line-height:1.7}
+  .rc-del{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:.82rem;padding:4px 6px;border-radius:8px}
+  .rc-del:hover{background:var(--red-soft,#f9e6e6);color:var(--red,#c0392b)}
 
   /* ---------- سجل حركات الصندوق ---------- */
   .flog{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 2px;border-bottom:1px solid var(--line);font-size:.8rem}
@@ -511,7 +536,7 @@
       border-radius:26px;padding:22px 24px;
     }
     main{max-width:1080px;padding:20px 24px}
-    #tab-add,#tab-budget,#tab-settings{max-width:620px;margin:0 auto}
+    #tab-add,#tab-budget,#tab-settings,#tab-bills,#tab-recon{max-width:620px;margin:0 auto}
     #tab-dash.active{display:grid;grid-template-columns:1.05fr .95fr;gap:0 20px;align-items:start}
     .dash-col{display:block;min-width:0}
     .modal{align-items:center}
@@ -878,6 +903,30 @@
     </div>
   </section>
 
+  <!-- تبويب: المطابقة -->
+  <section class="tab" id="tab-recon">
+    <div class="card" id="reconSystem"></div>
+    <div class="card">
+      <h2>✍️ سجّل جردة اليوم</h2>
+      <div class="hint" style="margin:2px 0 12px">عدّ فلوسك الفعلية اللي بإيدك وسجّلها هنا — نقارنها ويا رصيد النظام. لو طلع نقص، معناها أكو مصاريف نسيت تسجّلها.</div>
+      <div class="row">
+        <div><label>💵 كاش (بالبيت / بالجيب)</label><input type="tel" id="rcCash" inputmode="numeric" placeholder="0"></div>
+        <div><label>🏦 مصرف / بطاقات</label><input type="tel" id="rcBank" inputmode="numeric" placeholder="0"></div>
+      </div>
+      <label style="margin-top:10px">💍 ذهب / أمانات / غيرها (اختياري)</label>
+      <input type="tel" id="rcOther" inputmode="numeric" placeholder="0">
+      <div class="rc-diff" id="rcLive" style="display:none"></div>
+      <label style="margin-top:10px">ملاحظة (اختياري)</label>
+      <input type="text" id="rcNote" placeholder="مثلاً: جردة نص الشهر">
+      <button class="btn" id="btnAddRecon">حفظ المطابقة</button>
+    </div>
+    <div class="card">
+      <h2 style="margin-bottom:2px">🗂 سجل المطابقات</h2>
+      <div class="hint" style="margin:0 0 10px">آخر المطابقات المسجلة — تشوف منها إذا فلوسك ماشية صح.</div>
+      <div id="reconList"></div>
+    </div>
+  </section>
+
   <section class="tab" id="tab-settings">
     <div id="settingsBody"></div>
   </section>
@@ -888,6 +937,7 @@
   <button data-tab="tab-add"><span class="ic">＋</span>مصروف</button>
   <button data-tab="tab-budget"><span class="ic">⚖</span>الميزانية</button>
   <button data-tab="tab-bills" id="navBills"><span class="ic">🧾</span>فواتيري</button>
+  <button data-tab="tab-recon" id="navRecon"><span class="ic">🧮</span>المطابقة</button>
   <button data-tab="tab-settings"><span class="ic">⚙</span>الإعدادات</button>
 </nav>
 
@@ -1061,7 +1111,7 @@ function startRealtime(){
   if(!session || !session.hh) return;
   try{
     rtChannel = sb.channel('hh-' + session.hh);
-    ['expenses','budgets','categories','budget_incomes','debts','quick_buttons','bills'].forEach(tbl => {
+    ['expenses','budgets','categories','budget_incomes','debts','quick_buttons','bills','reconciliations'].forEach(tbl => {
       rtChannel.on('postgres_changes',
         { event:'*', schema:'public', table:tbl, filter:'household_id=eq.' + session.hh },
         onRemoteChange);
@@ -1087,6 +1137,8 @@ function onRemoteChange(){
         loadQuick();
         const bt = $('tab-bills');
         if(bt && bt.classList.contains('active')) loadBills();
+        const rt = $('tab-recon');
+        if(rt && rt.classList.contains('active')) loadRecons();
       }
     }catch(_){}
   }, 450);
@@ -1106,9 +1158,14 @@ function rpcFail(error){
   return { ok:false, error: msg, authFail };
 }
 async function apiGet(month){
-  const { data, error } = await sb.rpc('load_month', { p_month: month });
-  if(error) return rpcFail(error);
-  return { ok:true, budget: data.budget, expenses: data.expenses || [], debts: data.debts || [] };
+  // نجيب الشهر + الديون الكاملة (بالنوع وموعد الإرجاع) سوية
+  const [r1, r2] = await Promise.all([
+    sb.rpc('load_month', { p_month: month }),
+    sb.rpc('list_open_debts')
+  ]);
+  if(r1.error) return rpcFail(r1.error);
+  const debts = (!r2.error && Array.isArray(r2.data)) ? r2.data : (r1.data.debts || []);
+  return { ok:true, budget: r1.data.budget, expenses: r1.data.expenses || [], debts };
 }
 async function apiPost(p){
   let call;
@@ -1139,6 +1196,9 @@ async function apiPost(p){
       break;
     case 'withdrawFund':
       call = sb.rpc('withdraw_fund', { p_month:p.month, p_date:p.date, p_amount:p.amount, p_descr:p.desc||'', p_fund:p.fund, p_debt_account:p.debtAccount||'', p_to_category:p.toCategory||'' });
+      break;
+    case 'addLoan':
+      call = sb.rpc('add_loan', { p_month:p.month, p_date:p.date, p_amount:p.amount, p_fund:p.fund, p_account:p.account, p_due_date:p.dueDate||'', p_descr:p.desc||'' });
       break;
     case 'cancelDebt':
       call = sb.rpc('cancel_debt', { p_id:p.id });
@@ -1209,9 +1269,11 @@ async function loadMonth(month){
     state.expenses = res.expenses;
     state.debts = res.debts || [];
     render();
-    // الفواتير تعتمد على «الباقي للصرف» فنحدّثها بعد الرسم
+    // الفواتير والمطابقة تعتمد على «الباقي للصرف» فنحدّثها بعد الرسم
     const bt = $('tab-bills');
     if(bt && bt.classList.contains('active')) loadBills();
+    const rt = $('tab-recon');
+    if(rt && rt.classList.contains('active')) loadRecons();
   }catch(err){
     toast('ما كدرت أوصل للبيانات: ' + err.message, true);
   }finally{
@@ -1271,6 +1333,7 @@ function render(){
   const totalIncome = totalSalary + extraIncome;
   const remain = totalIncome + spendCarried - saveContrib - spendingSpent - fundDeposits;
   state._surplus = Math.max(0, remain);
+  state._remainRaw = remain;   // للمطابقة — بدون تصفير السالب
 
   $('hSalary') && setStat($('hSalary'), totalIncome);
   setStat($('hSpent'), spendingSpent);
@@ -1328,6 +1391,7 @@ function render(){
 
   /* ===== صناديق الادخار ===== */
   let saveHtml = '';
+  state._fundTotal = 0;   // للمطابقة
   const saveList = cats.map((c,i)=>({c,i})).filter(x=>x.c.type==='save');
   if(saveList.length){
     let totalBal = 0, rows = '';
@@ -1367,6 +1431,7 @@ function render(){
           <div class="fund-actions">
             <button class="fa-wd" onclick="openWithdraw(${i})" ${state.locked?'disabled':''}>سحب −</button>
             <button class="fa-dep" onclick="openDeposit(${i})" ${state.locked?'disabled':''}>إيداع +</button>
+            <button class="fa-loan" onclick="openLoan(${i})" ${state.locked?'disabled':''}>قرض 🤝</button>
             <button class="fa-log" onclick="openFundLog(${i})" title="سجل الحركات">☰</button>
             ${(!state.locked && bal===0) ? `<button class="fa-del2" onclick="deleteFund('${esc(c.name).replace(/'/g,"\\'")}')" title="إلغاء الصندوق">🗑</button>` : ''}
           </div>
@@ -1374,6 +1439,7 @@ function render(){
       delete spentByCat[c.name];
     });
     saveHtml = `<div class="save-head">صناديق الادخار 🏦 <span>الإجمالي: ${fmt(totalBal)}</span></div>` + rows;
+    state._fundTotal = totalBal;
   }
   $('saveList').innerHTML = saveHtml;
 
@@ -1384,13 +1450,24 @@ function render(){
     const totalDebt = open.reduce((s,d)=> s + (d.amount||0), 0);
     let rows = '';
     open.forEach(d => {
+      const isLoan = d.kind === 'قرض';
+      let dueHtml = '';
+      if(isLoan && d.dueDate){
+        const days = Math.floor((new Date(d.dueDate) - new Date(todayISO())) / 86400000);
+        const cls = days < 0 ? 'overdue' : (days <= 3 ? 'soon' : '');
+        const txt = days < 0 ? ('⏰ فات موعد الإرجاع (' + esc(d.dueDate) + ')')
+                  : days === 0 ? '⏰ موعد الإرجاع اليوم!'
+                  : ('⏰ موعد الإرجاع: ' + esc(d.dueDate) + ' (باقي ' + days + ' يوم)');
+        dueHtml = `<div class="debt-due ${cls}">${txt}</div>`;
+      }
       rows += `
-        <div class="debt">
+        <div class="debt ${isLoan?'loan':''}">
           <div class="debt-top">
-            <span class="debt-acc">${esc(d.account)}</span>
+            <span class="debt-acc">${esc(d.account)}${isLoan?'<span class="debt-kind">🤝 قرض</span>':''}</span>
             <span class="debt-amt">${fmt(d.amount)}</span>
           </div>
-          <div class="debt-sub">مطلوب لصندوق «${esc(d.fund)}» · سُحب ${esc(d.date)}</div>
+          <div class="debt-sub">مطلوب لصندوق «${esc(d.fund)}» · ${isLoan?'انعطى':'سُحب'} ${esc(d.date)}</div>
+          ${dueHtml}
           <div class="debt-actions">
             <button class="db-return" onclick="returnDebt('${d.id}')">↩ رجّعه للصندوق</button>
             <button class="db-cancel" onclick="cancelDebt('${d.id}')">شطب (احذفه)</button>
@@ -1766,6 +1843,7 @@ window.openWithdraw = (idx) => {
     <button class="btn ghost" onclick="modalClose()">إلغاء</button>
   `);
   liveFormat($('wdAmount'));
+  setTimeout(() => { try{ $('wdAmount').focus(); }catch(_){} }, 260);
   $('wdSave').onclick = async () => {
     const amount = num($('wdAmount').value);
     if(amount <= 0) return toast('دخّل المبلغ', true);
@@ -1788,6 +1866,54 @@ window.openWithdraw = (idx) => {
       toast(toCat ? ('انسحب وانضاف لـ«'+toCat+'» ✓ 💸') : (acc ? 'انسحب وانسجّل كدين ✓' : 'انسحب ✓'));
       await loadMonth(state.month);
     }catch(err){ toast('ما انسحب: ' + err.message, true); }
+    finally{ loading(false); }
+  };
+};
+
+/* ---------- قرض من صندوق ادخار ---------- */
+window.openLoan = (idx) => {
+  if(state.locked) return;
+  const c = (state.budget.categories||[])[idx];
+  if(!c) return;
+  // رصيد الصندوق الحالي (للتوضيح فقط — ما نمنع القرض الأكبر منه)
+  const wd = (state.expenses||[]).filter(e => e.category === c.name).reduce((a,e)=> a + e.amount, 0);
+  const bal = (Number(c.carried)||0) + (Number(c.amount)||0) - wd;
+  modalOpen(`
+    <h2>قرض من «${esc(c.name)}» 🤝</h2>
+    <div class="hint" style="margin:0 0 8px">القرض ينقص رصيد الصندوق (الحالي: <b style="color:var(--primary)">${fmt(bal)}</b>) ويظل مسجّل باسم اللي أخذه لين يرجّعه — والترجيع يرجع للصندوق نفسه، مو للفائض.</div>
+    <div class="row">
+      <div><label>المبلغ</label><input type="tel" id="lnAmount" inputmode="numeric" placeholder="0"></div>
+      <div><label>التاريخ</label><input type="date" id="lnDate" value="${todayISO()}"></div>
+    </div>
+    <label style="margin-top:10px">لمن القرض؟</label>
+    <input type="text" id="lnAcc" placeholder="مثلاً: أخوي أحمد / صديقي">
+    <label style="margin-top:10px">⏰ موعد الإرجاع المتوقع (اختياري)</label>
+    <input type="date" id="lnDue">
+    <label>السبب (اختياري)</label><input type="text" id="lnDesc" placeholder="شنو المناسبة؟">
+    <button class="btn" id="lnSave">سجّل القرض</button>
+    <button class="btn ghost" onclick="modalClose()">إلغاء</button>
+  `);
+  liveFormat($('lnAmount'));
+  setTimeout(() => { try{ $('lnAmount').focus(); }catch(_){} }, 260);
+  $('lnSave').onclick = async () => {
+    const amount = num($('lnAmount').value);
+    if(amount <= 0) return toast('دخّل المبلغ', true);
+    const acc = $('lnAcc').value.trim();
+    if(!acc) return toast('اكتب اسم اللي أخذ القرض', true);
+    const date = $('lnDate').value || todayISO();
+    if(amount > bal && !confirm('المبلغ أكبر من رصيد الصندوق (' + fmt(bal) + ') — الرصيد راح يصير سالب. تكمل؟')) return;
+    loading(true);
+    try{
+      const res = await apiPost({
+        action:'addLoan', month: date.slice(0,7), date, amount,
+        fund: c.name, account: acc, dueDate: $('lnDue').value || '', desc: $('lnDesc').value.trim()
+      });
+      if(guardAuth(res)) return;
+      if(!res.ok) throw new Error(res.error || 'خطأ');
+      modalClose();
+      toast('انسجّل القرض لـ«' + acc + '» ✓ 🤝');
+      await loadMonth(state.month);
+    }catch(err){ toast('ما انسجّل: ' + err.message, true); }
     finally{ loading(false); }
   };
 };
@@ -1851,6 +1977,7 @@ window.openDeposit = async (idx) => {
     <button class="btn ghost" onclick="modalClose()">إلغاء</button>
   `);
   liveFormat($('dpAmount'));
+  setTimeout(() => { try{ $('dpAmount').focus(); }catch(_){} }, 260);
 
   const capNow = () => {
     const s = $('dpSrc').value;
@@ -2061,6 +2188,10 @@ function renderSettings(){
         <span class="st-lbl">🧾 أظهر تبويب «فواتيري»</span>
         <label class="switch"><input type="checkbox" id="billsToggle" ${BILLS_ON?'checked':''}><span class="track"></span><span class="knob"></span></label>
       </div>
+      <div class="set-toggle">
+        <span class="st-lbl">🧮 أظهر تبويب «المطابقة»</span>
+        <label class="switch"><input type="checkbox" id="reconToggle" ${RECON_ON?'checked':''}><span class="track"></span><span class="knob"></span></label>
+      </div>
       <label style="margin-top:12px">🌤 ثيم الخلفية (الفصول)</label>
       <select id="seasonSel">
         ${Object.keys(SKY_THEMES).map(k => `<option value="${k}">${SKY_THEMES[k].name}</option>`).join('')}
@@ -2136,6 +2267,12 @@ function renderSettings(){
     localStorage.setItem('mas_bills', BILLS_ON ? 'on' : 'off');
     applyBillsVisible();
     toast(BILLS_ON ? 'ظهر تبويب فواتيري ✓' : 'انخفى تبويب فواتيري');
+  };
+  if($('reconToggle')) $('reconToggle').onchange = (e) => {
+    RECON_ON = e.target.checked;
+    localStorage.setItem('mas_recon', RECON_ON ? 'on' : 'off');
+    applyReconVisible();
+    toast(RECON_ON ? 'ظهر تبويب المطابقة ✓' : 'انخفى تبويب المطابقة');
   };
   $('btnClockS').onclick = () => {
     clockIdx = (clockIdx + 1) % CLOCK_SKINS.length;
@@ -2524,6 +2661,7 @@ document.querySelectorAll('nav button').forEach(btn => {
     $(btn.dataset.tab).classList.add('active');
     if(btn.dataset.tab === 'tab-settings') renderSettings();
     if(btn.dataset.tab === 'tab-bills') loadBills();
+    if(btn.dataset.tab === 'tab-recon') loadRecons();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 });
@@ -2647,6 +2785,115 @@ window.deleteBill = async (id, name) => {
     if(error) throw error;
     billsItems = billsItems.filter(x=>x.id!==id);
     renderBills();
+    toast('انحذفت ✓'); sndTick();
+  }catch(err){ toast('ما انحذفت: ' + err.message, true); }
+};
+
+/* ============================================================
+   المطابقة — جردة الفلوس الفعلية مقابل رصيد النظام
+   ============================================================ */
+let reconItems = [];
+let RECON_ON = localStorage.getItem('mas_recon') !== 'off';   // ظاهر افتراضياً
+function applyReconVisible(){
+  const nb = $('navRecon');
+  if(nb) nb.style.display = RECON_ON ? '' : 'none';
+  if(!RECON_ON){
+    const rt = $('tab-recon');
+    if(rt && rt.classList.contains('active')){
+      document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      const db = document.querySelector('nav button[data-tab="tab-dash"]');
+      if(db) db.classList.add('active');
+      const dt = $('tab-dash'); if(dt) dt.classList.add('active');
+    }
+  }
+}
+function reconSystemTotal(){
+  return (state._remainRaw || 0) + (state._fundTotal || 0);
+}
+function renderReconSystem(){
+  const box = $('reconSystem');
+  if(!box) return;
+  const remain = state._remainRaw || 0;
+  const funds  = state._fundTotal || 0;
+  const sys    = reconSystemTotal();
+  box.innerHTML = `
+    <h2 style="margin-top:0">🧮 رصيدك بالنظام — ${esc(state.month)}</h2>
+    <div class="bl-stat"><span>💵 الباقي للصرف</span><b style="color:${remain<0?'var(--red,#c0392b)':'var(--ink)'}">${remain<0?'−':''}${fmt(Math.abs(remain))}</b></div>
+    <div class="bl-stat"><span>🏦 أرصدة الصناديق</span><b>${fmt(funds)}</b></div>
+    <div class="bl-stat" style="border-top:1px solid var(--line);margin-top:4px;padding-top:9px"><span><b>= المفروض بإيدك</b></span><b style="color:var(--primary);font-size:.95rem">${sys<0?'−':''}${fmt(Math.abs(sys))}</b></div>
+    <div class="hint" style="margin-top:8px">الديون والقروض المفتوحة مو محسوبة — لأنها فلوس طالعة من إيدك وراجعة للصناديق بعدين.</div>
+  `;
+}
+function reconActual(){
+  return num($('rcCash').value) + num($('rcBank').value) + num($('rcOther').value);
+}
+function reconLive(){
+  const live = $('rcLive');
+  if(!live) return;
+  const actual = reconActual();
+  if(actual <= 0){ live.style.display = 'none'; return; }
+  const sys = reconSystemTotal();
+  const diff = actual - sys;
+  live.style.display = '';
+  if(Math.abs(diff) < 1){
+    live.className = 'rc-diff';
+    live.innerHTML = '✅ مطابق تماماً — الفعلي ' + fmt(actual);
+  }else if(diff < 0){
+    live.className = 'rc-diff bad';
+    live.innerHTML = '⚠️ ناقصك <b>' + fmt(-diff) + '</b> — يمكن أكو مصاريف مو مسجلة';
+  }else{
+    live.className = 'rc-diff warn';
+    live.innerHTML = '💡 عندك زيادة <b>' + fmt(diff) + '</b> — يمكن أكو دخل مو مسجّل';
+  }
+}
+async function loadRecons(){
+  renderReconSystem();
+  reconLive();
+  try{
+    const { data, error } = await sb.rpc('list_recons', { p_limit: 15 });
+    if(error) throw error;
+    reconItems = data || [];
+  }catch(_){ reconItems = []; }
+  renderRecons();
+}
+function renderRecons(){
+  const list = $('reconList');
+  if(!list) return;
+  if(!reconItems.length){
+    list.innerHTML = '<div class="empty" style="padding:14px">بعد ما مسوّي أي مطابقة — عدّ فلوسك وسجّل أول جردة من فوك 👆</div>';
+    return;
+  }
+  list.innerHTML = reconItems.map(r => {
+    const actual = (Number(r.cash)||0) + (Number(r.bank)||0) + (Number(r.other)||0);
+    const sys = Number(r.systemTotal)||0;
+    const diff = actual - sys;
+    const badge = Math.abs(diff) < 1
+      ? '<span class="rc-badge ok">✓ مطابق</span>'
+      : (diff < 0 ? '<span class="rc-badge miss">ناقص ' + fmt(-diff) + '</span>'
+                  : '<span class="rc-badge extra">زايد ' + fmt(diff) + '</span>');
+    const parts = [];
+    if(r.cash > 0)  parts.push('💵 ' + fmt(r.cash));
+    if(r.bank > 0)  parts.push('🏦 ' + fmt(r.bank));
+    if(r.other > 0) parts.push('💍 ' + fmt(r.other));
+    return `
+      <div class="rc-item">
+        <div class="rc-line">
+          <span class="rc-date">${esc(r.date)}</span>
+          ${badge}
+          <button class="rc-del" onclick="deleteRecon('${r.id}')" aria-label="حذف">✕</button>
+        </div>
+        <div class="rc-sub">الفعلي ${fmt(actual)} (${parts.join(' · ')}) مقابل النظام ${fmt(sys)}${r.byName ? ' · سجّلها ' + esc(r.byName) : ''}${r.note ? '<br>📝 ' + esc(r.note) : ''}</div>
+      </div>`;
+  }).join('');
+}
+window.deleteRecon = async (id) => {
+  if(!confirm('حذف هذه المطابقة من السجل؟')) return;
+  try{
+    const { error } = await sb.rpc('delete_recon', { p_id: id });
+    if(error) throw error;
+    reconItems = reconItems.filter(x=>x.id!==id);
+    renderRecons();
     toast('انحذفت ✓'); sndTick();
   }catch(err){ toast('ما انحذفت: ' + err.message, true); }
 };
@@ -2783,6 +3030,30 @@ window.delExpense = async (id) => {
 
 $('btnAddCat').onclick = () => addRow('spend','','',0);
 $('btnAddQuick').onclick = openAddQuick;
+/* المطابقة — الفورم */
+['rcCash','rcBank','rcOther'].forEach(id => {
+  liveFormat($(id));
+  $(id).addEventListener('input', reconLive);
+});
+$('btnAddRecon').onclick = async () => {
+  const cash = num($('rcCash').value), bank = num($('rcBank').value), other = num($('rcOther').value);
+  if(cash + bank + other <= 0) return toast('دخّل مبلغ واحد على الأقل', true);
+  loading(true);
+  try{
+    const { error } = await sb.rpc('add_recon', {
+      p_month: state.month, p_date: todayISO(),
+      p_cash: cash, p_bank: bank, p_other: other,
+      p_note: $('rcNote').value.trim(), p_system: reconSystemTotal()
+    });
+    if(error) throw new Error(error.message);
+    $('rcCash').value=''; $('rcBank').value=''; $('rcOther').value=''; $('rcNote').value='';
+    reconLive();
+    toast('انحفظت المطابقة ✓ 🧮'); sndHappy();
+    await loadRecons();
+  }catch(err){ toast('ما انحفظت: ' + err.message, true); }
+  finally{ loading(false); }
+};
+
 liveFormat($('blAmount'));
 $('btnAddBill').onclick = async () => {
   const name = $('blName').value.trim();
@@ -2938,6 +3209,14 @@ const I18N = {
   'فواتيري':'My Bills','🧾 فواتير الشهر':'🧾 This month\'s bills','➕ إضافة فاتورة':'➕ Add a bill','اسم الفاتورة':'Bill name','يوم الاستحقاق (اختياري)':'Due day (optional)','⧉ انسخ الشهر الماضي':'⧉ Copy last month','إضافة':'Add',
   'إجمالي الفواتير':'Total bills','✓ المدفوع':'✓ Paid','⏳ الباقي عليك':'⏳ Still owed','💵 الباقي للصرف عندك':'💵 Your left to spend',
   '🧾 أظهر تبويب «فواتيري»':'🧾 Show the "My Bills" tab','🌤 ثيم الخلفية (الفصول)':'🌤 Background theme (seasons)',
+  'المطابقة':'Reconcile','🧮 أظهر تبويب «المطابقة»':'🧮 Show the "Reconcile" tab',
+  '✍️ سجّل جردة اليوم':'✍️ Record today\'s count',
+  'عدّ فلوسك الفعلية اللي بإيدك وسجّلها هنا — نقارنها ويا رصيد النظام. لو طلع نقص، معناها أكو مصاريف نسيت تسجّلها.':'Count the actual money you have and record it here — we compare it with the system balance. A shortfall means some expenses were never logged.',
+  '💵 كاش (بالبيت / بالجيب)':'💵 Cash (home / pocket)','🏦 مصرف / بطاقات':'🏦 Bank / cards','💍 ذهب / أمانات / غيرها (اختياري)':'💍 Gold / deposits / other (optional)',
+  'ملاحظة (اختياري)':'Note (optional)','مثلاً: جردة نص الشهر':'e.g. Mid-month count','حفظ المطابقة':'Save reconciliation',
+  '🗂 سجل المطابقات':'🗂 Reconciliation history','آخر المطابقات المسجلة — تشوف منها إذا فلوسك ماشية صح.':'Your latest counts — see whether your money is on track.',
+  'الديون والقروض المفتوحة مو محسوبة — لأنها فلوس طالعة من إيدك وراجعة للصناديق بعدين.':'Open debts and loans are excluded — that money already left your hands and returns to the funds later.',
+  'قرض 🤝':'Loan 🤝','لمن القرض؟':'Who is the loan for?','⏰ موعد الإرجاع المتوقع (اختياري)':'⏰ Expected return date (optional)','سجّل القرض':'Record loan','مثلاً: أخوي أحمد / صديقي':'e.g. My brother / a friend','شنو المناسبة؟':'What\'s it for?',
   'تلقائي (حسب الوقت) ☀️🌙':'Auto (by time of day) ☀️🌙','ربيع 🌸':'Spring 🌸','صيف ☀️':'Summer ☀️','خريف 🍂':'Autumn 🍂','شتاء ❄️':'Winter ❄️',
   '💸 أضف المبلغ لتصنيف مصروف (اختياري)':'💸 Add the amount to a spending category (optional)','— بلا (بس اسحب) —':'— None (just withdraw) —',
   'مصدر الفلوس':'Money source','كل المتاح':'All available','انتغيّر الثيم ✓ 🌤':'Theme changed ✓ 🌤',
@@ -3418,6 +3697,7 @@ loadTheme();
 apiReady();
 try{ applyLangBoot(); }catch(e){}
 try{ applyBillsVisible(); }catch(e){}
+try{ applyReconVisible(); }catch(e){}
 try{ startDeco(); }catch(e){}
 try{ updateSky(); setInterval(updateSky, 5 * 60 * 1000); }catch(e){}
 try{ initDepth(); }catch(e){}
