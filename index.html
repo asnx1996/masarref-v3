@@ -344,28 +344,32 @@
   .filter-bar select{flex:1}
   .filter-bar input,.filter-bar select{padding:10px 12px;font-size:.82rem;border-radius:12px}
   .exp{
-    display:flex;align-items:center;gap:11px;cursor:pointer;
-    background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);
-    padding:11px 13px;margin-bottom:8px;transition:transform .15s var(--ease);
+    display:flex;align-items:center;gap:12px;cursor:pointer;
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:12px 14px;margin-bottom:9px;transition:transform .15s var(--ease),box-shadow .2s,border-color .2s;
+    touch-action:pan-y;
   }
   .exp:active{transform:scale(.99)}
   .exp .cat-dot{
-    width:38px;height:38px;border-radius:12px;flex-shrink:0;
+    width:44px;height:44px;border-radius:14px;flex-shrink:0;
     background:var(--primary-soft);color:var(--primary);
     display:flex;align-items:center;justify-content:center;
-    font-weight:700;font-size:.85rem;
+    font-weight:800;font-size:1.08rem;
+    box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--primary) 14%, transparent);
   }
-  .exp .cat-dot.wd{background:#FBEEDC;color:var(--amber)}
-  .exp .cat-dot.ret{background:var(--primary-soft);color:var(--primary)}
+  .exp .cat-dot.wd{background:color-mix(in srgb, var(--amber) 16%, var(--card));color:var(--amber);box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--amber) 22%, transparent)}
+  .exp .cat-dot.ret{background:color-mix(in srgb, var(--green) 15%, var(--card));color:var(--green);box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--green) 22%, transparent)}
   .exp .mid{flex:1;min-width:0}
-  .exp .desc{font-size:.85rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .exp .meta{font-size:.66rem;color:var(--muted);margin-top:2px}
-  .exp .amt{font-weight:700;font-size:.88rem;white-space:nowrap}
-  .exp .amt.ret{color:var(--primary)}
+  .exp .desc{font-size:.92rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .exp .meta{font-size:.68rem;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .exp .amt{font-weight:800;font-size:.98rem;white-space:nowrap;letter-spacing:-.2px}
+  .exp .amt.ret{color:var(--green)}
   .exp .del{
-    border:none;background:var(--red-soft);color:var(--red);
-    width:30px;height:30px;border-radius:10px;cursor:pointer;font-size:.9rem;flex-shrink:0;
+    border:none;background:transparent;color:var(--muted);
+    width:32px;height:32px;border-radius:10px;cursor:pointer;font-size:.95rem;flex-shrink:0;
+    transition:background .15s,color .15s;
   }
+  .exp .del:hover{background:var(--red-soft);color:var(--red)}
 
   /* ---------- صفوف التصنيفات بالميزانية ---------- */
   .cat-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
@@ -788,9 +792,11 @@
 
   /* ===== حركة دخول اللوحة ===== */
   @keyframes cardRise{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:none}}
-  @keyframes donutIn{from{opacity:0;transform:scale(.82) rotate(-14deg)}to{opacity:1;transform:none}}
+  @keyframes donutFade{from{opacity:0}to{opacity:1}}
   .tab.active .sum-card{animation:cardRise .55s var(--ease) both}
-  .tab.active .donut svg{animation:donutIn .5s cubic-bezier(.3,.85,.35,1) both;transform-origin:center}
+  /* الدونات: القطع تترسم بنعومة عبر JS (animateDonut)؛ هنا فقط ظهور ناعم للوسط */
+  .tab.active .donut svg text{animation:donutFade .7s ease .35s both}
+  .donut .dseg{transition:opacity .18s}
   /* تتابع دخول عناصر القوائم */
   #envList .env,#saveList .fund,#debtList .debt,#expList .exp{animation:cardRise .5s var(--ease) both}
   #envList .env:nth-child(1),#saveList .fund:nth-child(1),#debtList .debt:nth-child(1),#expList .exp:nth-child(1){animation-delay:.03s}
@@ -799,6 +805,39 @@
   #envList .env:nth-child(4),#saveList .fund:nth-child(4),#debtList .debt:nth-child(4),#expList .exp:nth-child(4){animation-delay:.18s}
   #envList .env:nth-child(5),#saveList .fund:nth-child(5),#debtList .debt:nth-child(5),#expList .exp:nth-child(5){animation-delay:.23s}
   #envList .env:nth-child(n+6),#saveList .fund:nth-child(n+6),#debtList .debt:nth-child(n+6),#expList .exp:nth-child(n+6){animation-delay:.28s}
+
+  /* ============================================================
+     أنميشن تفاعلي مع الماوس (كمبيوتر فقط) — لكل شاشة إحساسها
+     ============================================================ */
+  .amb-on .card,.amb-on .sum-card,.amb-on .env,.amb-on .fund{position:relative}
+  .amb-on .card::before,.amb-on .sum-card::before,.amb-on .env::before,.amb-on .fund::before{
+    content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;
+    opacity:0;transition:opacity .35s ease;
+    background:radial-gradient(240px circle at var(--mx,50%) var(--my,50%), color-mix(in srgb, var(--primary) 20%, rgba(255,255,255,.22)), transparent 55%);
+    mix-blend-mode:soft-light;
+  }
+  .amb-on .card:hover::before,.amb-on .sum-card:hover::before,.amb-on .env:hover::before,.amb-on .fund:hover::before{opacity:1}
+  /* توقيع اللوحة: بطاقة الملخص تميل باتجاه المؤشر */
+  .amb-on .sum-card{transition:transform .16s ease-out, box-shadow .2s;transform-style:preserve-3d;will-change:transform}
+
+  /* ============================================================
+     شيمر التحميل (skeleton) + حالات فاضية ألطف
+     ============================================================ */
+  @keyframes shimmer{100%{background-position:-200% 0}}
+  .sk{border-radius:var(--radius-sm);background:linear-gradient(100deg,
+      color-mix(in srgb, var(--line) 55%, transparent) 30%,
+      color-mix(in srgb, var(--card) 80%, #fff) 50%,
+      color-mix(in srgb, var(--line) 55%, transparent) 70%);
+    background-size:200% 100%;animation:shimmer 1.3s linear infinite}
+  .sk-card{height:150px;margin-bottom:12px}
+  .sk-row{height:66px;margin-bottom:9px}
+  .empty{
+    text-align:center;color:var(--muted);font-size:.82rem;
+    padding:34px 16px;line-height:1.9;
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+  }
+  .empty .emo{font-size:2.4rem;line-height:1;opacity:.9;margin-bottom:4px;filter:saturate(.9)}
+  .empty b{color:var(--ink);font-weight:700;font-size:.9rem}
 
   @media (prefers-reduced-motion: reduce){
     *{animation:none!important;transition:none!important}
@@ -1626,11 +1665,18 @@ async function doLogin(){
 }
 
 /* ---------- تحميل الشهر ---------- */
+function showSkeleton(){
+  const sc = $('summaryCard'), en = $('envList'), ex = $('expList');
+  if(sc) sc.innerHTML = '<div class="card sk sk-card"></div>';
+  if(en) en.innerHTML = '<div class="sk sk-row"></div><div class="sk sk-row"></div><div class="sk sk-row"></div>';
+  if(ex) ex.innerHTML = '<div class="sk sk-row"></div><div class="sk sk-row"></div>';
+}
 async function loadMonth(month){
   state.month = month;
   $('monthPick').value = month;
   if(!apiReady()){ render(); return; }
   inFlight = true;
+  showSkeleton();
   loading(true);
   try{
     const res = await apiGet(month);
@@ -1654,6 +1700,23 @@ async function loadMonth(month){
 }
 
 /* ---------- الرسم الدائري ---------- */
+// رسم القطع بنعومة ومتتابعة (unfurl) — بصري بحت
+function animateDonut(){
+  const svg = document.querySelector('#summaryCard .donut svg');
+  if(!svg) return;
+  const c = 2 * Math.PI * 52;                 // محيط الدائرة (r=52)
+  const segs = svg.querySelectorAll('.dseg');
+  segs.forEach((sg, i) => {
+    const finalDa = sg.getAttribute('stroke-dasharray');   // "len rest"
+    sg.style.transition = 'none';
+    sg.setAttribute('stroke-dasharray', '0 ' + c.toFixed(2));
+    requestAnimationFrame(() => {
+      sg.style.transition = 'stroke-dasharray .8s cubic-bezier(.22,.61,.36,1)';
+      sg.style.transitionDelay = (i * 0.07).toFixed(2) + 's';
+      requestAnimationFrame(() => { sg.setAttribute('stroke-dasharray', finalDa); });
+    });
+  });
+}
 function donutSVG(parts){
   const total = parts.reduce((s,p)=> s + p.value, 0);
   if(total <= 0) return '<div class="empty" style="padding:14px">ماكو مصاريف</div>';
@@ -1750,6 +1813,7 @@ function render(){
       if(sg.dataset.cat !== dn.dataset.active) sg.style.opacity = '.25';
     });
   }
+  animateDonut();
 
   /* ===== ظروف المصاريف ===== */
   let envHtml = '';
@@ -1876,7 +1940,7 @@ function render(){
         <div class="env-sub"><span>صرفت ${fmt(spentByCat[k])}</span><span>المتاح 0 د.ع</span></div>
       </div>`;
   });
-  $('envList').innerHTML = envHtml || '<div class="empty">بعد ما مسوّي ميزانية لهذا الشهر.<br>روح لتبويب «الميزانية» وحدد الرواتب والتصنيفات.</div>';
+  $('envList').innerHTML = envHtml || '<div class="empty"><span class="emo">🗂️</span><b>ماكو ميزانية لهذا الشهر بعد</b>روح لتبويب «الميزانية» وحدد الرواتب والتصنيفات.</div>';
 
   /* ===== فلتر + قائمة المصاريف ===== */
   buildFilterOptions();
@@ -1969,7 +2033,7 @@ function renderExpenseList(){
     const label = e.desc || (isDep ? 'إيداع' : (isRet ? 'إرجاع' : (isWd ? 'سحب' : 'بدون تفاصيل')));
     const tag = isFund ? ' · تمويل' : (isToFund ? ' · لصندوق' : (isDep ? ' · إيداع' : (isRet ? ' · إرجاع' : (isWd ? ' · سحب' : ''))));
     expHtml += `
-      <div class="exp" onclick="openEdit('${e.id}')">
+      <div class="exp" data-id="${e.id}" onclick="openEdit('${e.id}')">
         <div class="cat-dot ${dotCls}">${icon}</div>
         <div class="mid">
           <div class="desc">${esc(label)}</div>
@@ -1979,7 +2043,7 @@ function renderExpenseList(){
         ${state.locked ? '' : `<button class="del" onclick="event.stopPropagation();delExpense('${e.id}')" aria-label="حذف">✕</button>`}
       </div>`;
   });
-  $('expList').innerHTML = expHtml || '<div class="empty">' + (state.expenses.length ? 'ماكو نتائج للفلتر.' : 'ماكو مصاريف مسجلة بهذا الشهر.') + '</div>';
+  $('expList').innerHTML = expHtml || '<div class="empty"><span class="emo">' + (state.expenses.length ? '🔍' : '🧾') + '</span><b>' + (state.expenses.length ? 'ماكو نتائج للفلتر.' : 'ماكو مصاريف مسجلة بهذا الشهر.') + '</b>' + (state.expenses.length ? 'جرّب تغيّر كلمة البحث أو الفلتر.' : 'سجّل أول مصروف من تبويب «الإضافة».') + '</div>';
 }
 
 /* ---------- القفل ---------- */
@@ -4141,13 +4205,85 @@ function initDepth(){
         const d = parseFloat(el.dataset.depth) || 0;
         el.style.transform = `translate(${tx*d}px, ${ty*d*0.4}px)`;
       });
-      // الكروت المعلّمة depth تميل ميلان خفيف جداً
-      document.querySelectorAll('.tab.active .depth').forEach((el, i) => {
+      // الكروت المعلّمة depth تميل ميلان خفيف جداً (نستثني sum-card — يتكفّل بيها initAmbient بالميلان)
+      document.querySelectorAll('.tab.active .depth:not(.sum-card)').forEach((el, i) => {
         const k = 1 + (i % 3) * 0.35;
         el.style.transform = `translate(${tx*6*k}px, ${ty*5*k}px)`;
       });
     });
   }, { passive: true });
+}
+
+/* ============================================================
+   أنميشن تفاعلي مع الماوس — كمبيوتر فقط (Spotlight + ميلان اللوحة)
+   ============================================================ */
+function initAmbient(){
+  if(document.documentElement.classList.contains('perf')) return;
+  if(!window.matchMedia || !window.matchMedia('(hover:hover) and (min-width:1000px)').matches) return;
+  document.body.classList.add('amb-on');
+  let raf = null, curCard = null, ex = 0, ey = 0;
+  document.addEventListener('pointermove', (e) => {
+    const card = e.target.closest ? e.target.closest('.card,.sum-card,.env,.fund') : null;
+    curCard = card; ex = e.clientX; ey = e.clientY;
+    if(raf || !card) return;
+    raf = requestAnimationFrame(() => {
+      raf = null;
+      if(!curCard) return;
+      const r = curCard.getBoundingClientRect();
+      const px = (ex - r.left) / r.width, py = (ey - r.top) / r.height;
+      curCard.style.setProperty('--mx', (px*100).toFixed(1) + '%');
+      curCard.style.setProperty('--my', (py*100).toFixed(1) + '%');
+      // توقيع اللوحة: ميلان بطاقة الملخص باتجاه المؤشر
+      if(curCard.classList.contains('sum-card')){
+        const rx = (px - 0.5) * 7, ry = (0.5 - py) * 7;
+        curCard.style.transform = `perspective(900px) rotateY(${rx.toFixed(2)}deg) rotateX(${ry.toFixed(2)}deg)`;
+      }
+    });
+  }, { passive: true });
+  document.addEventListener('pointerout', (e) => {
+    const sc = e.target.closest ? e.target.closest('.sum-card') : null;
+    if(sc && (!e.relatedTarget || !sc.contains(e.relatedTarget))) sc.style.transform = '';
+  }, { passive: true });
+}
+
+/* ============================================================
+   سحب صف المصروف أفقياً للحذف (موبايل) — يشغّل نفس تأكيد الحذف
+   ============================================================ */
+function initSwipe(){
+  const list = $('expList');
+  if(!list) return;
+  let sw = null;
+  list.addEventListener('touchstart', (e) => {
+    const exp = e.target.closest && e.target.closest('.exp');
+    if(!exp || (e.target.closest && e.target.closest('.del')) || state.locked){ sw = null; return; }
+    const t = e.touches[0];
+    sw = { exp, x:t.clientX, y:t.clientY, dx:0, horiz:false };
+  }, { passive:true });
+  list.addEventListener('touchmove', (e) => {
+    if(!sw) return;
+    const t = e.touches[0], dx = t.clientX - sw.x, dy = t.clientY - sw.y;
+    if(!sw.horiz){
+      if(Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) sw.horiz = true;
+      else if(Math.abs(dy) > 10){ sw = null; return; }
+      else return;
+    }
+    sw.dx = dx;
+    sw.exp.style.transition = 'none';
+    sw.exp.style.transform = 'translateX(' + dx.toFixed(0) + 'px)';
+    const r = Math.min(1, Math.abs(dx) / 110);
+    sw.exp.style.background = 'color-mix(in srgb, var(--red-soft) ' + (r*100).toFixed(0) + '%, var(--card))';
+  }, { passive:true });
+  const end = () => {
+    if(!sw) return;
+    const exp = sw.exp, dx = sw.dx, id = exp.dataset.id;
+    exp.style.transition = 'transform .25s var(--ease), background .25s';
+    exp.style.transform = '';
+    exp.style.background = '';
+    if(Math.abs(dx) > 100 && id){ setTimeout(() => { try{ delExpense(id); }catch(_){} }, 60); }
+    sw = null;
+  };
+  list.addEventListener('touchend', end, { passive:true });
+  list.addEventListener('touchcancel', end, { passive:true });
 }
 
 /* ============================================================
@@ -4269,6 +4405,8 @@ window.addEventListener('beforeprint', () => {
 try{ startDeco(); }catch(e){}
 try{ updateSky(); setInterval(updateSky, 5 * 60 * 1000); }catch(e){}
 try{ initDepth(); }catch(e){}
+try{ initAmbient(); }catch(e){}
+try{ initSwipe(); }catch(e){}
 (async () => {
   try{
     const { data:{ session: s } } = await sb.auth.getSession();
