@@ -96,7 +96,7 @@
   @keyframes splashFade{to{opacity:0;visibility:hidden}}
 
   /* ---------- خلفية السماء المتدرّجة (شمس/قمر/نجوم) ---------- */
-  #sky{position:fixed;inset:0;z-index:-2;overflow:hidden;transition:background 3s ease;pointer-events:none;background:var(--bg)}
+  #sky{position:fixed;inset:0;z-index:-2;overflow:hidden;transition:background 3s ease,filter .3s ease;pointer-events:none;background:var(--bg);filter:blur(var(--sky-blur,0px))}
   #sky .sky-body{
     position:absolute;width:120px;height:120px;border-radius:50%;
     top:12%;left:50%;transform:translateX(-50%);
@@ -428,6 +428,11 @@
   .pal-dots i{width:12px;height:12px;border-radius:4px;display:inline-block}
   @media (hover:hover){ .pal:hover{border-color:var(--primary)} }
   @media (min-width:1000px){ .pal{width:calc(50% - 5px)} }
+
+  /* ---------- سلايدر التغويش ---------- */
+  .blur-row{display:flex;align-items:center;gap:12px;margin-top:2px}
+  .blur-row input[type=range]{flex:1;accent-color:var(--primary);height:26px}
+  .blur-val{font-variant-numeric:tabular-nums;font-weight:800;color:var(--primary);min-width:34px;text-align:center;font-size:.9rem}
 
   /* ---------- منتقي الألوان ---------- */
   .swatches{display:flex;flex-wrap:wrap;gap:11px}
@@ -820,12 +825,10 @@
   <div class="sky-body" id="skyBody"></div>
   <div id="skyParticles"></div>
   <svg class="sky-scene" id="skyScene" viewBox="0 0 1440 500" preserveAspectRatio="xMidYMax slice">
-    <path class="mtn mtn-far" data-depth="6"  d="M0,330 L120,270 L240,310 L380,240 L520,300 L680,230 L820,300 L980,250 L1140,300 L1300,255 L1440,300 L1440,500 L0,500 Z"/>
-    <path class="mtn mtn-mid" data-depth="12" d="M0,380 L160,300 L320,360 L480,285 L640,355 L820,290 L1000,360 L1180,300 L1360,360 L1440,320 L1440,500 L0,500 Z"/>
-    <g class="trees" data-depth="22">
-      <path d="M0,470 L70,470 L60,455 L66,455 L54,438 L60,438 L48,420 L40,420 L28,438 L34,438 L22,455 L28,455 L18,470 Z"/>
-    </g>
-    <path class="mtn mtn-near" data-depth="20" d="M0,440 L200,370 L400,435 L620,360 L840,435 L1060,365 L1280,435 L1440,395 L1440,500 L0,500 Z"/>
+    <!-- تلال ناعمة منحنية (بدل الجبال المدبّبة) — ٣ طبقات للعمق -->
+    <path class="mtn mtn-far" data-depth="6"  d="M0,352 C240,300 470,300 720,336 C980,372 1200,312 1440,344 L1440,500 L0,500 Z"/>
+    <path class="mtn mtn-mid" data-depth="12" d="M0,400 C280,348 560,358 880,392 C1120,418 1320,356 1440,388 L1440,500 L0,500 Z"/>
+    <path class="mtn mtn-near" data-depth="20" d="M0,452 C340,410 700,420 1010,446 C1220,464 1340,418 1440,442 L1440,500 L0,500 Z"/>
   </svg>
 </div>
 
@@ -905,7 +908,7 @@
       <h2>سجّل مصروف</h2>
       <div class="row">
         <div>
-          <label>المبلغ (د.ع)</label>
+          <label id="amtCurLabel">المبلغ (د.ع)</label>
           <input type="tel" id="expAmount" placeholder="50,000" inputmode="numeric">
         </div>
         <div>
@@ -1189,9 +1192,53 @@ const PALETTES = {
       sunset:'linear-gradient(160deg,#3E5E86 0%,#6E8AA8 48%,#E0A878 100%)',
       sea:'linear-gradient(160deg,#2C9FC0 0%,#7FCEDE 45%,#D8F0F0 100%)'
     }
+  },
+  charcoal: {
+    name:'رصاصي مودرن ⬛', primary:'#3E4247', amber:'#B8946A', green:'#5F8A6E',
+    chart:['#3E4247','#B8946A','#6E7378','#5F8A6E','#8A8F96','#A98F6E','#767B82','#9AA0A6','#5E6369','#C0A57E'],
+    mtnDay:['#9A9EA4','#7E838A','#62676E','#484D54'], mtnNight:['#2E3238','#24282E','#1A1E24','#12151A'],
+    phases:[
+      'linear-gradient(160deg,#D2D0CC 0%,#C8BFB6 45%,#B8ACA0 100%)',
+      'linear-gradient(160deg,#CDD1D6 0%,#E2E4E7 55%,#F2F3F5 100%)',
+      'linear-gradient(160deg,#C7CBD0 0%,#DDE0E4 55%,#EEF0F2 100%)',
+      'linear-gradient(160deg,#B8BCC2 0%,#D0D3D7 55%,#E6E4E0 100%)',
+      'linear-gradient(160deg,#6E7378 0%,#9BA0A6 52%,#C9AD8E 100%)',
+      'linear-gradient(170deg,#16181C 0%,#24272C 55%,#33373D 100%)'
+    ],
+    seasons:{
+      spring:'linear-gradient(160deg,#D6D4D0 0%,#E4E2DE 55%,#F2F1EE 100%)',
+      summer:'linear-gradient(160deg,#C7CBD0 0%,#DDE0E4 55%,#F0F1F3 100%)',
+      autumn:'linear-gradient(160deg,#B8ADA0 0%,#A69684 50%,#8C7C68 100%)',
+      winter:'linear-gradient(160deg,#CDD2D8 0%,#E4E7EB 55%,#F6F8FA 100%)',
+      night:'linear-gradient(160deg,#16181C 0%,#24272C 55%,#33373D 100%)',
+      sunset:'linear-gradient(160deg,#5A5E64 0%,#8A8F96 48%,#C9AD8E 100%)',
+      sea:'linear-gradient(160deg,#8FA0A6 0%,#B8C2C6 45%,#DCE2E2 100%)'
+    }
+  },
+  requiem: {
+    name:'ريكويم 🧟', primary:'#9E1B1B', amber:'#A8822E', green:'#5C7A32',
+    chart:['#9E1B1B','#A8822E','#5C7A32','#7A2E2A','#C0453E','#6E3A38','#8A6A2E','#B0562E','#5E4A46','#8E2E2A'],
+    mtnDay:['#5A4340','#43302E','#2E1F1E','#1C1212'], mtnNight:['#2A1416','#1C0E10','#120809','#0A0506'],
+    phases:[
+      'linear-gradient(160deg,#3A2422 0%,#5E2E28 45%,#7E4438 100%)',
+      'linear-gradient(160deg,#5A4A46 0%,#75605A 55%,#907870 100%)',
+      'linear-gradient(160deg,#6B5C56 0%,#8A6E60 55%,#A88C78 100%)',
+      'linear-gradient(160deg,#4E3A36 0%,#6E524A 55%,#8E6C5E 100%)',
+      'linear-gradient(160deg,#2A1416 0%,#6E1F1C 52%,#A84428 100%)',
+      'linear-gradient(170deg,#0A0708 0%,#1C0E10 55%,#331416 100%)'
+    ],
+    seasons:{
+      spring:'linear-gradient(160deg,#4A2E2C 0%,#6E3A32 55%,#8E5648 100%)',
+      summer:'linear-gradient(160deg,#5A4A46 0%,#7A5E52 55%,#9E7A64 100%)',
+      autumn:'linear-gradient(160deg,#4E2A24 0%,#7A3A28 50%,#A0562E 100%)',
+      winter:'linear-gradient(160deg,#3A3236 0%,#544A4E 55%,#726468 100%)',
+      night:'linear-gradient(160deg,#0A0708 0%,#1C0E10 55%,#331416 100%)',
+      sunset:'linear-gradient(160deg,#2A1416 0%,#6E1F1C 52%,#A84428 100%)',
+      sea:'linear-gradient(160deg,#26343A 0%,#40524E 45%,#6E5A48 100%)'
+    }
   }
 };
-const PALETTE_ORDER = ['indigo','sand','forest','ocean'];
+const PALETTE_ORDER = ['ocean','indigo','sand','forest','charcoal','requiem'];
 
 // هندسة الأوقات (مواقع الشمس/القمر) — مشتركة، الألوان تجي من الباليت
 const PHASE_GEOM = [
@@ -1223,7 +1270,18 @@ let session = null;
 
 /* ---------- أدوات ---------- */
 const $ = id => document.getElementById(id);
-const fmt = n => (Number(n)||0).toLocaleString('en-US') + ' د.ع';
+/* العملة — نص العرض فقط (ما يمسّ أي حساب) */
+const CURRENCIES = {
+  iqd: { sym:'د.ع', pos:'after',  name:'دينار عراقي (د.ع)' },
+  usd: { sym:'$',   pos:'before', name:'دولار ($)' }
+};
+let CURRENCY = 'iqd';
+try{ CURRENCY = CURRENCIES[localStorage.getItem('mas_cur')] ? localStorage.getItem('mas_cur') : 'iqd'; }catch(_){}
+const fmt = n => {
+  const v = (Number(n)||0).toLocaleString('en-US');
+  const c = CURRENCIES[CURRENCY] || CURRENCIES.iqd;
+  return c.pos === 'before' ? c.sym + v : v + ' ' + c.sym;
+};
 const num = v => Number(String(v).replace(/[^\d.]/g,'')) || 0;
 const todayISO = () => new Date().toISOString().slice(0,10);
 const thisMonth = () => new Date().toISOString().slice(0,7);
@@ -1306,6 +1364,39 @@ window.pickPalette = (id) => {
   try{ renderSettings(); }catch(_){}
   toast('انتغيّر الثيم ✓ 🎨');
 };
+
+/* ---------- العملة (نص عرض فقط) ---------- */
+function updateCurrencyLabels(){
+  const c = CURRENCIES[CURRENCY] || CURRENCIES.iqd;
+  const lbl = $('amtCurLabel');
+  if(lbl) lbl.textContent = 'المبلغ (' + c.sym + ')';
+}
+function refreshMoney(){
+  try{ if(session) render(); }catch(_){}
+  try{ updateAlloc(); }catch(_){}
+  try{ if($('tab-bills') && $('tab-bills').classList.contains('active')) renderBills(); }catch(_){}
+  try{ if($('tab-recon') && $('tab-recon').classList.contains('active')){ renderReconSystem(); renderRecons(); } }catch(_){}
+}
+function setCurrency(id){
+  CURRENCY = CURRENCIES[id] ? id : 'iqd';
+  try{ localStorage.setItem('mas_cur', CURRENCY); }catch(_){}
+  updateCurrencyLabels();
+  refreshMoney();
+}
+
+/* ---------- تغويش خلفية السماء (0-100) ---------- */
+let skyBlur = 0;
+try{ skyBlur = parseInt(localStorage.getItem('mas_skyblur') || '0', 10) || 0; }catch(_){}
+function applySkyBlur(v){
+  const pct = Math.max(0, Math.min(100, Number(v) || 0));
+  const px = (pct / 100 * 18).toFixed(1);   // أقصى تغويش ~18px
+  document.documentElement.style.setProperty('--sky-blur', px + 'px');
+}
+function setSkyBlur(v){
+  skyBlur = Math.max(0, Math.min(100, parseInt(v, 10) || 0));
+  try{ localStorage.setItem('mas_skyblur', String(skyBlur)); }catch(_){}
+  applySkyBlur(skyBlur);
+}
 
 /* ---------- المودال ---------- */
 function modalOpen(html){ $('modalCard').innerHTML = '<div class="grabber"></div>' + html; $('modal').classList.add('show'); }
@@ -2593,6 +2684,14 @@ function renderSettings(){
         ${Object.keys(SEASON_NAMES).map(k => `<option value="${k}">${SEASON_NAMES[k]}</option>`).join('')}
       </select>
       <div class="hint" style="margin-top:4px">«تلقائي» يغيّر السماء مع ساعة اليوم (شمس وقمر ونجوم). باقي الثيمات ثابتة بمزاج الفصل.</div>
+      <label style="margin-top:12px">🌫️ تغويش الخلفية (${skyBlur}٪)</label>
+      <div class="blur-row"><input type="range" id="skyBlurRange" min="0" max="100" step="1" value="${skyBlur}"><span class="blur-val" id="skyBlurVal">${skyBlur}</span></div>
+      <div class="hint" style="margin-top:4px">يغوّش السماء والخلفية فقط — البطاقات تبقى واضحة.</div>
+      <label style="margin-top:12px">💵 العملة</label>
+      <select id="curSel">
+        ${Object.keys(CURRENCIES).map(k => `<option value="${k}">${CURRENCIES[k].name}</option>`).join('')}
+      </select>
+      <div class="hint" style="margin-top:4px">تتطبّق على كل المبالغ بالتطبيق فوراً.</div>
     </div>
 
     <div class="card">
@@ -2655,6 +2754,18 @@ function renderSettings(){
   if($('seasonSel')){
     $('seasonSel').value = skySeason;
     $('seasonSel').onchange = (e) => { setSeason(e.target.value); toast('انتغيّر الثيم ✓ 🌤'); };
+  }
+  if($('skyBlurRange')){
+    $('skyBlurRange').oninput = (e) => {
+      const v = e.target.value;
+      applySkyBlur(v);
+      if($('skyBlurVal')) $('skyBlurVal').textContent = v;
+    };
+    $('skyBlurRange').onchange = (e) => setSkyBlur(e.target.value);
+  }
+  if($('curSel')){
+    $('curSel').value = CURRENCY;
+    $('curSel').onchange = (e) => { setCurrency(e.target.value); toast('انتغيّرت العملة ✓ 💵'); };
   }
   if($('billsToggle')) $('billsToggle').onchange = (e) => {
     BILLS_ON = e.target.checked;
@@ -4142,6 +4253,8 @@ if(/Android/i.test(navigator.userAgent)) document.documentElement.classList.add(
   window.addEventListener('load', () => setTimeout(kill, t));
 })();
 loadPalette();
+try{ applySkyBlur(skyBlur); }catch(e){}
+try{ updateCurrencyLabels(); }catch(e){}
 apiReady();
 try{ applyLangBoot(); }catch(e){}
 try{ applyBillsVisible(); }catch(e){}
