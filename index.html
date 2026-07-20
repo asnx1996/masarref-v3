@@ -4,55 +4,59 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>Pocky — مصاريفنا</title>
-<meta name="theme-color" content="#0D6E5F">
+<meta name="theme-color" content="#C86B4A">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Pocky">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800&family=Alexandria:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#F5F5F7;
+    --bg:#FBF7F1;
     --bg-2:#FFFFFF;
     --card:#FFFFFF;
-    --ink:#1C1C1E;
-    --muted:#8A8A8E;
-    --line:#E6E6EA;
-    --primary:#0D6E5F;
-    --primary-soft:#E2F0ED;
-    --amber:#E0A52E;
-    --red:#D9544F;
-    --red-soft:#FBECEB;
-    --radius:18px;
-    --radius-sm:13px;
-    --shadow:0 1px 2px rgba(20,20,30,.04), 0 4px 16px rgba(20,20,30,.05);
-    --shadow-lg:0 8px 40px rgba(20,20,30,.16);
-    --blur:saturate(180%) blur(20px);
+    --ink:#2A2018;
+    --muted:#93887C;
+    --line:#EBE2D6;
+    --primary:#C86B4A;
+    --primary-soft:#F6E7DE;
+    --amber:#D9962F;
+    --green:#3F9E7A;
+    --green-soft:#E1F1EA;
+    --red:#C0453E;
+    --red-soft:#F8E6E3;
+    --radius:22px;
+    --radius-sm:16px;
+    --shadow:0 1px 2px rgba(70,45,25,.05), 0 6px 20px rgba(70,45,25,.07);
+    --shadow-lg:0 12px 44px rgba(60,35,15,.20);
+    --blur:saturate(160%) blur(20px);
     --ease:cubic-bezier(.32,.72,0,1);
-    --header-grad:linear-gradient(160deg, var(--primary), color-mix(in srgb, var(--primary) 78%, #000 22%));
+    --header-grad:linear-gradient(160deg, var(--primary), color-mix(in srgb, var(--primary) 74%, #3a1c0e 26%));
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 
   /* ---------- الوضع الداكن (دارك مود) ---------- */
   body.dark{
-    --bg:#101216;
-    --bg-2:#15181D;
-    --card:#1B1F26;
-    --ink:#FFFFFF;
-    --muted:#C9CFD8;
-    --line:#2B3039;
-    --primary-soft:color-mix(in srgb, var(--primary) 24%, #1B1F26);
-    --red-soft:#3A2527;
-    --shadow:0 1px 2px rgba(0,0,0,.35), 0 4px 16px rgba(0,0,0,.30);
-    --shadow-lg:0 8px 40px rgba(0,0,0,.55);
-    color:#fff;
+    --bg:#1C1712;
+    --bg-2:#241C15;
+    --card:#2A2018;
+    --ink:#F3E9DD;
+    --muted:#B9A996;
+    --line:#3A2E23;
+    --primary-soft:color-mix(in srgb, var(--primary) 26%, #2A2018);
+    --green-soft:color-mix(in srgb, var(--green) 24%, #2A2018);
+    --red-soft:#3E241F;
+    --shadow:0 1px 2px rgba(0,0,0,.40), 0 6px 22px rgba(0,0,0,.34);
+    --shadow-lg:0 12px 44px rgba(0,0,0,.58);
+    color:#F3E9DD;
   }
-  body.dark input,body.dark select{background:#232830;color:var(--ink);border-color:var(--line)}
-  body.dark input::placeholder{color:#6E7580}
+  body.dark input,body.dark select{background:#33271D;color:var(--ink);border-color:var(--line)}
+  body.dark input::placeholder{color:#8A7A68}
   body.dark .month-pick{background:rgba(255,255,255,.10)}
-  body.dark .hstat.main{background:#232830;color:#fff}
+  body.dark .hstat.main{background:#33271D;color:var(--green)}
   body.dark .hstat.main .lbl{opacity:.75}
   body.dark .warn-btn{background:var(--card)}
   body.dark ::-webkit-calendar-picker-indicator{filter:invert(1)}
@@ -61,7 +65,7 @@
   body.dark .lg-item:hover,body.dark .lg-item.on{outline-color:color-mix(in srgb, var(--primary) 60%, #fff)}
   html{-webkit-text-size-adjust:100%}
   body{
-    font-family:'Alexandria',-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;
+    font-family:'Rubik','Alexandria',-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;
     background:var(--bg);
     color:var(--ink);
     min-height:100vh;
@@ -74,7 +78,7 @@
   /* ---------- شاشة الافتتاح (Splash) ---------- */
   #splash{
     position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;
-    background:linear-gradient(160deg,#0F7A69 0%,#0D6E5F 55%,#0A5A4D 100%);
+    background:linear-gradient(160deg,#D67A54 0%,#C86B4A 55%,#A9522F 100%);
     animation:splashOut .7s cubic-bezier(.5,0,.75,0) 1.9s forwards;
   }
   #splash.done{display:none!important}
@@ -119,7 +123,7 @@
   #skyParticles{position:absolute;inset:0;overflow:hidden;pointer-events:none}
   #skyParticles i{position:absolute;top:-6%;display:block;animation:fall linear infinite}
   #skyParticles i.snow{width:7px;height:7px;border-radius:50%;background:#fff;opacity:.85}
-  #skyParticles i.petal{width:9px;height:7px;border-radius:60% 20% 60% 20%;background:#F8C6DA;opacity:.9}
+  #skyParticles i.petal{width:9px;height:7px;border-radius:60% 20% 60% 20%;background:#F3B7A6;opacity:.9}
   #skyParticles i.leaf{width:10px;height:8px;border-radius:70% 20% 70% 20%;background:#D98A3B;opacity:.9}
   @keyframes fall{
     0%{transform:translateY(0) translateX(0) rotate(0);opacity:0}
@@ -192,7 +196,7 @@
   .hstat{flex:1;background:rgba(255,255,255,.13);border-radius:15px;padding:11px 12px;backdrop-filter:var(--blur)}
   .hstat .lbl{font-size:.65rem;font-weight:300;opacity:.85}
   .hstat .val{font-size:1.02rem;font-weight:700;margin-top:3px;white-space:nowrap}
-  .hstat.main{background:#fff;color:var(--primary)}
+  .hstat.main{background:#fff;color:var(--green)}
   .hstat.main .lbl{opacity:.7}
   .hstat .val.neg{color:#FFD9D7}
   .hstat.main .val.neg{color:var(--red)}
@@ -407,6 +411,24 @@
   .set-sec{font-size:.72rem;font-weight:700;color:var(--muted);margin:18px 2px 8px}
   .set-sec:first-of-type{margin-top:4px}
 
+  /* ---------- منتقي الثيمات (الباليتات) ---------- */
+  .pal-grid{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+  .pal{
+    position:relative;width:calc(50% - 5px);display:flex;align-items:center;gap:11px;
+    border:1.5px solid var(--line);border-radius:16px;padding:10px 11px;cursor:pointer;
+    background:var(--card);transition:transform .16s var(--ease),border-color .2s,box-shadow .2s;
+  }
+  .pal:active{transform:scale(.97)}
+  .pal.sel{border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent)}
+  .pal.sel::after{content:'✓';position:absolute;top:7px;left:9px;color:var(--primary);font-weight:800;font-size:.8rem}
+  .pal-sky{width:38px;height:38px;border-radius:12px;flex-shrink:0;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
+  .pal-info{display:flex;flex-direction:column;gap:5px;min-width:0}
+  .pal-name{font-weight:700;font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pal-dots{display:flex;gap:4px}
+  .pal-dots i{width:12px;height:12px;border-radius:4px;display:inline-block}
+  @media (hover:hover){ .pal:hover{border-color:var(--primary)} }
+  @media (min-width:1000px){ .pal{width:calc(50% - 5px)} }
+
   /* ---------- منتقي الألوان ---------- */
   .swatches{display:flex;flex-wrap:wrap;gap:11px}
   .sw{
@@ -434,7 +456,7 @@
   .toast.show{opacity:1;transform:translateX(50%) translateY(0)}
   .toast.err{background:var(--red)}
   #loader{
-    position:fixed;inset:0;background:rgba(245,245,247,.7);
+    position:fixed;inset:0;background:color-mix(in srgb, var(--bg) 72%, transparent);
     display:none;align-items:center;justify-content:center;z-index:180;
     backdrop-filter:blur(3px);
   }
@@ -503,7 +525,7 @@
   .flog:last-child{border-bottom:none}
   .flog .fl-meta{color:var(--muted);font-size:.66rem;margin-top:2px}
   .flog .fl-amt{font-weight:700;white-space:nowrap}
-  .flog .fl-amt.plus{color:var(--primary)}
+  .flog .fl-amt.plus{color:var(--green)}
   .flog .fl-amt.minus{color:var(--red)}
 
   /* ---------- كود العائلة ---------- */
@@ -572,7 +594,14 @@
       border-radius:26px;padding:22px 24px;
     }
     main{max-width:1080px;padding:20px 24px}
-    #tab-add,#tab-settings,#tab-bills,#tab-recon{max-width:620px;margin:0 auto}
+    #tab-bills,#tab-recon{max-width:1080px;margin:0 auto}
+    #tab-settings{max-width:1080px;margin:0 auto}
+    /* الفواتير + المطابقة: بطاقة الملخص عريضة فوق، والباقي عمودين */
+    #tab-bills.active,#tab-recon.active{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;align-items:start}
+    #tab-bills.active>#billsSummary,#tab-recon.active>#reconSystem{grid-column:1/-1}
+    /* الإعدادات: بطاقاتها كلها داخل #settingsBody، فنوزّعها على عمودين (masonry) */
+    #settingsBody{columns:2;column-gap:20px}
+    #settingsBody>.card{break-inside:avoid;-webkit-column-break-inside:avoid;display:inline-block;width:100%;vertical-align:top}
     #tab-dash.active,#tab-budget.active{display:grid;grid-template-columns:1.05fr .95fr;gap:0 20px;align-items:start}
     .dash-full{grid-column:1/-1;min-width:0}
     #tab-budget.active{grid-template-columns:1fr 1fr;max-width:1080px}
@@ -713,6 +742,59 @@
     #printArea .p-row b{font-weight:700}
   }
 
+  /* ============================================================
+     Glass Sky — بطاقات زجاجية مثلجة فوق السماء + عمق طبقي + حركة دخول
+     ============================================================ */
+  body.sky-on .card,
+  body.sky-on .env,
+  body.sky-on .fund,
+  body.sky-on .debt,
+  body.sky-on .exp,
+  body.sky-on .login-card{
+    background:color-mix(in srgb, var(--card) 64%, transparent);
+    -webkit-backdrop-filter:saturate(160%) blur(16px);
+    backdrop-filter:saturate(160%) blur(16px);
+    border:1px solid rgba(255,255,255,.5);
+    box-shadow:0 10px 30px rgba(90,50,20,.15), inset 0 1px 0 rgba(255,255,255,.55);
+  }
+  body.dark.sky-on .card,
+  body.dark.sky-on .env,
+  body.dark.sky-on .fund,
+  body.dark.sky-on .debt,
+  body.dark.sky-on .exp,
+  body.dark.sky-on .login-card{
+    background:color-mix(in srgb, var(--card) 56%, transparent);
+    border-color:rgba(255,255,255,.10);
+    box-shadow:0 12px 34px rgba(0,0,0,.44), inset 0 1px 0 rgba(255,255,255,.07);
+  }
+  /* بطاقة الملخص = بطلة زجاجية بارزة */
+  body.sky-on .sum-card{
+    background:color-mix(in srgb, var(--card) 72%, transparent);
+    box-shadow:0 18px 44px rgba(90,50,20,.2), inset 0 1px 0 rgba(255,255,255,.6);
+  }
+  body.dark.sky-on .sum-card{box-shadow:0 18px 46px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.08)}
+  /* شريط التبويبات زجاجي أوضح فوق السماء */
+  body.sky-on nav{background:color-mix(in srgb, var(--card) 74%, transparent)}
+  /* وضع الأداء (أندرويد): بلا زجاج — بطاقات صلبة */
+  .perf.sky-on .card,.perf.sky-on .env,.perf.sky-on .fund,.perf.sky-on .debt,
+  .perf.sky-on .exp,.perf.sky-on .sum-card,.perf.sky-on .login-card,.perf.sky-on nav{
+    background:var(--card);-webkit-backdrop-filter:none;backdrop-filter:none;
+  }
+
+  /* ===== حركة دخول اللوحة ===== */
+  @keyframes cardRise{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:none}}
+  @keyframes donutIn{from{opacity:0;transform:scale(.82) rotate(-14deg)}to{opacity:1;transform:none}}
+  .tab.active .sum-card{animation:cardRise .55s var(--ease) both}
+  .tab.active .donut svg{animation:donutIn .5s cubic-bezier(.3,.85,.35,1) both;transform-origin:center}
+  /* تتابع دخول عناصر القوائم */
+  #envList .env,#saveList .fund,#debtList .debt,#expList .exp{animation:cardRise .5s var(--ease) both}
+  #envList .env:nth-child(1),#saveList .fund:nth-child(1),#debtList .debt:nth-child(1),#expList .exp:nth-child(1){animation-delay:.03s}
+  #envList .env:nth-child(2),#saveList .fund:nth-child(2),#debtList .debt:nth-child(2),#expList .exp:nth-child(2){animation-delay:.08s}
+  #envList .env:nth-child(3),#saveList .fund:nth-child(3),#debtList .debt:nth-child(3),#expList .exp:nth-child(3){animation-delay:.13s}
+  #envList .env:nth-child(4),#saveList .fund:nth-child(4),#debtList .debt:nth-child(4),#expList .exp:nth-child(4){animation-delay:.18s}
+  #envList .env:nth-child(5),#saveList .fund:nth-child(5),#debtList .debt:nth-child(5),#expList .exp:nth-child(5){animation-delay:.23s}
+  #envList .env:nth-child(n+6),#saveList .fund:nth-child(n+6),#debtList .debt:nth-child(n+6),#expList .exp:nth-child(n+6){animation-delay:.28s}
+
   @media (prefers-reduced-motion: reduce){
     *{animation:none!important;transition:none!important}
   }
@@ -722,11 +804,11 @@
 <div id="splash">
   <div class="splash-inner">
     <svg class="splash-logo" viewBox="0 0 120 120" width="120" height="120" aria-hidden="true">
-      <rect width="120" height="120" rx="27" fill="#0D6E5F"/>
-      <g fill="#F5F0E1">
+      <rect width="120" height="120" rx="27" fill="#C86B4A"/>
+      <g fill="#FBF3E8">
         <path d="M60 30 L92 56 L84 64 L82 62 L82 88 L38 88 L38 62 L36 64 L28 56 Z M44 46 L44 34 L52 34 L52 40 Z"/>
       </g>
-      <circle cx="60" cy="66" r="15" fill="#0D6E5F" stroke="#F5F0E1" stroke-width="4"/>
+      <circle cx="60" cy="66" r="15" fill="#C86B4A" stroke="#FBF3E8" stroke-width="4"/>
       <text x="60" y="73" font-size="20" font-weight="800" fill="#F5F0E1" text-anchor="middle" font-family="Georgia,serif">$</text>
     </svg>
     <div class="splash-name">Pocky</div>
@@ -1009,19 +1091,132 @@ const SUPABASE_URL = "https://rcpwavfgxrqzgxclqwss.supabase.co";
 const SUPABASE_KEY = "sb_publishable_d6EVDwJ4-neRBjtXathxxA_yXqpKUMD";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const PALETTE = ['#0D6E5F','#2E9E8B','#D99A2B','#C0504D','#6A8CAF','#8E6FAE','#5BA86F','#B5793A','#4C9DA6','#9A6FA0'];
+/* ============================================================
+   الباليتات (الثيمات) — كل باليت يجمع: لون الموقع + سماء منسّقة معه
+   لمّا يختار المستخدم باليت من الإعدادات، يتغيّر لون الواجهة وتتصبغ
+   كل السماء (نهار/غروب/ليل + الفصول) بنفس العائلة اللونية.
+   (هذا كله ألوان/بيانات عرض — ما يمسّ أي حساب أو استدعاء بيانات)
+   ============================================================ */
+const DEFAULT_PAL = 'ocean';
+// ألوان الرسم البياني (الدونات) — تُضبط حسب الباليت الفعّال
+let PALETTE = ['#2C8FB0','#E0A24E','#2FA98A','#5E8AC0','#4EA5C0','#8A6AB0','#5EB0A0','#C08A5E','#5B9AB8','#3F9E9E'];
 
-/* الثيمات الجاهزة (لون أساسي لكل ثيم) */
-const THEMES = [
-  { id:'teal',   name:'أخضر مزرق', primary:'#0D6E5F' },
-  { id:'blue',   name:'أزرق',      primary:'#2563EB' },
-  { id:'indigo', name:'بنفسجي',    primary:'#6D5AE0' },
-  { id:'rose',   name:'وردي',      primary:'#E0457B' },
-  { id:'orange', name:'برتقالي',   primary:'#E0742E' },
-  { id:'amber',  name:'عسلي',      primary:'#C99A1E' },
-  { id:'slate',  name:'رصاصي',     primary:'#475569' },
-  { id:'black',  name:'فحمي',      primary:'#1F2937' }
+const PALETTES = {
+  sand: {
+    name:'دفء رملي 🏜️', primary:'#C0603F', amber:'#DE9A3A', green:'#3F9E7A',
+    chart:['#C0603F','#DE9A3A','#6E8B5B','#3F9E7A','#C99A5B','#A56A55','#7D9A88','#D98C6A','#8E7B63','#B5793A'],
+    mtnDay:['#C79A72','#A9784F','#835A3B','#5E3E28'], mtnNight:['#4A3550','#3A283F','#2A1B2E','#1C1220'],
+    phases:[
+      'linear-gradient(160deg,#FCE7C8 0%,#F6C9A8 45%,#E9A6A0 100%)',
+      'linear-gradient(160deg,#F5DCB8 0%,#FBEAD2 55%,#FEF6EA 100%)',
+      'linear-gradient(160deg,#F3C889 0%,#F9E0B0 55%,#FEF3DC 100%)',
+      'linear-gradient(160deg,#EEB878 0%,#F2D2A0 55%,#F7E6CB 100%)',
+      'linear-gradient(160deg,#7A5E86 0%,#C57B6B 52%,#F0A968 100%)',
+      'linear-gradient(170deg,#241528 0%,#3A2438 55%,#4A3048 100%)'
+    ],
+    seasons:{
+      spring:'linear-gradient(160deg,#F5DCC6 0%,#FBEADD 55%,#FCEFEA 100%)',
+      summer:'linear-gradient(160deg,#F3C57D 0%,#F9DFA6 50%,#FEF3CE 100%)',
+      autumn:'linear-gradient(160deg,#F4CE93 0%,#E9A96B 50%,#C87E55 100%)',
+      winter:'linear-gradient(160deg,#DFCDBE 0%,#EFE2D5 55%,#FAF3EB 100%)',
+      night:'linear-gradient(160deg,#241528 0%,#3A2438 55%,#4A3048 100%)',
+      sunset:'linear-gradient(160deg,#F7B267 0%,#F0855C 48%,#B56B8E 100%)',
+      sea:'linear-gradient(160deg,#5FB6C0 0%,#9FD6CE 45%,#EEE0CC 100%)'
+    }
+  },
+  indigo: {
+    name:'هدوء بنفسجي 🌌', primary:'#5B6CE0', amber:'#E0A54E', green:'#35A79A',
+    chart:['#5B6CE0','#8A79F0','#35A79A','#E0A54E','#7C8AE8','#A56AC0','#5FA8D0','#9A8CF0','#6E7BC8','#C08AD0'],
+    mtnDay:['#8A93C8','#6A73A8','#4E5684','#363C60'], mtnNight:['#2E3560','#232848','#191E38','#12152A'],
+    phases:[
+      'linear-gradient(160deg,#D9D2F0 0%,#E9CAD6 45%,#F0C2C0 100%)',
+      'linear-gradient(160deg,#CFD6F5 0%,#E2E6FA 55%,#F4F1FC 100%)',
+      'linear-gradient(160deg,#9FB2F0 0%,#C6D2F8 55%,#EAEFFE 100%)',
+      'linear-gradient(160deg,#A9AEE8 0%,#CFC9EC 55%,#EDE6F5 100%)',
+      'linear-gradient(160deg,#5B4E8E 0%,#9E6FA0 52%,#E7A6A6 100%)',
+      'linear-gradient(170deg,#12163A 0%,#1E2450 55%,#2E2F60 100%)'
+    ],
+    seasons:{
+      spring:'linear-gradient(160deg,#DCD6F2 0%,#E9DCEE 55%,#F5E4EC 100%)',
+      summer:'linear-gradient(160deg,#8FB6F0 0%,#BBD3F8 50%,#EAF0FE 100%)',
+      autumn:'linear-gradient(160deg,#C6A8D8 0%,#B98BB0 50%,#9E6E96 100%)',
+      winter:'linear-gradient(160deg,#C6D2E8 0%,#DFE6F4 55%,#F5F8FD 100%)',
+      night:'linear-gradient(160deg,#12163A 0%,#1E2450 55%,#2E2F60 100%)',
+      sunset:'linear-gradient(160deg,#6E5A9E 0%,#A66FA0 48%,#E7A6A6 100%)',
+      sea:'linear-gradient(160deg,#5B8FD8 0%,#8FB6E8 45%,#D8E4F5 100%)'
+    }
+  },
+  forest: {
+    name:'غابة هادئة 🌿', primary:'#4F8A6B', amber:'#CE9A4E', green:'#6FB047',
+    chart:['#4F8A6B','#CE9A4E','#6FB047','#3F9E9E','#8AAE6A','#A5894E','#5E9E7A','#B0A24E','#7B9A5B','#4E8A8A'],
+    mtnDay:['#8FAE7A','#6C8E5A','#4E6E40','#36502E'], mtnNight:['#2E4A3E','#233A30','#193028','#12201A'],
+    phases:[
+      'linear-gradient(160deg,#E7E3C4 0%,#DCD0A8 45%,#CDBE92 100%)',
+      'linear-gradient(160deg,#D9E4C6 0%,#EAF0D8 55%,#F6F9EC 100%)',
+      'linear-gradient(160deg,#AECF9E 0%,#D0E4BE 55%,#EDF5DE 100%)',
+      'linear-gradient(160deg,#A8C892 0%,#CDD9A8 55%,#EBEAC8 100%)',
+      'linear-gradient(160deg,#3E6E72 0%,#7FA47F 52%,#E4D3A0 100%)',
+      'linear-gradient(170deg,#132420 0%,#1E3830 55%,#2A463A 100%)'
+    ],
+    seasons:{
+      spring:'linear-gradient(160deg,#DCEFC6 0%,#EAF3DA 55%,#F1F6E4 100%)',
+      summer:'linear-gradient(160deg,#8FCF9E 0%,#C6E4B6 50%,#EEF6CE 100%)',
+      autumn:'linear-gradient(160deg,#C9C079 0%,#A99A44 50%,#7E7A2E 100%)',
+      winter:'linear-gradient(160deg,#CDD9C6 0%,#E2ECD9 55%,#F4F8EE 100%)',
+      night:'linear-gradient(160deg,#132420 0%,#1E3830 55%,#2A463A 100%)',
+      sunset:'linear-gradient(160deg,#3E6E72 0%,#7FA47F 48%,#D9C88A 100%)',
+      sea:'linear-gradient(160deg,#4FA5A0 0%,#8FCEC0 45%,#DFF0DC 100%)'
+    }
+  },
+  ocean: {
+    name:'بحر هادئ 🌊', primary:'#2C8FB0', amber:'#E0A24E', green:'#2FA98A',
+    chart:['#2C8FB0','#E0A24E','#2FA98A','#5E8AC0','#4EA5C0','#8A6AB0','#5EB0A0','#C08A5E','#5B9AB8','#3F9E9E'],
+    mtnDay:['#6EA3B8','#4E8098','#365F76','#254656'], mtnNight:['#25455E','#1B3548','#132838','#0C1C28'],
+    phases:[
+      'linear-gradient(160deg,#CFE6EC 0%,#E6D6D0 45%,#EEC6B8 100%)',
+      'linear-gradient(160deg,#C2E2F0 0%,#DEF0F8 55%,#F0FAFD 100%)',
+      'linear-gradient(160deg,#7FC8E8 0%,#B6E2F4 55%,#E6F6FE 100%)',
+      'linear-gradient(160deg,#8FC8DE 0%,#C2E0E4 55%,#EAF2E8 100%)',
+      'linear-gradient(160deg,#3E5E86 0%,#5E8AA8 50%,#E0A878 100%)',
+      'linear-gradient(170deg,#0E1E32 0%,#173048 55%,#22475E 100%)'
+    ],
+    seasons:{
+      spring:'linear-gradient(160deg,#CFEAE6 0%,#E2F0EC 55%,#F0F8F4 100%)',
+      summer:'linear-gradient(160deg,#5FC8E8 0%,#A6E2F4 50%,#E6F8FE 100%)',
+      autumn:'linear-gradient(160deg,#6EA8B0 0%,#9C9E88 50%,#C88E5E 100%)',
+      winter:'linear-gradient(160deg,#C6DCE8 0%,#DFEEF6 55%,#F4FBFD 100%)',
+      night:'linear-gradient(160deg,#0E1E32 0%,#173048 55%,#22475E 100%)',
+      sunset:'linear-gradient(160deg,#3E5E86 0%,#6E8AA8 48%,#E0A878 100%)',
+      sea:'linear-gradient(160deg,#2C9FC0 0%,#7FCEDE 45%,#D8F0F0 100%)'
+    }
+  }
+};
+const PALETTE_ORDER = ['indigo','sand','forest','ocean'];
+
+// هندسة الأوقات (مواقع الشمس/القمر) — مشتركة، الألوان تجي من الباليت
+const PHASE_GEOM = [
+  { h:[5,7],   sun:true,  x:14, y:70 },
+  { h:[7,11],  sun:true,  x:30, y:34 },
+  { h:[11,15], sun:true,  x:50, y:14 },
+  { h:[15,18], sun:true,  x:72, y:32 },
+  { h:[18,20], sun:true,  x:86, y:72 },
+  { h:[20,5],  sun:false, x:64, y:20 }
 ];
+// هندسة الفصول (شمس/قمر + الموقع + الذرات) — مشتركة، التدرّج من الباليت
+const SEASON_META = {
+  spring: { body:'sun',  x:38, y:20, particles:'petal' },
+  summer: { body:'sun',  x:52, y:11, particles:null },
+  autumn: { body:'sun',  x:72, y:40, particles:'leaf' },
+  winter: { body:'sun',  x:64, y:26, particles:'snow' },
+  night:  { body:'moon', x:70, y:15, particles:null },
+  sunset: { body:'sun',  x:50, y:44, particles:null },
+  sea:    { body:'sun',  x:30, y:14, particles:null }
+};
+const SEASON_NAMES = {
+  auto:'تلقائي (حسب الوقت) ☀️🌙', spring:'ربيع 🌸', summer:'صيف ☀️', autumn:'خريف 🍂',
+  winter:'شتاء ❄️', night:'ليل ونجوم 🌌', sunset:'غروب 🌇', sea:'بحر 🌊'
+};
+let activePal = PALETTES[DEFAULT_PAL];
 
 let state = { month:'', budget:null, expenses:[], debts:[], locked:false };
 let session = null;
@@ -1085,6 +1280,32 @@ function saveTheme(primary){
   try{ localStorage.setItem('mas_theme', primary); }catch(_){}
   applyTheme(primary);
 }
+
+/* ---------- الباليت (لون الموقع + السماء المنسّقة) ---------- */
+function applyPalette(id, save){
+  const p = PALETTES[id] || PALETTES[DEFAULT_PAL];
+  activePal = p;
+  const R = document.documentElement.style;
+  R.setProperty('--primary', p.primary);
+  R.setProperty('--primary-soft', softTint(p.primary));
+  R.setProperty('--amber', p.amber);
+  R.setProperty('--green', p.green);
+  PALETTE = p.chart;
+  if(save !== false){ try{ localStorage.setItem('mas_palette', id); }catch(_){} }
+  try{ updateSky(); }catch(_){}
+  try{ applyDark(); }catch(_){}          // يزامن لون شريط المتصفح (theme-color)
+  try{ if(session) render(); }catch(_){} // يعيد تلوين الدونات/المفتاح بألوان الباليت
+}
+function curPaletteId(){
+  let id = ''; try{ id = localStorage.getItem('mas_palette') || ''; }catch(_){}
+  return PALETTES[id] ? id : DEFAULT_PAL;
+}
+function loadPalette(){ applyPalette(curPaletteId(), false); }
+window.pickPalette = (id) => {
+  applyPalette(id);
+  try{ renderSettings(); }catch(_){}
+  toast('انتغيّر الثيم ✓ 🎨');
+};
 
 /* ---------- المودال ---------- */
 function modalOpen(html){ $('modalCard').innerHTML = '<div class="grabber"></div>' + html; $('modal').classList.add('show'); }
@@ -2300,9 +2521,14 @@ function rgbEq(a,b){
 
 /* ---------- تبويب الإعدادات (كل إعدادات الموقع بمكان واحد) ---------- */
 function renderSettings(){
-  let curColor = '';
-  try{ curColor = localStorage.getItem('mas_theme') || THEMES[0].primary; }catch(_){ curColor = THEMES[0].primary; }
-  const sw = THEMES.map(t => `<div class="sw ${t.primary.toLowerCase()===curColor.toLowerCase()?'sel':''}" style="background:${t.primary}" title="${t.name}" onclick="pickTheme('${t.primary}')"></div>`).join('');
+  const curPal = curPaletteId();
+  const palCards = PALETTE_ORDER.map(id => {
+    const p = PALETTES[id];
+    return `<div class="pal ${id===curPal?'sel':''}" onclick="pickPalette('${id}')" title="${p.name}">
+      <span class="pal-sky" style="background:${p.seasons.sunset}"></span>
+      <span class="pal-info"><span class="pal-name">${p.name}</span>
+      <span class="pal-dots"><i style="background:${p.primary}"></i><i style="background:${p.amber}"></i><i style="background:${p.green}"></i></span></span></div>`;
+  }).join('');
   const clockName = CLOCK_SKINS[clockIdx % CLOCK_SKINS.length].name;
 
   $('settingsBody').innerHTML = `
@@ -2343,11 +2569,9 @@ function renderSettings(){
         <span class="st-lbl">🌙 الوضع الداكن (دارك مود)</span>
         <label class="switch"><input type="checkbox" id="darkToggle" ${DARK_ON?'checked':''}><span class="track"></span><span class="knob"></span></label>
       </div>
-      <label>🎨 لون الواجهة</label>
-      <div class="swatches">
-        ${sw}
-        <label class="sw sw-custom" title="لون مخصص">＋<input type="color" id="customColor" value="${curColor}"></label>
-      </div>
+      <label>🎨 ثيم الألوان</label>
+      <div class="pal-grid">${palCards}</div>
+      <div class="hint" style="margin-top:2px">كل ثيم يصبغ لون الموقع + السماء (نهار/غروب/ليل والفصول) بنفس العائلة — يتطبّق فوراً وينحفظ بجهازك.</div>
       <div class="set-toggle" style="margin-top:10px">
         <span class="st-lbl">🌐 اللغة — ${LANG.cur==='en'?'English':'العربية'}</span>
         <button class="btn ghost" id="btnLangS" style="margin:0;width:auto;padding:8px 16px">${LANG.cur==='en'?'حوّل للعربية':'Switch to English'}</button>
@@ -2366,7 +2590,7 @@ function renderSettings(){
       </div>
       <label style="margin-top:12px">🌤 ثيم الخلفية (الفصول)</label>
       <select id="seasonSel">
-        ${Object.keys(SKY_THEMES).map(k => `<option value="${k}">${SKY_THEMES[k].name}</option>`).join('')}
+        ${Object.keys(SEASON_NAMES).map(k => `<option value="${k}">${SEASON_NAMES[k]}</option>`).join('')}
       </select>
       <div class="hint" style="margin-top:4px">«تلقائي» يغيّر السماء مع ساعة اليوم (شمس وقمر ونجوم). باقي الثيمات ثابتة بمزاج الفصل.</div>
     </div>
@@ -2420,7 +2644,6 @@ function renderSettings(){
     }catch(err){ toast('ما انتغيّر: ' + err.message, true); }
     finally{ loading(false); }
   };
-  $('customColor').addEventListener('input', e => pickTheme(e.target.value, true));
   if($('idleSel')){
     $('idleSel').value = String(autoLogoutMin);
     $('idleSel').onchange = (e) => {
@@ -2984,7 +3207,7 @@ let DARK_ON = localStorage.getItem('mas_dark') === 'on';      // فاتح افت
 function applyDark(){
   document.body.classList.toggle('dark', DARK_ON);
   const meta = document.querySelector('meta[name="theme-color"]');
-  if(meta) meta.content = DARK_ON ? '#101216' : (getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#0D6E5F');
+  if(meta) meta.content = DARK_ON ? '#1C1712' : (getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#C86B4A');
 }
 function applyReconVisible(){
   const nb = $('navRecon');
@@ -3569,18 +3792,44 @@ const CLOCK_SKINS = [
   { id:'minimal', name:'بسيطة عصرية', face:'#fff', ring:'#E5E7EB', tick:'#9CA3AF', num:'#111', hour:'#111', min:'#111', sec:'#10B981', center:'#111', numerals:'minimal' },
   { id:'dark',    name:'ليلية سوداء', face:'#1C1C22', ring:'#3A3A44', tick:'#6B7280', num:'#E5E7EB', hour:'#fff', min:'#fff', sec:'#F59E0B', center:'#fff', numerals:'latin' },
   { id:'london',  name:'بيغ بن (لندن)', face:'#F4ECD8', ring:'#2B2B2B', tick:'#2B2B2B', num:'#1A1A1A', hour:'#1A1A1A', min:'#1A1A1A', sec:'#7A1F1F', center:'#2B2B2B', numerals:'roman' },
-  { id:'gold',    name:'ذهبية ملكية', face:'#12100B', ring:'#D4AF37', tick:'#D4AF37', num:'#D4AF37', hour:'#F5E6A8', min:'#F5E6A8', sec:'#fff', center:'#D4AF37', numerals:'roman' }
+  { id:'gold',    name:'ذهبية ملكية', face:'#12100B', ring:'#D4AF37', tick:'#D4AF37', num:'#D4AF37', hour:'#F5E6A8', min:'#F5E6A8', sec:'#fff', center:'#D4AF37', numerals:'roman' },
+  // ---- أشكال عصرية وراقية جديدة ----
+  { id:'swiss',    name:'سويسري نظيف', face:'#FFFFFF', ring:'#111111', tick:'#111111', num:'#111', hour:'#111111', min:'#111111', sec:'#E4002B', center:'#111111', numerals:'minimal', markers:'ticks', secDot:true },
+  { id:'bauhaus',  name:'باوهاوس', face:'#F7F3E8', ring:'#1A1A1A', tick:'#1A1A1A', num:'#1A1A1A', hour:'#1A63C6', min:'#111111', sec:'#E4002B', center:'#E4002B', numerals:'latin', markers:'dots' },
+  { id:'neon',     name:'نيون أورورا', face:'#0E1220', ring:'#37E0C8', tick:'#37E0C8', num:'#8FF0E4', hour:'#EAFDFB', min:'#EAFDFB', sec:'#37E0C8', center:'#37E0C8', numerals:'minimal', markers:'dots', glow:true, ringW:2.5 },
+  { id:'emerald',  name:'زمردي فاخر', face:'#0E2A22', ring:'#D4AF37', tick:'#D4AF37', num:'#E8CF8A', hour:'#F5E6A8', min:'#F5E6A8', sec:'#FFFFFF', center:'#D4AF37', numerals:'roman', markers:'ticks' },
+  { id:'pearl',    name:'لؤلؤي ناعم', face:'#ECECF2', ring:'#DDDDE6', tick:'#A9A9B8', num:'#5A5A66', hour:'#3A3A44', min:'#3A3A44', sec:'#2C8FB0', center:'#3A3A44', numerals:'minimal', markers:'four', soft:true },
+  { id:'midnight', name:'منتصف الليل', face:'#141A33', ring:'#5A6488', tick:'#9AA4C8', num:'#C6CEEC', hour:'#EEF1FB', min:'#EEF1FB', sec:'#7CC4F0', center:'#C6CEEC', numerals:'minimal', markers:'dots' }
 ];
 let clockIdx = parseInt(localStorage.getItem('mas_clock') || '0', 10) || 0;
 function romanFor(n){ return ['','I','II','III','IIII','V','VI','VII','VIII','IX','X','XI','XII'][n]; }
+// معرّف SVG للتوهّج (نيون) والوجه الناعم (نيومورفيزم) — نضيفه مرة حسب الشكل
+function clockDefs(sk){
+  let d = '';
+  if(sk.soft) d += `<radialGradient id="clkSoft" cx="38%" cy="34%" r="82%"><stop offset="0%" stop-color="#FBFBFF"/><stop offset="100%" stop-color="#DFDFEA"/></radialGradient>`;
+  if(sk.glow) d += `<filter id="clkGlow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>`;
+  return d ? `<defs>${d}</defs>` : '';
+}
 function buildClockFace(sk){
   const cx=100, cy=100, R=94;
+  const mk = sk.markers || 'ticks';
+  const gf = sk.glow ? ' filter="url(#clkGlow)"' : '';
   let ticks='', nums='';
-  for(let i=0;i<60;i++){
-    const a = (i/60)*2*Math.PI - Math.PI/2;
-    const big = i%5===0;
-    const r1 = big?80:85, r2=90;
-    ticks += `<line x1="${cx+r1*Math.cos(a)}" y1="${cy+r1*Math.sin(a)}" x2="${cx+r2*Math.cos(a)}" y2="${cy+r2*Math.sin(a)}" stroke="${sk.tick}" stroke-width="${big?2.2:1}" opacity="${big?1:.5}"/>`;
+  if(mk === 'dots'){
+    for(let i=0;i<12;i++){
+      const a=(i/12)*2*Math.PI - Math.PI/2, r=82;
+      ticks += `<circle cx="${(cx+r*Math.cos(a)).toFixed(1)}" cy="${(cy+r*Math.sin(a)).toFixed(1)}" r="${i%3===0?3.2:2}" fill="${sk.tick}"${gf}/>`;
+    }
+  } else if(mk === 'four'){
+    for(let i=0;i<12;i++){
+      const a=(i/12)*2*Math.PI - Math.PI/2, big=i%3===0, r1=big?76:84, r2=90;
+      ticks += `<line x1="${(cx+r1*Math.cos(a)).toFixed(1)}" y1="${(cy+r1*Math.sin(a)).toFixed(1)}" x2="${(cx+r2*Math.cos(a)).toFixed(1)}" y2="${(cy+r2*Math.sin(a)).toFixed(1)}" stroke="${sk.tick}" stroke-width="${big?3:1.4}" opacity="${big?1:.5}" stroke-linecap="round"/>`;
+    }
+  } else {
+    for(let i=0;i<60;i++){
+      const a = (i/60)*2*Math.PI - Math.PI/2, big = i%5===0, r1 = big?80:85, r2=90;
+      ticks += `<line x1="${cx+r1*Math.cos(a)}" y1="${cy+r1*Math.sin(a)}" x2="${cx+r2*Math.cos(a)}" y2="${cy+r2*Math.sin(a)}" stroke="${sk.tick}" stroke-width="${big?2.2:1}" opacity="${big?1:.5}"/>`;
+    }
   }
   if(sk.numerals!=='minimal'){
     for(let h=1;h<=12;h++){
@@ -3591,18 +3840,20 @@ function buildClockFace(sk){
       nums += `<text x="${cx+r*Math.cos(a)}" y="${cy+r*Math.sin(a)}" fill="${sk.num}" font-size="${sk.numerals==='roman'?13:15}" font-weight="700" text-anchor="middle" dominant-baseline="central" font-family="Georgia,serif">${label}</text>`;
     }
   }
-  return `<circle cx="${cx}" cy="${cy}" r="${R}" fill="${sk.face}" stroke="${sk.ring}" stroke-width="5"/>${ticks}${nums}`;
+  const faceFill = sk.soft ? 'url(#clkSoft)' : sk.face;
+  return `${clockDefs(sk)}<circle cx="${cx}" cy="${cy}" r="${R}" fill="${faceFill}" stroke="${sk.ring}" stroke-width="${sk.ringW||5}"/>${ticks}${nums}`;
 }
 function renderClock(){
   const sk = CLOCK_SKINS[clockIdx % CLOCK_SKINS.length];
   const box = $('clockSkin');
   if(!box) return;
+  const gf = sk.glow ? ' filter="url(#clkGlow)"' : '';
   box.innerHTML = `
     <svg viewBox="0 0 200 200" width="200" height="200">
       ${buildClockFace(sk)}
-      <line id="clkH" x1="100" y1="100" x2="100" y2="55" stroke="${sk.hour}" stroke-width="5" stroke-linecap="round"/>
-      <line id="clkM" x1="100" y1="100" x2="100" y2="35" stroke="${sk.min}" stroke-width="3.4" stroke-linecap="round"/>
-      <line id="clkS" x1="100" y1="112" x2="100" y2="28" stroke="${sk.sec}" stroke-width="1.5" stroke-linecap="round"/>
+      <g id="clkH"><line x1="100" y1="100" x2="100" y2="55" stroke="${sk.hour}" stroke-width="5" stroke-linecap="round"${gf}/></g>
+      <g id="clkM"><line x1="100" y1="100" x2="100" y2="35" stroke="${sk.min}" stroke-width="3.4" stroke-linecap="round"${gf}/></g>
+      <g id="clkS"><line x1="100" y1="112" x2="100" y2="28" stroke="${sk.sec}" stroke-width="1.5" stroke-linecap="round"${gf}/>${sk.secDot?`<circle cx="100" cy="32" r="4.6" fill="${sk.sec}"/>`:''}</g>
       <circle cx="100" cy="100" r="4.5" fill="${sk.center}"/>
     </svg>`;
 }
@@ -3639,27 +3890,18 @@ function startDeco(){
 /* ============================================================
    خلفية السماء — تتدرّج مع ساعة اليوم (فجر/نهار/غروب/ليل)
    ============================================================ */
-const SKY_PHASES = [
-  // فجر مبكر 5-7
-  { h:[5,7],   grad:'linear-gradient(160deg,#FCE7C8 0%,#F6C9A8 45%,#E9A6A0 100%)', sun:true,  x:14, y:70 },
-  // صباح 7-11
-  { h:[7,11],  grad:'linear-gradient(160deg,#BFE3F5 0%,#DCEEFA 55%,#F3F8FC 100%)', sun:true,  x:30, y:34 },
-  // ظهر 11-15
-  { h:[11,15], grad:'linear-gradient(160deg,#8FD0F2 0%,#BFE6FA 55%,#EAF6FE 100%)', sun:true,  x:50, y:14 },
-  // عصر 15-18
-  { h:[15,18], grad:'linear-gradient(160deg,#A6D5EE 0%,#E6D9C2 60%,#F3E4CE 100%)', sun:true,  x:72, y:32 },
-  // غروب 18-20
-  { h:[18,20], grad:'linear-gradient(160deg,#5E6E9E 0%,#C57B77 55%,#F0A968 100%)', sun:true,  x:86, y:72 },
-  // ليل 20-5
-  { h:[20,5],  grad:'linear-gradient(170deg,#0E1430 0%,#1C2650 55%,#2A2A55 100%)', sun:false, x:64, y:20 }
-];
+// أوقات اليوم للباليت الفعّال (الهندسة مشتركة، التدرّج يجي من الباليت)
+function curPhases(){
+  return PHASE_GEOM.map((g,i)=>({ h:g.h, sun:g.sun, x:g.x, y:g.y, grad:activePal.phases[i] }));
+}
 function skyPhaseFor(hr){
-  for(const p of SKY_PHASES){
+  const phases = curPhases();
+  for(const p of phases){
     const [a,b] = p.h;
     if(a < b){ if(hr >= a && hr < b) return p; }
     else { if(hr >= a || hr < b) return p; } // يمر عبر منتصف الليل
   }
-  return SKY_PHASES[SKY_PHASES.length-1];
+  return phases[phases.length-1];
 }
 let skyStarsBuilt = false, treesBuilt = false;
 function buildTrees(){
@@ -3694,28 +3936,20 @@ function buildStars(){
   skyStarsBuilt = true;
 }
 /* ============================================================
-   ثيمات الفصول — «تلقائي» يتبع ساعة اليوم، وباقي الثيمات ثابتة
+   ثيمات الفصول — «تلقائي» يتبع ساعة اليوم، وباقي الثيمات ثابتة.
+   التدرّجات والجبال تجي من الباليت الفعّال (activePal) حتى تنسجم.
    ============================================================ */
-const SKY_THEMES = {
-  auto:   { name:'تلقائي (حسب الوقت) ☀️🌙' },
-  spring: { name:'ربيع 🌸', grad:'linear-gradient(160deg,#A9E3F7 0%,#DCF3E4 55%,#FDEAF2 100%)',
-            body:'sun',  x:38, y:20, mtn:['#8FBE93','#6C9E76','#4E7A58','#36573E'], particles:'petal' },
-  summer: { name:'صيف ☀️',  grad:'linear-gradient(160deg,#63C8F0 0%,#B6E7FB 50%,#FFF3C9 100%)',
-            body:'sun',  x:52, y:11, mtn:['#7BA3B8','#587F98','#3E5F76','#2A4657'], particles:null },
-  autumn: { name:'خريف 🍂', grad:'linear-gradient(160deg,#F4CE93 0%,#E9A96B 50%,#C87E55 100%)',
-            body:'sun',  x:72, y:40, mtn:['#B4855A','#8E6444','#6B4832','#4A3122'], particles:'leaf' },
-  winter: { name:'شتاء ❄️', grad:'linear-gradient(160deg,#BFD8E8 0%,#E1EDF6 55%,#F7FBFD 100%)',
-            body:'sun',  x:64, y:26, mtn:['#C3D3DF','#9BB0C1','#75899C','#566A7C'], particles:'snow' },
-  night:  { name:'ليل ونجوم 🌌', grad:'linear-gradient(160deg,#0D1128 0%,#1A2044 55%,#2A2F55 100%)',
-            body:'moon', x:70, y:15, mtn:['#2E3556','#232948','#191E38','#12152A'], particles:null },
-  sunset: { name:'غروب 🌇', grad:'linear-gradient(160deg,#F7B267 0%,#F0855C 48%,#7D5BA6 100%)',
-            body:'sun',  x:50, y:44, mtn:['#8A5A83','#6C4470','#4E3158','#352043'], particles:null },
-  sea:    { name:'بحر 🌊', grad:'linear-gradient(160deg,#4FB3E8 0%,#84CEEB 45%,#C9EAF8 100%)',
-            body:'sun',  x:30, y:14, mtn:['#4A7FA5','#356287','#254B6B','#183750'], particles:null }
-};
-// ألوان الجبال بالوضع التلقائي (نهار / ليل)
-const AUTO_MTN_DAY   = ['#6E7BB0','#54608F','#3C466B','#2A2E4A'];
-const AUTO_MTN_NIGHT = ['#2E3556','#232948','#191E38','#12152A'];
+// يبني ثيم فصل للباليت الفعّال (التدرّج من الباليت، الهندسة مشتركة)
+function curSeasonTheme(key){
+  const meta = SEASON_META[key];
+  if(!meta || !activePal.seasons[key]) return null;
+  return {
+    grad: activePal.seasons[key],
+    body: meta.body, x: meta.x, y: meta.y,
+    mtn: (key === 'night') ? activePal.mtnNight : activePal.mtnDay,
+    particles: meta.particles
+  };
+}
 
 let skySeason = localStorage.getItem('mas_season') || 'auto';
 let particlesKind = null;
@@ -3748,13 +3982,13 @@ function updateSky(){
   buildStars();
   buildTrees();
 
-  const th = SKY_THEMES[skySeason];
+  const th = (skySeason === 'auto') ? null : curSeasonTheme(skySeason);
   let grad, isSun, x, y, mtn, parts;
 
-  if(!th || skySeason === 'auto'){
+  if(!th){
     const p = skyPhaseFor(new Date().getHours());
     grad = p.grad; isSun = p.sun; x = p.x; y = p.y;
-    mtn = p.sun ? AUTO_MTN_DAY : AUTO_MTN_NIGHT;
+    mtn = p.sun ? activePal.mtnDay : activePal.mtnNight;
     parts = null;
   }else{
     grad = th.grad; isSun = th.body !== 'moon'; x = th.x; y = th.y;
@@ -3907,7 +4141,7 @@ if(/Android/i.test(navigator.userAgent)) document.documentElement.classList.add(
   setTimeout(kill, 4000);
   window.addEventListener('load', () => setTimeout(kill, t));
 })();
-loadTheme();
+loadPalette();
 apiReady();
 try{ applyLangBoot(); }catch(e){}
 try{ applyBillsVisible(); }catch(e){}
