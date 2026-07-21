@@ -2,6 +2,25 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
+<!-- سياسة أمان المحتوى (CSP): طبقة دفاع بعمق.
+     ملاحظة: التطبيق سكربت inline + معالجات onclick داخل الـHTML، لذلك script-src
+     يحتاج 'unsafe-inline' (CSP ما يمنع حقن inline هنا — الحماية الأساسية من esc()).
+     لكن CSP يمنع: تحميل سكربتات خارجية غير مصرّحة، تسريب البيانات لأي دومين ثاني
+     (connect-src)، تأطير الصفحة/clickjacking (frame-ancestors)، وحقن <object>/<base>. -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' https://fonts.gstatic.com;
+  img-src 'self' data: blob:;
+  connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net;
+  worker-src 'self';
+  media-src 'self';
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+  frame-ancestors 'none';
+  upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>Pocky — مصاريفنا</title>
 <meta name="theme-color" content="#C86B4A">
@@ -1124,7 +1143,7 @@
 <div id="loader"><div class="spin"></div></div>
 <div id="printArea"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js" integrity="sha384-WmjsOVSSw3JNqIKfmDU35+uddOzBdP9PlYIWCg7xdnVOesjWVGpRcooOVheFFwH4" crossorigin="anonymous"></script>
 <script>
 /* ============================================================
    إعدادات Supabase — رابط المشروع + المفتاح العلني (Publishable)
@@ -3068,11 +3087,12 @@ function printReport(){
 
 /* ---------- تحميل مكتبة خارجية عند الحاجة بس (حتى يظل الفتح سريع) ---------- */
 const _libs = {};
-function loadScript(src){
+function loadScript(src, integrity){
   if(_libs[src]) return _libs[src];
   _libs[src] = new Promise((res, rej) => {
     const s = document.createElement('script');
     s.src = src;
+    if(integrity){ s.integrity = integrity; s.crossOrigin = 'anonymous'; }  // تحقّق سلامة الملف (SRI)
     s.onload = res;
     s.onerror = () => { delete _libs[src]; rej(new Error('ما كدرت أحمّل المكتبة — دقق على النت')); };
     document.head.appendChild(s);
@@ -3104,7 +3124,7 @@ async function downloadBackup(){
 async function exportExcel(scope){
   loading(true);
   try{
-    await loadScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
+    await loadScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js', 'sha384-vtjasyidUo0kW94K5MXDXntzOJpQgBKXmE7e2Ga4LG0skTTLeBi97eFAXsqewJjw');
     const wb = XLSX.utils.book_new();
     wb.Workbook = { Views: [{ RTL: true }] };
     const money = n => Number(n) || 0;
