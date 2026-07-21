@@ -1477,6 +1477,21 @@ function curFontId(){
 function loadFontPref(){ applyFont(curFontId(), false); }
 function setFont(id){ applyFont(FONTS[id] ? id : 'rubik'); }
 
+/* ---------- حجم الخط (تكبير/تصغير كل النصوص) ----------
+   نغيّر حجم خط الجذر (html) — أغلب أحجام النصوص بالتطبيق بوحدة rem
+   فتتكبّر/تتصغّر كلها بتناسب. القيمة نسبة مئوية (100 = الأساس). */
+let fontScale = 110;
+try{ const _fs = parseInt(localStorage.getItem('mas_fontscale'), 10); if(!isNaN(_fs)) fontScale = _fs; }catch(_){}
+function applyFontScale(pct){
+  const v = Math.max(80, Math.min(140, Number(pct) || 100));
+  document.documentElement.style.fontSize = v + '%';
+}
+function setFontScale(pct){
+  fontScale = Math.max(80, Math.min(140, parseInt(pct, 10) || 100));
+  try{ localStorage.setItem('mas_fontscale', String(fontScale)); }catch(_){}
+  applyFontScale(fontScale);
+}
+
 /* ---------- تغويش خلفية السماء (0-100) ---------- */
 let skyBlur = 0;
 try{ skyBlur = parseInt(localStorage.getItem('mas_skyblur') || '0', 10) || 0; }catch(_){}
@@ -2846,6 +2861,9 @@ function renderSettings(){
         ${Object.keys(FONTS).map(k => `<option value="${k}" style="font-family:${FONTS[k].stack}${FONT_FALLBACK}">${FONTS[k].name}</option>`).join('')}
       </select>
       <div class="hint" style="margin-top:4px">يتطبّق على كل التطبيق فوراً وينحفظ بجهازك. بعض الخطوط تنزل من النت أول مرة تختارها.</div>
+      <label style="margin-top:12px">🔠 حجم الخط (${fontScale}٪)</label>
+      <div class="blur-row"><input type="range" id="fontScaleRange" min="80" max="140" step="5" value="${fontScale}"><span class="blur-val" id="fontScaleVal">${fontScale}</span></div>
+      <div class="hint" style="margin-top:4px">يكبّر أو يصغّر كل نصوص التطبيق سوا — جرّب لين يريّح عينك.</div>
     </div>
 
     <div class="card">
@@ -2926,6 +2944,14 @@ function renderSettings(){
     // نحمّل كل الخطوط عند فتح الإعدادات حتى تشوف كل خيار بخطه بالقائمة
     Object.keys(FONTS).forEach(loadFont);
     $('fontSel').onchange = (e) => { setFont(e.target.value); toast('انتغيّر الخط ✓ 🔤'); };
+  }
+  if($('fontScaleRange')){
+    $('fontScaleRange').oninput = (e) => {
+      const v = e.target.value;
+      applyFontScale(v);
+      if($('fontScaleVal')) $('fontScaleVal').textContent = v;
+    };
+    $('fontScaleRange').onchange = (e) => setFontScale(e.target.value);
   }
   if($('billsToggle')) $('billsToggle').onchange = (e) => {
     BILLS_ON = e.target.checked;
@@ -4487,6 +4513,7 @@ if(/Android/i.test(navigator.userAgent)) document.documentElement.classList.add(
 })();
 loadPalette();
 try{ loadFontPref(); }catch(e){}
+try{ applyFontScale(fontScale); }catch(e){}
 try{ applySkyBlur(skyBlur); }catch(e){}
 try{ updateCurrencyLabels(); }catch(e){}
 apiReady();
