@@ -1442,6 +1442,41 @@ function setCurrency(id){
   refreshMoney();
 }
 
+/* ---------- نوع الخط ----------
+   الخطوط تتحمّل من Google Fonts عند اختيارها فقط (كسول) حتى ما تثقّل
+   الإقلاع. «روبيك» محمّل أصلاً بالرأس. الاختيار ينحفظ بالجهاز. */
+const FONTS = {
+  rubik:   { name:'روبيك (الافتراضي)',   stack:"'Rubik','Alexandria'",     url:'' },
+  cairo:   { name:'القاهرة',             stack:"'Cairo'",                  url:'https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap' },
+  tajawal: { name:'تجوّل',               stack:"'Tajawal'",                url:'https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap' },
+  almarai: { name:'المراعي',             stack:"'Almarai'",                url:'https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap' },
+  ibm:     { name:'IBM بلكس عربي',       stack:"'IBM Plex Sans Arabic'",   url:'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap' },
+  amiri:   { name:'أميري (نسخ كلاسيكي)', stack:"'Amiri'",                  url:'https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap' },
+  reem:    { name:'ريم كوفي',            stack:"'Reem Kufi'",              url:'https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400;500;600;700&display=swap' }
+};
+const FONT_FALLBACK = ",-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif";
+const _fontLinks = {};
+function loadFont(id){
+  const f = FONTS[id];
+  if(!f || !f.url || _fontLinks[id]) return;
+  const l = document.createElement('link');
+  l.rel = 'stylesheet'; l.href = f.url;
+  document.head.appendChild(l);
+  _fontLinks[id] = true;
+}
+function applyFont(id, save){
+  const f = FONTS[id] || FONTS.rubik;
+  if(id !== 'rubik') loadFont(id);
+  document.body.style.fontFamily = f.stack + FONT_FALLBACK;
+  if(save !== false){ try{ localStorage.setItem('mas_font', id); }catch(_){} }
+}
+function curFontId(){
+  let id = ''; try{ id = localStorage.getItem('mas_font') || ''; }catch(_){}
+  return FONTS[id] ? id : 'rubik';
+}
+function loadFontPref(){ applyFont(curFontId(), false); }
+function setFont(id){ applyFont(FONTS[id] ? id : 'rubik'); }
+
 /* ---------- تغويش خلفية السماء (0-100) ---------- */
 let skyBlur = 0;
 try{ skyBlur = parseInt(localStorage.getItem('mas_skyblur') || '0', 10) || 0; }catch(_){}
@@ -2806,6 +2841,11 @@ function renderSettings(){
         ${Object.keys(CURRENCIES).map(k => `<option value="${k}">${CURRENCIES[k].name}</option>`).join('')}
       </select>
       <div class="hint" style="margin-top:4px">تتطبّق على كل المبالغ بالتطبيق فوراً.</div>
+      <label style="margin-top:12px">🔤 نوع الخط</label>
+      <select id="fontSel">
+        ${Object.keys(FONTS).map(k => `<option value="${k}" style="font-family:${FONTS[k].stack}${FONT_FALLBACK}">${FONTS[k].name}</option>`).join('')}
+      </select>
+      <div class="hint" style="margin-top:4px">يتطبّق على كل التطبيق فوراً وينحفظ بجهازك. بعض الخطوط تنزل من النت أول مرة تختارها.</div>
     </div>
 
     <div class="card">
@@ -2880,6 +2920,12 @@ function renderSettings(){
   if($('curSel')){
     $('curSel').value = CURRENCY;
     $('curSel').onchange = (e) => { setCurrency(e.target.value); toast('انتغيّرت العملة ✓ 💵'); };
+  }
+  if($('fontSel')){
+    $('fontSel').value = curFontId();
+    // نحمّل كل الخطوط عند فتح الإعدادات حتى تشوف كل خيار بخطه بالقائمة
+    Object.keys(FONTS).forEach(loadFont);
+    $('fontSel').onchange = (e) => { setFont(e.target.value); toast('انتغيّر الخط ✓ 🔤'); };
   }
   if($('billsToggle')) $('billsToggle').onchange = (e) => {
     BILLS_ON = e.target.checked;
@@ -4440,6 +4486,7 @@ if(/Android/i.test(navigator.userAgent)) document.documentElement.classList.add(
   window.addEventListener('load', () => setTimeout(kill, t));
 })();
 loadPalette();
+try{ loadFontPref(); }catch(e){}
 try{ applySkyBlur(skyBlur); }catch(e){}
 try{ updateCurrencyLabels(); }catch(e){}
 apiReady();
