@@ -1621,7 +1621,7 @@ async function apiPost(p){
       call = sb.rpc('withdraw_fund', { p_month:p.month, p_date:p.date, p_amount:p.amount, p_descr:p.desc||'', p_fund:p.fund, p_debt_account:p.debtAccount||'', p_to_category:p.toCategory||'' });
       break;
     case 'addLoan':
-      call = sb.rpc('add_loan', { p_month:p.month, p_date:p.date, p_amount:p.amount, p_fund:p.fund, p_account:p.account, p_due_date:p.dueDate||'', p_descr:p.desc||'' });
+      call = sb.rpc('add_loan', { p_month:p.month, p_date:p.date, p_amount:p.amount, p_fund:p.fund, p_account:p.account, p_due_date:p.dueDate||'', p_descr:p.desc||'', p_to_category:p.toCategory||'' });
       break;
     case 'editWithdraw':
       call = sb.rpc('edit_withdrawal', { p_id:p.id, p_amount:p.amount, p_date:p.date, p_descr:p.desc||'' });
@@ -1919,6 +1919,7 @@ function render(){
     let rows = '';
     open.forEach(d => {
       const isLoan = d.kind === 'قرض';
+      const isCatLoan = isLoan && !!d.toCategory;
       let dueHtml = '';
       if(isLoan && d.dueDate){
         const days = Math.floor((new Date(d.dueDate) - new Date(todayISO())) / 86400000);
@@ -1931,10 +1932,10 @@ function render(){
       rows += `
         <div class="debt ${isLoan?'loan':''}">
           <div class="debt-top">
-            <span class="debt-acc">${esc(d.account)}${isLoan?'<span class="debt-kind">🤝 قرض</span>':''}</span>
+            <span class="debt-acc">${isCatLoan?'🗂️ ':''}${esc(d.account)}${isLoan?`<span class="debt-kind">${isCatLoan?'🤝 قرض تصنيف':'🤝 قرض'}</span>`:''}</span>
             <span class="debt-amt">${fmt(d.amount)}</span>
           </div>
-          <div class="debt-sub">مطلوب لصندوق «${esc(d.fund)}» · ${isLoan?'انعطى':'سُحب'} ${esc(d.date)}</div>
+          <div class="debt-sub">مطلوب لصندوق «${esc(d.fund)}» · ${isCatLoan?'قرض على تصنيف':(isLoan?'انعطى':'سُحب')} ${esc(d.date)}</div>
           ${dueHtml}
           <div class="debt-actions">
             <button class="db-return" onclick="returnDebt('${d.id}')">↩ رجّعه للصندوق</button>
@@ -2377,40 +2378,70 @@ window.openLoan = (idx) => {
   // رصيد الصندوق الحالي (للتوضيح فقط — ما نمنع القرض الأكبر منه)
   const wd = (state.expenses||[]).filter(e => e.category === c.name).reduce((a,e)=> a + e.amount, 0);
   const bal = (Number(c.carried)||0) + (Number(c.amount)||0) - wd;
+  const spendCats = (state.budget.categories||[]).filter(x => x.type !== 'save');
+  const lnCatOpts = spendCats.map(x => `<option value="${esc(x.name)}">${esc(x.name)}</option>`).join('');
   modalOpen(`
     <h2>قرض من «${esc(c.name)}» 🤝</h2>
-    <div class="hint" style="margin:0 0 8px">القرض ينقص رصيد الصندوق (الحالي: <b style="color:var(--primary)">${fmt(bal)}</b>) ويظل مسجّل باسم اللي أخذه لين يرجّعه — والترجيع يرجع للصندوق نفسه، مو للفائض.</div>
+    <div class="hint" style="margin:0 0 8px">القرض ينقص رصيد الصندوق (الحالي: <b style="color:var(--primary)">${fmt(bal)}</b>) ويظل مسجّل لين يرجّعه — والترجيع يرجع للصندوق نفسه، مو للفائض.</div>
     <div class="row">
       <div><label>المبلغ</label><input type="tel" id="lnAmount" inputmode="numeric" placeholder="0"></div>
       <div><label>التاريخ</label><input type="date" id="lnDate" value="${todayISO()}"></div>
     </div>
-    <label style="margin-top:10px">لمن القرض؟</label>
-    <input type="text" id="lnAcc" placeholder="مثلاً: أخوي أحمد / صديقي">
-    <label style="margin-top:10px">⏰ موعد الإرجاع المتوقع (اختياري)</label>
-    <input type="date" id="lnDue">
+    <label style="margin-top:10px">القرض على منو؟</label>
+    <div class="ln-seg" style="display:flex;gap:8px;margin:2px 0 4px">
+      <button type="button" class="btn ghost ln-type on" data-lntype="person" style="flex:1;margin:0">👤 شخص</button>
+      <button type="button" class="btn ghost ln-type" data-lntype="cat" style="flex:1;margin:0">🗂️ تصنيف مصاريف</button>
+    </div>
+    <div id="lnPersonWrap">
+      <input type="text" id="lnAcc" placeholder="مثلاً: أخوي أحمد / صديقي">
+      <label style="margin-top:10px">⏰ موعد الإرجاع المتوقع (اختياري)</label>
+      <input type="date" id="lnDue">
+    </div>
+    <div id="lnCatWrap" style="display:none">
+      ${spendCats.length
+        ? `<select id="lnCat">${lnCatOpts}</select>
+           <div class="hint" style="margin:4px 0 0">راح يزيد «المتاح» لهذا التصنيف كقرض من الصندوق. ولمن ترجّعه، يرجع للصندوق وينقص من التصنيف.</div>`
+        : `<div class="hint" style="margin:4px 0 0">ماكو تصنيفات مصاريف بهذا الشهر — أضف تصنيف من تبويب «الميزانية» أول.</div>`}
+    </div>
     <label>السبب (اختياري)</label><input type="text" id="lnDesc" placeholder="شنو المناسبة؟">
     <button class="btn" id="lnSave">سجّل القرض</button>
     <button class="btn ghost" onclick="modalClose()">إلغاء</button>
   `);
   liveFormat($('lnAmount'));
   setTimeout(() => { try{ $('lnAmount').focus(); }catch(_){} }, 260);
+  let lnType = 'person';
+  document.querySelectorAll('.ln-type').forEach(btn => {
+    btn.onclick = () => {
+      lnType = btn.dataset.lntype;
+      document.querySelectorAll('.ln-type').forEach(b => b.classList.toggle('on', b === btn));
+      $('lnPersonWrap').style.display = lnType === 'person' ? '' : 'none';
+      $('lnCatWrap').style.display    = lnType === 'cat'    ? '' : 'none';
+    };
+  });
   $('lnSave').onclick = async () => {
     const amount = num($('lnAmount').value);
     if(amount <= 0) return toast('دخّل المبلغ', true);
-    const acc = $('lnAcc').value.trim();
-    if(!acc) return toast('اكتب اسم اللي أخذ القرض', true);
     const date = $('lnDate').value || todayISO();
+    let acc = '', toCat = '', dueDate = '';
+    if(lnType === 'cat'){
+      toCat = ($('lnCat') && $('lnCat').value) || '';
+      if(!toCat) return toast('اختر تصنيف المصاريف', true);
+    }else{
+      acc = $('lnAcc').value.trim();
+      if(!acc) return toast('اكتب اسم اللي أخذ القرض', true);
+      dueDate = $('lnDue').value || '';
+    }
     if(amount > bal && !confirm('المبلغ أكبر من رصيد الصندوق (' + fmt(bal) + ') — الرصيد راح يصير سالب. تكمل؟')) return;
     loading(true);
     try{
       const res = await apiPost({
         action:'addLoan', month: date.slice(0,7), date, amount,
-        fund: c.name, account: acc, dueDate: $('lnDue').value || '', desc: $('lnDesc').value.trim()
+        fund: c.name, account: acc, toCategory: toCat, dueDate, desc: $('lnDesc').value.trim()
       });
       if(guardAuth(res)) return;
       if(!res.ok) throw new Error(res.error || 'خطأ');
       modalClose();
-      toast('انسجّل القرض لـ«' + acc + '» ✓ 🤝');
+      toast(toCat ? ('انسجّل القرض على «' + toCat + '» ✓ 🤝') : ('انسجّل القرض لـ«' + acc + '» ✓ 🤝'));
       await loadMonth(state.month);
     }catch(err){ toast('ما انسجّل: ' + err.message, true); }
     finally{ loading(false); }
