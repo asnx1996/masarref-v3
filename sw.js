@@ -1,10 +1,17 @@
 /* مصاريفنا — Service Worker
    يخزّن واجهة التطبيق حتى تفتح فوراً، ويحدّثها بالخلفية بهدوء.
 
-   ⚠️ مهم: كل ما تعدّل index.html، غيّر رقم النسخة بالسطر التحت
-   (مثلاً masareef-v1 ← masareef-v2) حتى يوصل التحديث للتلفون. */
-const CACHE = 'masareef-v27';
-const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
+   ⚠️ مهم: كل ما تعدّل أي ملف من ملفات الواجهة (index.html / styles.css /
+   core.js / app.js / i18n.js / decor.js / boot.js)، غيّر رقم النسخة بالسطر
+   التحت (مثلاً masareef-v28 ← masareef-v29) حتى يوصل التحديث للتلفون. */
+const CACHE = 'masareef-v28';
+const SHELL = [
+  './', './index.html', './manifest.json', './icon-192.png', './icon-512.png',
+  './fonts.css', './styles.css',
+  './core.js', './app.js', './i18n.js', './decor.js', './boot.js',
+  './fonts/rubik-arabic.woff2', './fonts/rubik-latin.woff2',
+  './fonts/alexandria-arabic.woff2', './fonts/alexandria-latin.woff2'
+];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(

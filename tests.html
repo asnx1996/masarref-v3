@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>اختبارات مصاريفنا 🧪</title>
+<style>
+  body{font-family:'Segoe UI',Tahoma,sans-serif;background:#FBF7F1;color:#2A2018;max-width:720px;margin:0 auto;padding:20px}
+  h1{font-size:1.3rem}
+  .sum{padding:12px 16px;border-radius:12px;font-weight:700;margin:12px 0}
+  .sum.ok{background:#E1F1EA;color:#26765A}
+  .sum.bad{background:#F8E6E3;color:#A33530}
+  .t{display:flex;gap:10px;align-items:baseline;padding:7px 10px;border-bottom:1px solid #EBE2D6;font-size:.9rem}
+  .t.pass::before{content:'✓';color:#3F9E7A;font-weight:800}
+  .t.fail::before{content:'✕';color:#C0453E;font-weight:800}
+  .t.fail{background:#FDF2F0}
+  .t small{color:#93887C;display:block}
+  code{background:#F1E9DD;padding:1px 5px;border-radius:6px;font-size:.8rem;direction:ltr;display:inline-block}
+</style>
+</head>
+<body>
+<h1>🧪 اختبارات الدوال الحسابية (core.js)</h1>
+<div id="summary" class="sum">جاري التشغيل...</div>
+<div id="results"></div>
+
+<script src="core.js"></script>
+<script>
+/* عدّاء اختبارات مصغّر — بلا أي مكتبات */
+const results = [];
+function test(name, fn){
+  try{ fn(); results.push({ name, ok:true }); }
+  catch(e){ results.push({ name, ok:false, err: e.message }); }
+}
+function eq(actual, expected, label){
+  const a = JSON.stringify(actual), b = JSON.stringify(expected);
+  if(a !== b) throw new Error((label ? label + ' — ' : '') + 'توقعنا ' + b + ' وطلع ' + a);
+}
+
+/* ---------- num: تنظيف المدخلات الرقمية ---------- */
+test('num: يشيل الفواصل ويرجّع رقم', () => eq(num('12,500'), 12500));
+test('num: نص مو رقم يرجّع صفر', () => eq(num('abc'), 0));
+test('num: فارغ يرجّع صفر', () => eq(num(''), 0));
+test('num: يقبل الفارزة العشرية', () => eq(num('1.5'), 1.5));
+
+/* ---------- fmt: تنسيق العملة ---------- */
+test('fmt: دينار عراقي بعد الرقم', () => { CURRENCY = 'iqd'; eq(fmt(1250000), '1,250,000 د.ع'); });
+test('fmt: دولار قبل الرقم', () => { CURRENCY = 'usd'; eq(fmt(1000), '$1,000'); CURRENCY = 'iqd'; });
+test('fmt: قيمة خربانة تصير صفر', () => eq(fmt('خربان'), '0 د.ع'));
+
+/* ---------- esc: الحماية من حقن HTML ---------- */
+test('esc: يهرّب كل الرموز الخطرة', () =>
+  eq(esc('<a "b" \'c\' &>'), '&lt;a &quot;b&quot; &#39;c&#39; &amp;&gt;'));
+test('esc: نص عربي عادي يمر مثل ما هو', () => eq(esc('كهرباء وماء'), 'كهرباء وماء'));
+
+/* ---------- التاريخ المحلي (إصلاح مشكلة UTC) ---------- */
+test('localISO: تنسيق صحيح مع أصفار', () => eq(localISO(new Date(2026, 0, 5)), '2026-01-05'));
+test('localISO: نص الليل بأول الشهر يظل بنفس اليوم المحلي', () =>
+  eq(localISO(new Date(2026, 6, 1, 0, 30)), '2026-07-01'));   // بـUTC چان طلع 2026-06-30
+test('todayISO: صيغة YYYY-MM-DD', () => { if(!/^\d{4}-\d{2}-\d{2}$/.test(todayISO())) throw new Error(todayISO()); });
+test('thisMonth: صيغة YYYY-MM', () => { if(!/^\d{4}-\d{2}$/.test(thisMonth())) throw new Error(thisMonth()); });
+
+/* ---------- الشهر السابق وأيام الشهر ---------- */
+test('prevMonthStr: يرجع لشهر ١٢ بالسنة السابقة', () => eq(prevMonthStr('2026-01'), '2025-12'));
+test('prevMonthStr: شهر عادي', () => eq(prevMonthStr('2026-07'), '2026-06'));
+test('daysInMonth: شباط عادي ٢٨', () => eq(daysInMonth('2026-02'), 28));
+test('daysInMonth: شباط كبيسة ٢٩', () => eq(daysInMonth('2024-02'), 29));
+test('daysInMonth: كانون الثاني ٣١', () => eq(daysInMonth('2026-01'), 31));
+
+/* ---------- monthProgress ---------- */
+test('monthProgress: شهر ماضي كله منقضي', () => eq(monthProgress('2000-01'), { elapsed:31, left:0, total:31 }));
+test('monthProgress: شهر جاي كله باقي', () => eq(monthProgress('2099-01'), { elapsed:0, left:31, total:31 }));
+test('monthProgress: الشهر الحالي منقضي = يوم اليوم', () => {
+  const p = monthProgress(thisMonth());
+  eq(p.elapsed, new Date().getDate(), 'elapsed');
+  eq(p.left, p.total - p.elapsed, 'left');
+});
+
+/* ---------- طابور الأوفلاين ---------- */
+test('طابور الأوفلاين: إضافة وحذف', () => {
+  const bak = localStorage.getItem(OFFLINE_KEY);   // نحفظ الطابور الحقيقي وما نخربه
+  try{
+    localStorage.removeItem(OFFLINE_KEY);
+    eq(offlineList(), [], 'يبدي فارغ');
+    const q1 = offlineAdd({ month:'2026-07', date:'2026-07-22', amount:5000, desc:'تجربة ١', category:'بقالة' });
+    const q2 = offlineAdd({ month:'2026-07', date:'2026-07-22', amount:9000, desc:'تجربة ٢', category:'' });
+    eq(offlineList().length, 2, 'صار بيه اثنين');
+    if(q1 === q2) throw new Error('المعرّفات لازم تكون مختلفة');
+    offlineRemove(q1);
+    eq(offlineList().length, 1, 'ضل واحد');
+    eq(offlineList()[0].desc, 'تجربة ٢', 'الباقي هو الثاني');
+    offlineRemove(q2);
+    eq(offlineList(), [], 'رجع فارغ');
+  }finally{
+    if(bak === null) localStorage.removeItem(OFFLINE_KEY); else localStorage.setItem(OFFLINE_KEY, bak);
+  }
+});
+test('طابور الأوفلاين: بيانات خربانة بالتخزين ما تكسره', () => {
+  const bak = localStorage.getItem(OFFLINE_KEY);
+  try{
+    localStorage.setItem(OFFLINE_KEY, '{خربان json');
+    eq(offlineList(), []);
+  }finally{
+    if(bak === null) localStorage.removeItem(OFFLINE_KEY); else localStorage.setItem(OFFLINE_KEY, bak);
+  }
+});
+
+/* ---------- تمييز خطأ النت عن رفض السيرفر ---------- */
+if(navigator.onLine){
+  test('isNetErr: فشل الاتصال يعتبر خطأ نت', () => eq(isNetErr('TypeError: Failed to fetch'), true));
+  test('isNetErr: رفض السيرفر (شهر مقفل) مو خطأ نت', () => eq(isNetErr('هذا الشهر مقفل'), false));
+}
+
+/* ---------- عرض النتائج ---------- */
+const failed = results.filter(r => !r.ok);
+document.getElementById('summary').className = 'sum ' + (failed.length ? 'bad' : 'ok');
+document.getElementById('summary').textContent = failed.length
+  ? '✕ فشل ' + failed.length + ' من أصل ' + results.length + ' اختبار'
+  : '✓ نجحت كل الاختبارات (' + results.length + ')';
+document.getElementById('results').innerHTML = results.map(r =>
+  '<div class="t ' + (r.ok ? 'pass' : 'fail') + '"><div>' + r.name +
+  (r.ok ? '' : '<small>' + r.err.replace(/</g,'&lt;') + '</small>') + '</div></div>'
+).join('');
+</script>
+</body>
+</html>
