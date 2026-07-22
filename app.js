@@ -767,9 +767,11 @@ function render(){
   }
   $('saveList').innerHTML = saveHtml;
 
-  /* ===== ديون الصناديق (السحب على حساب) ===== */
+  /* ===== ديون الصناديق ===== */
+  // نعرض بس القروض هنا — السحب والإيداع ما يظهرون كبطاقة دين (حسب طلب المستخدم).
+  // القرض بس هو اللي يبقى «مطلوب» يترجّع أو ينشطب.
   let debtHtml = '';
-  const open = state.debts || [];
+  const open = (state.debts || []).filter(d => d.kind === 'قرض');
   if(open.length){
     const totalDebt = open.reduce((s,d)=> s + (d.amount||0), 0);
     let rows = '';
