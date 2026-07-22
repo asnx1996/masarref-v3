@@ -520,6 +520,12 @@ async function afterLogin(user){
   resetIdle();
   loadQuick();
   await loadMonth(thisMonth());
+  /* لو شهر اليوم مقفل (مثلاً استلمت راتب الشهر الجاي وقفلته من وقتها)
+     ننتقل تلقائياً لأول شهر مفتوح بعده */
+  let guard = 0;
+  while(state.locked && guard++ < 12){
+    await loadMonth(nextMonthStr(state.month));
+  }
   flushOffline();   // نرفع أي مصاريف انسجلت بلا نت
 }
 async function doLogin(){
@@ -841,7 +847,6 @@ function render(){
   cats.forEach(c => addRow(c.type === 'save' ? 'save' : 'spend', c.name, c.amount, c.carried, c.goal));
   (b.incomes || []).forEach(x => addIncomeRow(x.desc, x.amount));
   if(!document.querySelector('#catRows .cat-row')) addRow('spend','','',0);
-  $('allocCarry').textContent = fmt(spendCarried + saveCarried);
   updateAlloc();
 
   /* حالة القفل */
@@ -1522,10 +1527,14 @@ window.deleteWithdraw = async (id, fundIdx) => {
 window.returnDebt = async (id) => {
   const d = (state.debts||[]).find(x=>x.id===id);
   if(!d) return;
-  if(!confirm('ترجيع ' + fmt(d.amount) + ' لصندوق «' + d.fund + '»؟\nراح يرجع المبلغ لرصيد الصندوق ويتسجّل بتاريخ اليوم.')) return;
+  /* الإرجاع ينسجل بالشهر المعروض (المفتوح) — مو بشهر اليوم، لأن شهر
+     اليوم ممكن يكون مقفل إذا قفلته من وقت استلام راتب الشهر الجاي */
+  if(state.locked) return toast('هذا الشهر مقفل — روح للشهر المفتوح (الجاي) وسوي الإرجاع منه', true);
+  const retDate = dateInMonth(state.month);
+  if(!confirm('ترجيع ' + fmt(d.amount) + ' لصندوق «' + d.fund + '»؟\nراح يرجع المبلغ لرصيد الصندوق ويتسجّل بتاريخ ' + retDate + '.')) return;
   loading(true);
   try{
-    const res = await apiPost({ action:'returnDebt', id, date: todayISO() });
+    const res = await apiPost({ action:'returnDebt', id, date: retDate });
     if(guardAuth(res)) return;
     if(!res.ok) throw new Error(res.error || 'خطأ');
     toast('انرجّع للصندوق ✓');
@@ -2715,29 +2724,29 @@ $('btnSaveBudget').onclick = async () => {
 $('btnCloseMonth').onclick = () => {
   if(!apiReady()) return toast('اربط الموقع بالـ API أول', true);
   if(state.locked) return;
-  const surplus = state._surplus || 0;
+  /* شرط الإقفال: «الباقي للصرف» لازم يكون صفر بالضبط —
+     الفائض ينودّع بصندوق (إيداع +)، والعجز ينغطّى بسحب من صندوق */
+  const remain = state._remainRaw || 0;
+  if(remain > 0) return toast('باقي عندك ' + fmt(remain) + ' للصرف — ادّخره بصندوق (زر «إيداع +») حتى يصير صفر، بعدين اقفل 🏦', true);
+  if(remain < 0) return toast('صرفك زايد بـ' + fmt(-remain) + ' — اسحب من صندوق لتصنيف حتى يتصفّر الباقي، بعدين اقفل', true);
   modalOpen(`
     <h2>إقفال شهر ${esc(state.month)}</h2>
-    <div class="hint" style="margin:0 0 12px">راح ينقفل الشهر للعرض فقط (تكدر تفتحه بعدين)، ويترحّل باقي كل تصنيف وصندوق للشهر الجاي.</div>
-    ${surplus > 0 ? `
-    <label class="set-toggle" style="cursor:pointer">
-      <span class="st-lbl">↪ رحّل الفائض غير الموزّع (${fmt(surplus)}) كرصيد مبدئي للشهر الجاي</span>
-      <span class="switch"><input type="checkbox" id="carrySurplus" checked><span class="track"></span><span class="knob"></span></span>
-    </label>` : ''}
+    <div class="hint" style="margin:0 0 12px">راح ينقفل الشهر للعرض فقط (تكدر تفتحه بعدين)، ويترحّل باقي كل تصنيف وصندوق للشهر الجاي، وينتقلك التطبيق للشهر الجديد.</div>
     <button class="btn" id="doClose">إقفال الشهر ✓</button>
     <button class="btn ghost" onclick="modalClose()">إلغاء</button>
   `);
   $('doClose').onclick = async () => {
-    const carry = surplus > 0 && $('carrySurplus') && $('carrySurplus').checked;
+    const closed = state.month;
     modalClose();
     loading(true);
     try{
-      const res = await apiPost({ action: carry ? 'closeMonthCarry' : 'closeMonth', month: state.month });
+      const res = await apiPost({ action:'closeMonth', month: closed });
       if(guardAuth(res)) return;
       if(!res.ok) throw new Error(res.error || 'خطأ');
-      toast('انقفل الشهر وانرحّل الباقي ✓ 🎉');
+      toast('انقفل شهر ' + closed + ' ✓ أهلاً بالشهر الجديد 🎉');
       confetti();
-      await loadMonth(state.month);
+      // ننتقل مباشرة للشهر الجاي — راتب الشهر الجديد وصل 💵
+      await loadMonth(nextMonthStr(closed));
     }catch(err){ toast('ما انقفل: ' + err.message, true); }
     finally{ loading(false); }
   };

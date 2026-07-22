@@ -25,7 +25,16 @@ const localISO = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,
 const todayISO = () => localISO(new Date());
 const thisMonth = () => todayISO().slice(0,7);
 const prevMonthStr = m => { let p=m.split('-').map(Number),y=p[0],mm=p[1]-1; if(mm<1){mm=12;y--;} return y+'-'+('0'+mm).slice(-2); };
+const nextMonthStr = m => { let p=m.split('-').map(Number),y=p[0],mm=p[1]+1; if(mm>12){mm=1;y++;} return y+'-'+('0'+mm).slice(-2); };
 const daysInMonth = m => { const p=m.split('-').map(Number); return new Date(p[0], p[1], 0).getDate(); };
+/* تاريخ يقع جوّا الشهر المطلوب: لو اليوم من نفس الشهر ناخذه، وإلا
+   أول يوم (لو الشهر جاي) أو آخر يوم (لو فات) — للحركات اللي لازم
+   تنسجل بالشهر المعروض مثل إرجاع القرض */
+const dateInMonth = m => {
+  const t = todayISO();
+  if(t.slice(0,7) === m) return t;
+  return m + (m < t.slice(0,7) ? '-' + ('0'+daysInMonth(m)).slice(-2) : '-01');
+};
 
 function monthProgress(m){
   const total = daysInMonth(m);
