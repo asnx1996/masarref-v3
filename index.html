@@ -1341,8 +1341,12 @@ const fmt = n => {
   return c.pos === 'before' ? c.sym + v : v + ' ' + c.sym;
 };
 const num = v => Number(String(v).replace(/[^\d.]/g,'')) || 0;
-const todayISO = () => new Date().toISOString().slice(0,10);
-const thisMonth = () => new Date().toISOString().slice(0,7);
+/* التاريخ حسب توقيت الجهاز (محلي) — مو UTC. لو استخدمنا toISOString()
+   يطلع التاريخ ناقص من ١٢ الليل لـ٣ الصبح (بغداد UTC+3)، ومصروف أول
+   الشهر الليلي كان يروح للشهر الماضي (وممكن يكون مقفل!) */
+const localISO = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+const todayISO = () => localISO(new Date());
+const thisMonth = () => todayISO().slice(0,7);
 const prevMonthStr = m => { let p=m.split('-').map(Number),y=p[0],mm=p[1]-1; if(mm<1){mm=12;y--;} return y+'-'+('0'+mm).slice(-2); };
 const daysInMonth = m => { const p=m.split('-').map(Number); return new Date(p[0], p[1], 0).getDate(); };
 
@@ -1886,7 +1890,8 @@ function render(){
 
   /* ===== ظروف المصاريف ===== */
   let envHtml = '';
-  cats.filter(c=>c.type!=='save').forEach(c => {
+  cats.forEach((c, ci) => {
+    if(c.type === 'save') return;
     const carried = Number(c.carried)||0;
     const effective = (Number(c.amount)||0) + carried;
     const spent = spentByCat[c.name] || 0;
@@ -1902,7 +1907,7 @@ function render(){
         <div class="bar"><i class="${cls}" style="width:${pct}%"></i></div>
         <div class="env-sub"><span>صرفت ${fmt(spent)}</span><span>المتاح ${fmt(effective)}</span></div>
         ${carried ? `<div class="env-carry">↩ منها مرحّل من الشهر الماضي: ${fmt(carried)}</div>` : ''}
-        ${(!state.locked && left>0) ? `<button class="env-transfer" onclick="openTransfer('${esc(c.name).replace(/'/g,"\\'")}', ${left})">⇄ نقل من هذا التصنيف</button>` : ''}
+        ${(!state.locked && left>0) ? `<button class="env-transfer" onclick="openTransfer(${ci}, ${left})">⇄ نقل من هذا التصنيف</button>` : ''}
       </div>`;
     delete spentByCat[c.name];
   });
@@ -1951,7 +1956,7 @@ function render(){
             <button class="fa-dep" onclick="openDeposit(${i})" ${state.locked?'disabled':''}>إيداع +</button>
             <button class="fa-loan" onclick="openLoan(${i})" ${state.locked?'disabled':''}>قرض 🤝</button>
             <button class="fa-log" onclick="openFundLog(${i})" title="سجل الحركات">☰</button>
-            ${(!state.locked && bal===0) ? `<button class="fa-del2" onclick="deleteFund('${esc(c.name).replace(/'/g,"\\'")}')" title="إلغاء الصندوق">🗑</button>` : ''}
+            ${(!state.locked && bal===0) ? `<button class="fa-del2" onclick="deleteFund(${i})" title="إلغاء الصندوق">🗑</button>` : ''}
           </div>
         </div>`;
       delete spentByCat[c.name];
@@ -2319,8 +2324,12 @@ window.openEdit = (id) => {
 };
 
 /* ---------- نقل مبلغ بين تصنيفات المصاريف ---------- */
-window.openTransfer = (fromName, available) => {
+window.openTransfer = (idx, available) => {
   if(state.locked) return;
+  /* ناخذ الاسم من الـstate بالفهرس — ما نمرر نصوص المستخدم داخل onclick (حماية XSS) */
+  const from = ((state.budget && state.budget.categories) || [])[idx];
+  if(!from) return;
+  const fromName = from.name;
   const others = (state.budget.categories||[]).filter(c => c.type !== 'save' && c.name !== fromName);
   if(!others.length) return toast('ماكو تصنيف ثاني تنقل له', true);
   const opts = others.map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
@@ -2353,8 +2362,11 @@ window.openTransfer = (fromName, available) => {
 };
 
 /* ---------- إلغاء صندوق ادخار فاضي ---------- */
-window.deleteFund = (name) => {
+window.deleteFund = (idx) => {
   if(state.locked) return;
+  const c = ((state.budget && state.budget.categories) || [])[idx];
+  if(!c) return;
+  const name = c.name;
   if(!confirm('إلغاء صندوق «' + name + '»؟\n\nلازم رصيده يكون صفر. راح ينشال من الميزانية وما يظهر بالأشهر الجاية.')) return;
   (async () => {
     loading(true);
@@ -3006,6 +3018,7 @@ function renderSettings(){
 }
 
 /* ---------- لوحة المشرف (سوبر أدمن) ---------- */
+let adminHH = [];   // آخر قائمة عوائل جابها المشرف — للبحث بالـid
 async function showAdmin(){
   loading(true);
   try{
@@ -3016,6 +3029,7 @@ async function showAdmin(){
     const limitMB = (data.db_limit_bytes / 1048576);
     const usePct = Math.min(100, Math.round(usedMB / limitMB * 100));
     const hh = data.households || [];
+    adminHH = hh;   // حتى adminDelete تلگه الاسم بالـid (ما نمرر نصوص داخل onclick)
     // تقدير كم عائلة باقية: على أساس متوسط حجم العائلة الحالي
     const avgPerHH = hh.length ? (data.db_bytes / hh.length) : 0;
     const freeBytes = Math.max(0, data.db_limit_bytes - data.db_bytes);
@@ -3032,7 +3046,7 @@ async function showAdmin(){
             <div class="af-meta">${h.members} فرد · ${h.expenses} مصروف · ${h.months} شهر · آخر نشاط ${last}</div>
             <div class="af-meta">👥 ${esc(h.member_names || '—')} · كود: <b dir="ltr">${esc(h.code||'—')}</b></div>
           </div>
-          ${mine ? '' : `<button class="af-del" onclick="adminDelete('${h.id}','${esc((h.name||'').replace(/'/g,''))}')">حذف</button>`}
+          ${mine ? '' : `<button class="af-del" onclick="adminDelete('${h.id}')">حذف</button>`}
         </div>`;
     });
 
@@ -3060,7 +3074,9 @@ async function showAdmin(){
   }catch(err){ toast('ما كدرت أفتح اللوحة: ' + err.message, true); }
   finally{ loading(false); }
 }
-window.adminDelete = async (id, name) => {
+window.adminDelete = async (id) => {
+  const h = adminHH.find(x => x.id === id);
+  const name = (h && h.name) || 'عائلة';
   if(!confirm('حذف عائلة «' + name + '» نهائياً؟\n\nراح تنمسح كل بياناتها (المصاريف، الميزانيات، الصناديق، المستخدمين) وما ترجع.\nمتأكد ١٠٠٪؟')) return;
   loading(true);
   try{
@@ -3472,7 +3488,7 @@ function renderBills(){
           ${meta ? `<div class="bl-meta">${esc(meta)}</div>` : ''}
         </div>
         <div class="bl-amt">${fmt(b.amount)}</div>
-        <button class="bl-del" onclick="deleteBill('${b.id}','${esc(b.name).replace(/'/g,"\\'")}')" aria-label="حذف">✕</button>
+        <button class="bl-del" onclick="deleteBill('${b.id}')" aria-label="حذف">✕</button>
       </div>`;
   }).join('');
 }
@@ -3485,7 +3501,9 @@ window.toggleBill = async (id, paid) => {
     if(paid) sndHappy();
   }catch(err){ toast('ما انحفظ: ' + err.message, true); loadBills(); }
 };
-window.deleteBill = async (id, name) => {
+window.deleteBill = async (id) => {
+  const b = billsItems.find(x=>x.id===id);
+  const name = b ? b.name : '';
   if(!confirm('حذف فاتورة «' + name + '»؟')) return;
   try{
     const { error } = await sb.rpc('delete_bill', { p_id:id });
@@ -3733,7 +3751,10 @@ window.delExpense = async (id) => {
     const saveNames = new Set(((state.budget&&state.budget.categories)||[]).filter(c=>c.type==='save').map(c=>c.name));
     // سحب/قرض على صندوق → الحذف المتزامن (يشيل الدين والتمويل وياه)
     if(e.amount > 0 && saveNames.has(e.category)) return deleteWithdraw(e.id);
-    // حركة «تمويل من صندوق» → نحذف السحب الأصلي حتى ما يبقى مبلغ معلّق
+    // حركة تمويل/قرض مربوطة بسحب صندوق → نحذف السحب الأصلي حتى ما يبقى مبلغ معلّق.
+    // الربط الدقيق بالـlink_id من السيرفر (migration: sql/expense-link-id.sql)
+    if(e.amount < 0 && e.linkId) return deleteWithdraw(e.linkId);
+    // توافق: قواعد قديمة بلا linkId — مطابقة بالوصف والمبلغ والتاريخ (تقريبية)
     const fm = e.amount < 0 ? String(e.desc||'').match(/^تمويل من صندوق «(.+)»/) : null;
     if(fm){
       const w = state.expenses.find(x => x.id !== e.id && x.category === fm[1] && x.amount === -e.amount && x.date === e.date);
