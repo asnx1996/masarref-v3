@@ -830,3 +830,7 @@
   /* ---------- مصروف معلّق (انسجل بلا نت — بانتظار الرفع) ---------- */
   .exp.pending{opacity:.8;border:1.5px dashed var(--amber);background:color-mix(in srgb, var(--amber) 8%, var(--card))}
   .exp.pending .cat-dot{background:var(--amber);color:#fff}
+
+  /* ---------- صندوق مغلق (ما يترحّل للشهر الجاي) ---------- */
+  .fund.closed{opacity:.75;border:1.5px dashed var(--line)}
+  .fund.closed .fund-name{text-decoration:line-through;text-decoration-thickness:1px}

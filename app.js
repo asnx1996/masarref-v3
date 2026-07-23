@@ -489,9 +489,6 @@ async function apiPost(p){
     case 'transferCategory':
       call = sb.rpc('transfer_category', { p_month:p.month, p_from:p.from, p_to:p.to, p_amount:p.amount });
       break;
-    case 'deleteFund':
-      call = sb.rpc('delete_fund', { p_name:p.name });
-      break;
     case 'unlockMonth':
       call = sb.rpc('unlock_month', { p_month:p.month });
       break;
@@ -554,6 +551,10 @@ function showSkeleton(){
 async function loadMonth(month){
   state.month = month;
   $('monthPick').value = month;
+  /* تاريخ فورم الإضافة يتبع الشهر المعروض — لو اليوم من شهر ثاني (مقفل
+     مثلاً) ما نخلي المصروف يروح له بالغلط */
+  const ed = $('expDate');
+  if(ed && (ed.value||'').slice(0,7) !== month) ed.value = dateInMonth(month);
   if(!apiReady()){ render(); return; }
   inFlight = true;
   showSkeleton();
@@ -731,6 +732,7 @@ function render(){
       const wd = spentByCat[c.name] || 0;   // صافي السحب (السحب موجب، الإرجاع سالب)
       const bal = carried + contrib - wd;
       const goal = Number(c.goal)||0;
+      const isClosed = !!c.closed;   // مغلق: يظل ظاهر للشهر الحالي وما يترحّل
       totalBal += bal;
       let goalHtml = '';
       if(goal > 0){
@@ -747,7 +749,7 @@ function render(){
           </div>`;
       }
       rows += `
-        <div class="fund">
+        <div class="fund${isClosed?' closed':''}">
           <div class="fund-top">
             <span class="fund-name">🏦 ${esc(c.name)}</span>
             <span class="fund-bal">${fmt(bal)}</span>
@@ -758,12 +760,14 @@ function render(){
             ${wd ? `<span>${wd>=0?'− صافي السحب':'+ صافي الإيداع'}: ${fmt(Math.abs(wd))}</span>` : ''}
           </div>
           ${goalHtml}
+          ${isClosed ? `<div class="env-carry">🔒 مغلق — من ينقفل الشهر ما راح يترحّل للشهر الجاي</div>` : ''}
           <div class="fund-actions">
-            <button class="fa-wd" onclick="openWithdraw(${i})" ${state.locked?'disabled':''}>سحب −</button>
-            <button class="fa-dep" onclick="openDeposit(${i})" ${state.locked?'disabled':''}>إيداع +</button>
-            <button class="fa-loan" onclick="openLoan(${i})" ${state.locked?'disabled':''}>قرض 🤝</button>
+            <button class="fa-wd" onclick="openWithdraw(${i})" ${(state.locked||isClosed)?'disabled':''}>سحب −</button>
+            <button class="fa-dep" onclick="openDeposit(${i})" ${(state.locked||isClosed)?'disabled':''}>إيداع +</button>
+            <button class="fa-loan" onclick="openLoan(${i})" ${(state.locked||isClosed)?'disabled':''}>قرض 🤝</button>
             <button class="fa-log" onclick="openFundLog(${i})" title="سجل الحركات">☰</button>
-            ${(!state.locked && bal===0) ? `<button class="fa-del2" onclick="deleteFund(${i})" title="إلغاء الصندوق">🗑</button>` : ''}
+            ${(!state.locked && bal===0 && !isClosed) ? `<button class="fa-del2" onclick="closeFund(${i})" title="ما يترحّل للشهر الجاي">إغلاق 🔒</button>` : ''}
+            ${(!state.locked && isClosed) ? `<button class="fa-del2" onclick="reopenFund(${i})" title="رجّعه شغّال">فتح 🔓</button>` : ''}
           </div>
         </div>`;
       delete spentByCat[c.name];
@@ -974,6 +978,9 @@ function addRow(section, name, amount, carried, goal){
   carried = Number(carried)||0;
   goal = Number(goal)||0;
   const isSave = section === 'save';
+  /* صندوق مرحّل من شهر سابق (بيه رصيد) — محمي: لا ينحذف ولا ينسمى من جديد.
+     إغلاقه يصير من بطاقة الصندوق باللوحة بعد ما يتصفّر رصيده */
+  const lockedFund = isSave && carried !== 0;
   const container = isSave ? $('saveRows') : $('catRows');
   const ph = isSave ? 'مثلاً: ادخار بيت' : 'مثلاً: أكل البيت';
   const phAmt = isSave ? 'شهرياً' : 'المبلغ';
@@ -981,10 +988,11 @@ function addRow(section, name, amount, carried, goal){
   const div = document.createElement('div');
   div.className = 'cat-row';
   div.innerHTML = `
-    <input type="text" class="cname" placeholder="${ph}" value="${esc(name||'')}">
+    <input type="text" class="cname" placeholder="${ph}" value="${esc(name||'')}" ${lockedFund?'readonly style="opacity:.75"':''}>
     <input type="tel" class="camt" placeholder="${phAmt}" inputmode="numeric" value="${amount ? Number(amount).toLocaleString('en-US') : ''}">
-    <button class="rm" aria-label="حذف">✕</button>`;
-  div.querySelector('.rm').onclick = () => { wrap.remove(); updateAlloc(); };
+    ${lockedFund ? '<span class="rm" style="border:none;background:none" title="صندوق مرحّل — محمي">🔒</span>' : '<button class="rm" aria-label="حذف">✕</button>'}`;
+  const rm = div.querySelector('button.rm');
+  if(rm) rm.onclick = () => { wrap.remove(); updateAlloc(); };
   const amt = div.querySelector('.camt');
   liveFormat(amt);
   amt.addEventListener('input', updateAlloc);
@@ -1001,7 +1009,7 @@ function addRow(section, name, amount, carried, goal){
     const note = document.createElement('div');
     note.className = 'cat-carry';
     note.textContent = isSave
-      ? ('🏦 رصيد مرحّل بالصندوق: ' + fmt(carried))
+      ? ('🏦 رصيد مرحّل بالصندوق: ' + fmt(carried) + ' · محمي من الحذف — يتقفل من بطاقته باللوحة')
       : ('↩ مرحّل: ' + fmt(carried) + ' · المتاح: ' + fmt((Number(amount)||0) + carried));
     wrap.appendChild(note);
   }
@@ -1184,22 +1192,37 @@ window.openTransfer = (idx, available) => {
   };
 };
 
-/* ---------- إلغاء صندوق ادخار فاضي ---------- */
-window.deleteFund = (idx) => {
+/* ---------- إغلاق / فتح صندوق ادخار ----------
+   الإغلاق (برصيد صفر بس): الصندوق يظل ظاهر لنهاية الشهر،
+   ومن ينقفل الشهر ما يترحّل للشهر الجاي. */
+window.closeFund = (idx) => {
   if(state.locked) return;
   const c = ((state.budget && state.budget.categories) || [])[idx];
   if(!c) return;
-  const name = c.name;
-  if(!confirm('إلغاء صندوق «' + name + '»؟\n\nلازم رصيده يكون صفر. راح ينشال من الميزانية وما يظهر بالأشهر الجاية.')) return;
+  if(!confirm('إغلاق صندوق «' + c.name + '»؟\n\nيظل ظاهر لنهاية هذا الشهر، ومن تقفل الشهر ما يترحّل للشهر الجاي.\n(تكدر تفتحه من جديد بأي وقت قبل إقفال الشهر)')) return;
   (async () => {
     loading(true);
     try{
-      const res = await apiPost({ action:'deleteFund', name });
-      if(guardAuth(res)) return;
-      if(!res.ok) throw new Error(res.error || 'خطأ');
-      toast('انلغى الصندوق ✓');
+      const { error } = await sb.rpc('set_fund_closed', { p_month: state.month, p_name: c.name, p_closed: true });
+      if(error) throw new Error(error.message);
+      toast('انغلق الصندوق ✓ 🔒 ما راح يترحّل للشهر الجاي');
       await loadMonth(state.month);
-    }catch(err){ toast('ما انلغى: ' + err.message, true); }
+    }catch(err){ toast('ما انغلق: ' + err.message, true); }
+    finally{ loading(false); }
+  })();
+};
+window.reopenFund = (idx) => {
+  if(state.locked) return;
+  const c = ((state.budget && state.budget.categories) || [])[idx];
+  if(!c) return;
+  (async () => {
+    loading(true);
+    try{
+      const { error } = await sb.rpc('set_fund_closed', { p_month: state.month, p_name: c.name, p_closed: false });
+      if(error) throw new Error(error.message);
+      toast('انفتح الصندوق من جديد ✓ 🔓');
+      await loadMonth(state.month);
+    }catch(err){ toast('ما انفتح: ' + err.message, true); }
     finally{ loading(false); }
   })();
 };
@@ -1216,7 +1239,7 @@ window.openWithdraw = (idx) => {
     <div class="hint" style="margin:0 0 8px">السحب ينقص رصيد الصندوق. لو سجّلته على حساب، يبقى مطلوب للصندوق لين ترجعه أو تشطبه.</div>
     <div class="row">
       <div><label>المبلغ</label><input type="tel" id="wdAmount" inputmode="numeric" placeholder="0"></div>
-      <div><label>التاريخ</label><input type="date" id="wdDate" value="${todayISO()}"></div>
+      <div><label>التاريخ</label><input type="date" id="wdDate" value="${dateInMonth(state.month)}"></div>
     </div>
     <label>💸 أضف المبلغ لتصنيف مصروف (اختياري)</label>
     <select id="wdTo">${catOpts}</select>
@@ -1232,7 +1255,9 @@ window.openWithdraw = (idx) => {
   $('wdSave').onclick = async () => {
     const amount = num($('wdAmount').value);
     if(amount <= 0) return toast('دخّل المبلغ', true);
-    const date = $('wdDate').value || todayISO();
+    /* السحب ينسجل بالشهر المعروض — مو بشهر اليوم (اللي ممكن يكون مقفل) */
+    const date = $('wdDate').value || dateInMonth(state.month);
+    if(date.slice(0,7) !== state.month) return toast('التاريخ لازم يكون بشهر ' + state.month + ' (الشهر المعروض)', true);
     const reason = $('wdDesc').value.trim();
     const acc = $('wdAcc').value.trim();
     const toCat = $('wdTo').value;
@@ -1270,7 +1295,7 @@ window.openLoan = (idx) => {
     <div class="hint" style="margin:0 0 8px">القرض ينقص رصيد الصندوق (الحالي: <b style="color:var(--primary)">${fmt(bal)}</b>) ويظل مسجّل لين يرجّعه — والترجيع يرجع للصندوق نفسه، مو للفائض.</div>
     <div class="row">
       <div><label>المبلغ</label><input type="tel" id="lnAmount" inputmode="numeric" placeholder="0"></div>
-      <div><label>التاريخ</label><input type="date" id="lnDate" value="${todayISO()}"></div>
+      <div><label>التاريخ</label><input type="date" id="lnDate" value="${dateInMonth(state.month)}"></div>
     </div>
     <label style="margin-top:10px">القرض على منو؟</label>
     <div class="ln-seg" style="display:flex;gap:8px;margin:2px 0 4px">
@@ -1306,7 +1331,9 @@ window.openLoan = (idx) => {
   $('lnSave').onclick = async () => {
     const amount = num($('lnAmount').value);
     if(amount <= 0) return toast('دخّل المبلغ', true);
-    const date = $('lnDate').value || todayISO();
+    /* القرض ينسجل بالشهر المعروض — مو بشهر اليوم (اللي ممكن يكون مقفل) */
+    const date = $('lnDate').value || dateInMonth(state.month);
+    if(date.slice(0,7) !== state.month) return toast('التاريخ لازم يكون بشهر ' + state.month + ' (الشهر المعروض)', true);
     let acc = '', toCat = '', dueDate = '';
     if(lnType === 'cat'){
       toCat = ($('lnCat') && $('lnCat').value) || '';
@@ -1380,7 +1407,7 @@ window.openDeposit = async (idx) => {
     <div class="hint" id="dpHint" style="margin:6px 0 0"></div>
     <div class="row" style="margin-top:10px">
       <div><label>المبلغ</label><input type="tel" id="dpAmount" inputmode="numeric" placeholder="0"></div>
-      <div><label>التاريخ</label><input type="date" id="dpDate" value="${todayISO()}"></div>
+      <div><label>التاريخ</label><input type="date" id="dpDate" value="${dateInMonth(state.month)}"></div>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
       <button class="btn ghost" id="dpMax" style="margin:0;width:auto;padding:8px 14px;font-size:.75rem">كل المتاح</button>
@@ -1416,9 +1443,12 @@ window.openDeposit = async (idx) => {
     const cap = capNow(), from = $('dpSrc').value;
     if(amount <= 0) return toast('دخّل المبلغ', true);
     if(amount > cap) return toast('المبلغ أكثر من المتاح (' + fmt(cap) + ')', true);
+    /* الإيداع ينسجل بالشهر المعروض — الفائض محسوب عليه أصلاً */
+    const dpDate = $('dpDate').value || dateInMonth(state.month);
+    if(dpDate.slice(0,7) !== state.month) return toast('التاريخ لازم يكون بشهر ' + state.month + ' (الشهر المعروض)', true);
     loading(true);
     try{
-      const res = await apiPost({ action:'addDeposit', fund:c.name, amount, date: $('dpDate').value || todayISO(), desc: $('dpDesc').value.trim(), fromCategory: from });
+      const res = await apiPost({ action:'addDeposit', fund:c.name, amount, date: dpDate, desc: $('dpDesc').value.trim(), fromCategory: from });
       if(guardAuth(res)) return;
       if(!res.ok) throw new Error(res.error || 'خطأ');
       modalClose();
