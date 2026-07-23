@@ -655,8 +655,15 @@ function render(){
   state._surplus = Math.max(0, remain);
   state._remainRaw = remain;   // للمطابقة — بدون تصفير السالب
 
+  /* «المصروف» المعروض = الصرف الفعلي — نطلّع منه القروض/التمويل الداخل
+     من الصناديق (سالب) وسدادها (موجب). الحسابات (الباقي للصرف) تظل عالصافي. */
+  let fundInTotal = 0, repayTotal = 0;
+  Object.keys(fundInByCat).forEach(k => { fundInTotal += fundInByCat[k]; });
+  Object.keys(repayByCat).forEach(k => { repayTotal += repayByCat[k]; });
+  const realSpending = spendingSpent + fundInTotal - repayTotal;
+
   $('hSalary') && setStat($('hSalary'), totalIncome);
-  setStat($('hSpent'), spendingSpent);
+  setStat($('hSpent'), realSpending);
   setStat($('hRemain'), remain);
   $('hRemain').className = 'val' + (remain < 0 ? ' neg' : '');
 
@@ -673,7 +680,7 @@ function render(){
   if(other > 0) donutParts.push({ label:'أخرى', value:other });
 
   const prog = monthProgress(state.month);
-  const dailyAvg = prog.elapsed > 0 ? Math.round(spendingSpent / prog.elapsed) : 0;
+  const dailyAvg = prog.elapsed > 0 ? Math.round(realSpending / prog.elapsed) : 0;
   const canDaily = prog.left > 0 ? Math.max(0, Math.round(remain / prog.left)) : 0;
   const activeCat = ($('fltCat') && $('fltCat').value) || '';
   const legend = donutParts.map((p,i)=>`<span class="lg-item${activeCat===p.label?' on':''}" data-cat="${esc(p.label)}"><span class="lg-dot" style="background:${PALETTE[i%PALETTE.length]}"></span><b>${esc(p.label)}</b>${fmt(p.value)}</span>`).join('');
@@ -1966,8 +1973,14 @@ function buildReportHTML(){
   const cats = b.categories || [];
   const saveNames = new Set(cats.filter(c=>c.type==='save').map(c=>c.name));
 
-  const spentByCat = {};
-  state.expenses.forEach(e => { const k=e.category||'بلا تصنيف'; spentByCat[k]=(spentByCat[k]||0)+e.amount; });
+  const spentByCat = {}, fundInByCat = {}, repayByCat = {};
+  state.expenses.forEach(e => {
+    const k=e.category||'بلا تصنيف';
+    spentByCat[k]=(spentByCat[k]||0)+e.amount;
+    const d = String(e.desc||'');
+    if(e.amount < 0 && /^(قرض|تمويل) من صندوق/.test(d)) fundInByCat[k]=(fundInByCat[k]||0)-e.amount;
+    else if(e.amount > 0 && d.indexOf('سداد قرض لصندوق') === 0) repayByCat[k]=(repayByCat[k]||0)+e.amount;
+  });
   let spendingSpent=0, saveContrib=0, spendCarried=0, fundDeposits=0;
   cats.forEach(c => { if(c.type==='save') saveContrib+=(c.amount||0); else spendCarried+=(c.carried||0); });
   state.expenses.forEach(e => {
@@ -1980,11 +1993,17 @@ function buildReportHTML(){
   const extraIncome = ((b.incomes)||[]).reduce((s,x)=> s + (Number(x.amount)||0), 0);
   const totalIncome = totalSalary + extraIncome;
   const remain = totalIncome + spendCarried - saveContrib - spendingSpent - fundDeposits;
+  /* الصرف الفعلي للعرض بالتقرير (مثل اللوحة) */
+  let fundInTotal=0, repayTotal=0;
+  Object.keys(fundInByCat).forEach(k => { fundInTotal += fundInByCat[k]; });
+  Object.keys(repayByCat).forEach(k => { repayTotal += repayByCat[k]; });
+  const realSpending = spendingSpent + fundInTotal - repayTotal;
 
   let catRows = '';
   cats.filter(c=>c.type!=='save').forEach(c=>{
-    const eff = (c.amount||0)+(c.carried||0);
-    const sp = spentByCat[c.name]||0;
+    const fundIn = fundInByCat[c.name]||0, repay = repayByCat[c.name]||0;
+    const eff = (c.amount||0)+(c.carried||0)+(fundIn-repay);
+    const sp = (spentByCat[c.name]||0)+fundIn-repay;
     catRows += `<tr><td>${esc(c.name)}</td><td>${fmt(eff)}</td><td>${fmt(sp)}</td><td>${fmt(eff-sp)}</td></tr>`;
   });
 
@@ -2008,7 +2027,7 @@ function buildReportHTML(){
     <div class="p-row"><span>إجمالي الرواتب</span><b>${fmt(totalSalary)}</b></div>
     ${extraIncome ? `<div class="p-row"><span>إيرادات إضافية</span><b>${fmt(extraIncome)}</b></div>
     <div class="p-row"><span>إجمالي الدخل</span><b>${fmt(totalIncome)}</b></div>` : ''}
-    <div class="p-row"><span>إجمالي المصروف</span><b>${fmt(spendingSpent)}</b></div>
+    <div class="p-row"><span>إجمالي المصروف</span><b>${fmt(realSpending)}</b></div>
     <div class="p-row"><span>محجوز للادخار</span><b>${fmt(saveContrib)}</b></div>
     ${fundDeposits ? `<div class="p-row"><span>مودَع بالصناديق من الفائض</span><b>${fmt(fundDeposits)}</b></div>` : ''}
     <div class="p-row"><span>الباقي للصرف</span><b>${fmt(remain)}</b></div>
