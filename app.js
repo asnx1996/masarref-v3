@@ -645,14 +645,14 @@ function donutSVG(parts){
    النظرة العامة باللوحة — تبويبات: مصاريف / ادخار / فواتير / قروض
    كل تبويب يعرض تفاصيله برسم مختلف داخل نفس البطاقة
    ============================================================ */
-let dashView = 'exp';
-try{ dashView = ['exp','save','bills','loans'].includes(localStorage.getItem('mas_dashview')) ? localStorage.getItem('mas_dashview') : 'exp'; }catch(_){}
+let dashView = 'ov';   // 'ov' = نظرة عامة (بلا اختيار) — مقارنة بسيطة
+try{ dashView = ['ov','exp','save','bills','loans'].includes(localStorage.getItem('mas_dashview')) ? localStorage.getItem('mas_dashview') : 'ov'; }catch(_){}
+let _billsSeen = '';   // حتى ما نعيد جلب الفواتير بكل رسمة
 
 window.setDashView = (v) => {
-  dashView = v;
-  try{ localStorage.setItem('mas_dashview', v); }catch(_){}
-  document.querySelectorAll('#ovSeg .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.ov === v));
-  if(v === 'bills' && !billsItems.length){ loadBills().then(renderDashView).catch(()=>{}); }
+  /* ضغطة ثانية على نفس التبويب = إلغاء الاختيار → نظرة عامة */
+  dashView = (v === dashView) ? 'ov' : v;
+  try{ localStorage.setItem('mas_dashview', dashView); }catch(_){}
   renderDashView();
 };
 document.querySelectorAll('#ovSeg .seg-btn').forEach(b => { b.onclick = () => setDashView(b.dataset.ov); });
@@ -661,7 +661,52 @@ function renderDashView(){
   const el = $('summaryCard');
   if(!el) return;
   document.querySelectorAll('#ovSeg .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.ov === dashView));
-  const d = state._dash || { donutParts:[], dailyAvg:0, canDaily:0, prog:{left:0} };
+
+  /* التبويب يفلتر كل اللوحة: كل قسم يظهر بس بتبويبه */
+  const envEl = $('envList');  if(envEl) envEl.style.display  = dashView === 'exp'   ? '' : 'none';
+  const fsEl2 = $('fundSummary'); if(fsEl2) fsEl2.style.display = dashView === 'save' ? '' : 'none';
+  const dsEl2 = $('debtSummary'); if(dsEl2) dsEl2.style.display = dashView === 'loans' ? '' : 'none';
+
+  /* الفواتير محتاجينها بالنظرة العامة وتبويب الفواتير */
+  if((dashView === 'ov' || dashView === 'bills') && session && _billsSeen !== state.month){
+    _billsSeen = state.month;
+    loadBills().then(renderDashView).catch(()=>{});
+  }
+
+  const d = state._dash || { donutParts:[], dailyAvg:0, canDaily:0, prog:{left:0}, realSpending:0, totalAvail:0 };
+
+  /* ===== 👁️ النظرة العامة: مقارنة بسيطة (مصاريف / أهداف / فواتير) ===== */
+  if(dashView === 'ov'){
+    el.onclick = null;
+    const spentPct = d.totalAvail > 0 ? Math.min(100, Math.round(d.realSpending / d.totalAvail * 100)) : 0;
+    const gFunds = (state._dashFunds || []).filter(f => f.goal > 0);
+    const goalSum = gFunds.reduce((s,f)=> s + f.goal, 0);
+    const goalBal = gFunds.reduce((s,f)=> s + Math.min(Math.max(0, f.bal), f.goal), 0);
+    const goalPct = goalSum > 0 ? Math.round(goalBal / goalSum * 100) : 0;
+    const bTotal = billsItems.reduce((a,b)=> a + (Number(b.amount)||0), 0);
+    const bPaid  = billsItems.filter(b=>b.paid).reduce((a,b)=> a + (Number(b.amount)||0), 0);
+    const bPct = bTotal > 0 ? Math.round(bPaid / bTotal * 100) : 0;
+    el.innerHTML = `
+      <div class="card sum-card depth">
+        <div class="ov-top">👁️ نظرة سريعة على شهرك — اضغط تبويب (أو سطر) للتفاصيل، وضغطة ثانية ترجعك هنا</div>
+        <div class="ov-row" onclick="setDashView('exp')" style="cursor:pointer">
+          <div class="ov-line"><span>🧾 المصاريف</span><b>${fmt(d.realSpending)}</b></div>
+          <div class="bar" style="height:12px"><i style="width:${spentPct}%;background:${PALETTE[0]}"></i></div>
+          <div class="ov-sub"><span>صرفت ${spentPct}٪ من المتاح</span><span>المتاح ${fmt(d.totalAvail)}</span></div>
+        </div>
+        <div class="ov-row" onclick="setDashView('save')" style="cursor:pointer">
+          <div class="ov-line"><span>🎯 أهداف الادخار</span><b>${goalSum > 0 ? goalPct + '٪' : '—'}</b></div>
+          <div class="bar" style="height:12px"><i style="width:${goalPct}%;background:${PALETTE[2]}"></i></div>
+          <div class="ov-sub"><span>${goalSum > 0 ? 'وصلت ' + fmt(goalBal) : 'ماكو أهداف محددة بعد'}</span><span>${goalSum > 0 ? 'الهدف ' + fmt(goalSum) : 'حددها من الميزانية 🎯'}</span></div>
+        </div>
+        <div class="ov-row" onclick="setDashView('bills')" style="cursor:pointer">
+          <div class="ov-line"><span>📄 الفواتير</span><b>${bTotal > 0 ? fmt(bTotal - bPaid) + ' باقي' : '—'}</b></div>
+          <div class="bar" style="height:12px"><i style="width:${bPct}%;background:${PALETTE[1]}"></i></div>
+          <div class="ov-sub"><span>${bTotal > 0 ? 'دفعت ' + bPct + '٪' : 'ماكو فواتير هالشهر'}</span><span>${bTotal > 0 ? 'الإجمالي ' + fmt(bTotal) : ''}</span></div>
+        </div>
+      </div>`;
+    return;
+  }
 
   /* ===== 🧾 المصاريف: الدونات + أعلى تصنيف ===== */
   if(dashView === 'exp'){
@@ -914,7 +959,11 @@ function render(){
   renderInsightCard();
 
   /* بيانات النظرة العامة — تنخزن وتنرسم حسب التبويب المختار (renderDashView) */
-  state._dash = { donutParts, dailyAvg, canDaily, prog };
+  state._dash = {
+    donutParts, dailyAvg, canDaily, prog,
+    realSpending,
+    totalAvail: spendAlloc + spendCarried + fundInTotal - repayTotal
+  };
 
   /* ===== ظروف المصاريف ===== */
   let envHtml = '';
