@@ -315,6 +315,31 @@ function modalOpen(html){ $('modalCard').innerHTML = '<div class="grabber"></div
 window.modalClose = () => $('modal').classList.remove('show');
 $('modal').addEventListener('click', e => { if(e.target === $('modal')) modalClose(); });
 
+/* ---------- تأكيد الحذف الموحّد — بدل confirm() المتصفح ----------
+   نافذة تحذير واضحة: زر «لا، رجعني» هو الافتراضي، والحذف يحتاج ضغطة مقصودة.
+   ترجع Promise<boolean> حتى تنستعمل: if(!(await confirmDel(...))) return; */
+function confirmDel(title, sub, okLabel){
+  return new Promise(res => {
+    const m = $('cfModal'), c = $('cfCard');
+    if(!m || !c){ res(confirm(title + (sub ? '\n' + sub : ''))); return; }
+    c.innerHTML = `
+      <div class="grabber"></div>
+      <div class="cf-ico">🗑</div>
+      <div class="cf-title">${esc(title)}</div>
+      ${sub ? `<div class="cf-sub">${esc(sub)}</div>` : ''}
+      <div class="cf-actions">
+        <button class="btn" id="cfNo" type="button">لا، رجعني</button>
+        <button class="btn cf-danger" id="cfYes" type="button">${esc(okLabel || 'احذف')}</button>
+      </div>`;
+    m.classList.add('show');
+    const done = v => { m.classList.remove('show'); m.onclick = null; res(v); };
+    $('cfNo').onclick  = () => done(false);
+    $('cfYes').onclick = () => done(true);
+    m.onclick = e => { if(e.target === m) done(false); };
+    setTimeout(() => { try{ $('cfNo').focus(); }catch(_){} }, 80);
+  });
+}
+
 /* ---------- الجلسة (Supabase Auth يديرها ويجدّدها تلقائياً) ---------- */
 async function fetchProfile(userId){
   const { data, error } = await sb.from('profiles').select('display_name, household_id, is_admin').eq('id', userId).single();
@@ -566,6 +591,9 @@ async function loadMonth(month){
     state.budget = res.budget;
     state.expenses = res.expenses;
     state.debts = res.debts || [];
+    /* دخول متدرّج للبطاقات — بس عند تحميل شهر (مو بكل إعادة رسم صغيرة) */
+    const am = $('appMain');
+    if(am){ am.classList.add('fresh'); clearTimeout(am._ft); am._ft = setTimeout(() => am.classList.remove('fresh'), 1400); }
     render();
     // الفواتير والمطابقة تعتمد على «الباقي للصرف» فنحدّثها بعد الرسم
     const bt = $('tab-bills');
@@ -611,6 +639,27 @@ function donutSVG(parts){
   return `<svg viewBox="0 0 128 128" width="100%" height="100%">${segs}`+
     `<text x="64" y="61" text-anchor="middle" font-size="9" fill="var(--muted)">صرفت</text>`+
     `<text x="64" y="76" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink)">${(total).toLocaleString('en-US')}</text></svg>`;
+}
+
+/* ---------- بطاقة الذكاء (تدوير الملاحظات) ---------- */
+let insTimer = null, insIdx = 0;
+function renderInsightCard(){
+  const el = $('insightCard');
+  if(!el) return;
+  const list = state._insights || [];
+  clearInterval(insTimer);
+  if(!list.length){ el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="card insight"><span class="in-ico">🔍</span><span class="in-txt" id="insightTxt">${esc(list[0])}</span></div>`;
+  insIdx = 0;
+  if(list.length > 1){
+    insTimer = setInterval(() => {
+      const t = $('insightTxt');
+      if(!t){ clearInterval(insTimer); return; }
+      insIdx = (insIdx + 1) % list.length;
+      t.style.opacity = 0;
+      setTimeout(() => { t.textContent = (state._insights||list)[insIdx] || ''; t.style.opacity = 1; }, 350);
+    }, 6000);
+  }
 }
 
 /* ---------- العرض ---------- */
@@ -682,6 +731,50 @@ function render(){
   const prog = monthProgress(state.month);
   const dailyAvg = prog.elapsed > 0 ? Math.round(realSpending / prog.elapsed) : 0;
   const canDaily = prog.left > 0 ? Math.max(0, Math.round(remain / prog.left)) : 0;
+
+  /* ===== بطاقة الذكاء — ملاحظات تحقيقية محسوبة من بياناتك ===== */
+  const insights = [];
+  (state.debts||[]).filter(d => d.kind === 'قرض' && d.dueDate).forEach(d => {
+    const days = Math.floor((new Date(d.dueDate) - new Date(todayISO())) / 86400000);
+    if(days < 0) insights.push('⏰ قضية متأخرة: قرض «' + d.account + '» (' + fmt(d.amount) + ') فات موعد إرجاعه!');
+    else if(days <= 3) insights.push('⏰ قرض «' + d.account + '» موعد إرجاعه ' + (days === 0 ? 'اليوم' : 'بعد ' + days + ' يوم') + ' (' + fmt(d.amount) + ')');
+  });
+  cats.filter(c=>c.type!=='save').forEach(c => {
+    const fi = fundInByCat[c.name]||0, rp = repayByCat[c.name]||0;
+    const eff = (Number(c.amount)||0) + (Number(c.carried)||0) + fi - rp;
+    const sp = (spentByCat[c.name]||0) + fi - rp;
+    if(eff > 0 && sp > eff) insights.push('🚨 تحذير: «' + c.name + '» تجاوز ميزانيته بـ' + fmt(sp - eff));
+    else if(eff > 0 && sp / eff >= .85) insights.push('⚠️ «' + c.name + '» وصل ' + Math.round(sp / eff * 100) + '% من ميزانيته — انتبه للباقي');
+  });
+  if(prog.elapsed >= 14){
+    /* مقارنة آخر ٧ أيام بالـ٧ اللي قبلها (مصاريف صافية بس) */
+    let w1 = 0, w2 = 0;
+    const todayD = new Date(todayISO());
+    state.expenses.forEach(e => {
+      if(isFundMove(e, saveNames)) return;
+      const dd = Math.floor((todayD - new Date(e.date)) / 86400000);
+      if(dd >= 0 && dd < 7) w1 += e.amount;
+      else if(dd >= 7 && dd < 14) w2 += e.amount;
+    });
+    if(w2 > 0 && w1 >= 0){
+      const pc = Math.round((w1 - w2) / w2 * 100);
+      if(pc <= -5) insights.push('📉 صرفك آخر ٧ أيام أقل من الأسبوع اللي قبله بـ' + (-pc) + '% — أحسنت!');
+      else if(pc >= 5) insights.push('📈 صرفك آخر ٧ أيام أكثر من الأسبوع اللي قبله بـ' + pc + '%');
+    }
+  }
+  cats.filter(c=>c.type==='save').forEach(c => {
+    const goal = Number(c.goal)||0;
+    if(goal <= 0) return;
+    const bal = (Number(c.carried)||0) + (Number(c.amount)||0) - (spentByCat[c.name]||0);
+    if(bal >= goal) insights.push('🎉 القضية انحلت: صندوق «' + c.name + '» حقق هدفه!');
+    else if(bal / goal >= .8) insights.push('🎯 صندوق «' + c.name + '» وصل ' + Math.round(bal / goal * 100) + '% من هدفه — قربت!');
+  });
+  if(fundDeposits > 0) insights.push('🏦 ودّعت ' + fmt(fundDeposits) + ' بالصناديق هالشهر — عاشت إيدك');
+  if(prog.left > 0 && remain > 0) insights.push('💡 باقي ' + prog.left + ' يوم بالشهر وتكدر تصرف ' + fmt(canDaily) + ' باليوم');
+  if(!insights.length) insights.push('😌 كلشي تحت السيطرة — التحقيق ما لگه شي مريب');
+  state._insights = insights;
+  renderInsightCard();
+
   const activeCat = ($('fltCat') && $('fltCat').value) || '';
   const legend = donutParts.map((p,i)=>`<span class="lg-item${activeCat===p.label?' on':''}" data-cat="${esc(p.label)}"><span class="lg-dot" style="background:${PALETTE[i%PALETTE.length]}"></span><b>${esc(p.label)}</b>${fmt(p.value)}</span>`).join('');
 
@@ -726,8 +819,10 @@ function render(){
     const left = effective - realSpent;            // نفس قيمة (المخصص+المرحّل−الصافي)
     const pct = effective > 0 ? Math.min(100, Math.round(realSpent / effective * 100)) : (realSpent>0?100:0);
     const cls = pct >= 100 ? 'over' : (pct >= 80 ? 'warn' : '');
+    /* اللوحة عرض فقط — الضغط على الظرف يفتح سجل المصاريف مفلتر عليه،
+       وزر النقل انتقل لتبويب الميزانية */
     envHtml += `
-      <div class="env">
+      <div class="env clickable" onclick="filterByCatIdx(${ci})" title="اضغط حتى تشوف مصاريف هذا التصنيف">
         <div class="env-top">
           <span class="env-name">${esc(c.name)}</span>
           <span class="env-left ${left<0?'over':''}">${left<0 ? 'تجاوز ' + fmt(-left) : 'باقي ' + fmt(left)}</span>
@@ -736,14 +831,14 @@ function render(){
         <div class="env-sub"><span>صرفت ${fmt(realSpent)}</span><span>المتاح ${fmt(effective)}</span></div>
         ${carried ? `<div class="env-carry">↩ منها مرحّل من الشهر الماضي: ${fmt(carried)}</div>` : ''}
         ${loanOut > 0 ? `<div class="env-carry">🤝 منها قرض من الصناديق (لازم يرجع): ${fmt(loanOut)}</div>` : ''}
-        ${(!state.locked && left>0) ? `<button class="env-transfer" onclick="openTransfer(${ci}, ${left})">⇄ نقل من هذا التصنيف</button>` : ''}
       </div>`;
     delete spentByCat[c.name];
   });
 
-  /* ===== صناديق الادخار ===== */
+  /* ===== صناديق الادخار (البطاقات الكاملة بقسم «الصناديق» بتبويب المصروف) ===== */
   let saveHtml = '';
   state._fundTotal = 0;   // للمطابقة
+  const fundView = [];    // بيانات مختصرة لملخص اللوحة (عرض فقط)
   const saveList = cats.map((c,i)=>({c,i})).filter(x=>x.c.type==='save');
   if(saveList.length){
     let totalBal = 0, rows = '';
@@ -791,12 +886,29 @@ function render(){
             ${(!state.locked && isClosed) ? `<button class="fa-del2" onclick="reopenFund(${i})" title="رجّعه شغّال">فتح 🔓</button>` : ''}
           </div>
         </div>`;
+      fundView.push({ name:c.name, bal, goal, closed:isClosed });
       delete spentByCat[c.name];
     });
     saveHtml = `<div class="save-head">صناديق الادخار 🏦 <span>الإجمالي: ${fmt(totalBal)}</span></div>` + rows;
     state._fundTotal = totalBal;
   }
   $('saveList').innerHTML = saveHtml;
+
+  /* ملخص الصناديق باللوحة — عرض فقط، الضغط يوديك لقسم الصناديق */
+  const fsEl = $('fundSummary');
+  if(fsEl){
+    fsEl.innerHTML = fundView.length ? `
+      <div class="card">
+        <div class="save-head">صناديق الادخار 🏦 <span>الإجمالي: ${fmt(state._fundTotal)}</span></div>
+        ${fundView.map(f => `
+          <div class="fsum${f.closed?' off':''}" onclick="gotoFunds()" title="الإدارة من تبويب المصروف ← الصناديق">
+            <span class="fs-name">${f.closed?'🔒':'🏦'} ${esc(f.name)}</span>
+            ${f.goal>0 ? `<span class="fs-goal">🎯 ${Math.max(0, Math.min(100, Math.round(f.bal / f.goal * 100)))}%</span>` : ''}
+            <span class="fs-bal">${fmt(f.bal)}</span>
+          </div>`).join('')}
+        <div class="hint" style="margin:8px 2px 0">السحب والإيداع والقرض من تبويب «مصروف ← الصناديق» — اضغط أي صندوق يوديك هناك.</div>
+      </div>` : '';
+  }
 
   /* ===== ديون الصناديق ===== */
   // نعرض بس القروض هنا — السحب والإيداع ما يظهرون كبطاقة دين (حسب طلب المستخدم).
@@ -836,6 +948,27 @@ function render(){
   }
   $('debtList').innerHTML = debtHtml;
 
+  /* ملخص الديون باللوحة — عرض فقط، الإرجاع والشطب من قسم الصناديق */
+  const dsEl = $('debtSummary');
+  if(dsEl){
+    dsEl.innerHTML = open.length ? `
+      <div class="card">
+        <div class="save-head">ديون الصناديق ⏳ <span>الإجمالي: ${fmt(open.reduce((s,d)=> s + (d.amount||0), 0))}</span></div>
+        ${open.map(d => {
+          let due = '';
+          if(d.dueDate){
+            const days = Math.floor((new Date(d.dueDate) - new Date(todayISO())) / 86400000);
+            due = days < 0 ? ' · ⏰ فات موعده!' : (days === 0 ? ' · ⏰ يستحق اليوم!' : ' · باقي ' + days + ' يوم');
+          }
+          return `
+          <div class="fsum" onclick="gotoFunds()" title="الإرجاع والشطب من تبويب المصروف ← الصناديق">
+            <span class="fs-name">🤝 ${esc(d.account)}<small style="color:var(--muted);font-weight:400"> ← «${esc(d.fund)}»${due}</small></span>
+            <span class="fs-bal">${fmt(d.amount)}</span>
+          </div>`;
+        }).join('')}
+      </div>` : '';
+  }
+
   /* مصاريف على تصنيفات غير موجودة بالميزانية */
   Object.keys(spentByCat).forEach(k => {
     if(spentByCat[k] <= 0) return;
@@ -851,9 +984,11 @@ function render(){
   });
   $('envList').innerHTML = envHtml || '<div class="empty"><span class="emo">🗂️</span><b>ماكو ميزانية لهذا الشهر بعد</b>روح لتبويب «الميزانية» وحدد الرواتب والتصنيفات.</div>';
 
-  /* ===== فلتر + قائمة المصاريف ===== */
+  /* ===== فلتر + قائمة المصاريف + حركات الصناديق ===== */
   buildFilterOptions();
   renderExpenseList();
+  buildFundMoveFilters();
+  renderFundMoves();
 
   /* ===== قائمة تصنيفات فورم الإضافة (بدون صناديق الادخار) ===== */
   const sel = $('expCat');
@@ -881,19 +1016,20 @@ function render(){
 
 /* ---------- خيارات الفلتر ---------- */
 function buildFilterOptions(){
-  const cats = (state.budget && state.budget.categories) || [];
+  const saveNames = new Set(((state.budget&&state.budget.categories)||[]).filter(c=>c.type==='save').map(c=>c.name));
+  const pure = state.expenses.filter(e => !isFundMove(e, saveNames));   // مصاريف صافية بس
   const fc = $('fltCat'), fb = $('fltBy');
   const curC = fc.value, curB = fb.value;
-  const catNames = Array.from(new Set(state.expenses.map(e=>e.category).filter(Boolean)));
+  const catNames = Array.from(new Set(pure.map(e=>e.category).filter(Boolean)));
   fc.innerHTML = '<option value="">كل التصنيفات</option>' + catNames.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
   fc.value = curC;
-  const people = Array.from(new Set(state.expenses.map(e=>e.by).filter(Boolean)));
+  const people = Array.from(new Set(pure.map(e=>e.by).filter(Boolean)));
   fb.innerHTML = '<option value="">الكل</option>' + people.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
   fb.value = curB;
-  $('filterBar').style.display = state.expenses.length ? 'flex' : 'none';
+  $('filterBar').style.display = pure.length ? 'flex' : 'none';
 }
 
-/* ---------- فلترة من الرسم الدائري ---------- */
+/* ---------- فلترة من الرسم الدائري / ظروف اللوحة ---------- */
 window.filterByCat = (name) => {
   const fc = $('fltCat');
   if(!fc) return;
@@ -905,6 +1041,9 @@ window.filterByCat = (name) => {
   fc.value = name || '';
   render();   // يعيد رسم اللوحة + القائمة مع تظليل التصنيف المختار
   if(name){
+    /* القائمة صارت بتبويب المصروف — ننتقل له مفلتر */
+    gotoTab('tab-add');
+    setSeg('seg-exp');
     toast('مفلتر على «' + name + '» 🔎');
     const el = $('expList');
     if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
@@ -912,14 +1051,19 @@ window.filterByCat = (name) => {
     toast('انلغى الفلتر ✓');
   }
 };
+window.filterByCatIdx = (i) => {
+  const c = ((state.budget && state.budget.categories) || [])[i];
+  if(c) filterByCat(c.name);
+};
 
-/* ---------- قائمة المصاريف (مع الفلتر) ---------- */
+/* ---------- قائمة المصاريف (مع الفلتر — بدون حركات الصناديق) ---------- */
 function renderExpenseList(){
   const saveNames = new Set(((state.budget&&state.budget.categories)||[]).filter(c=>c.type==='save').map(c=>c.name));
   const txt = ($('fltText').value||'').trim().toLowerCase();
   const fc = $('fltCat').value, fb = $('fltBy').value;
 
   const list = state.expenses.filter(e => {
+    if(isFundMove(e, saveNames)) return false;   // حركات الصناديق إلها قسمها
     if(fc && e.category !== fc) return false;
     if(fb && e.by !== fb) return false;
     if(txt){
@@ -945,28 +1089,81 @@ function renderExpenseList(){
   });
 
   let expHtml = '';
-  list.forEach(e => {
-    const isWd  = saveNames.has(e.category);
-    const isRet = e.amount < 0;
-    const isDep = isRet && String(e.desc||'').indexOf('إيداع') === 0;
-    const isFund = isRet && !isWd && String(e.desc||'').indexOf('تمويل من صندوق') === 0;
-    const isToFund = !isRet && !isWd && String(e.desc||'').indexOf('إيداع لصندوق') === 0;
-    const dotCls = isRet ? 'ret' : (isWd ? 'wd' : '');
-    const icon = isFund ? '💸' : (isToFund ? '🏦' : (isDep ? '💰' : (isRet ? '↩' : (isWd ? '🏦' : esc((e.category||'؟').charAt(0))))));
-    const label = e.desc || (isDep ? 'إيداع' : (isRet ? 'إرجاع' : (isWd ? 'سحب' : 'بدون تفاصيل')));
-    const tag = isFund ? ' · تمويل' : (isToFund ? ' · لصندوق' : (isDep ? ' · إيداع' : (isRet ? ' · إرجاع' : (isWd ? ' · سحب' : ''))));
-    expHtml += `
-      <div class="exp" data-id="${e.id}" onclick="openEdit('${e.id}')">
-        <div class="cat-dot ${dotCls}">${icon}</div>
-        <div class="mid">
-          <div class="desc">${esc(label)}</div>
-          <div class="meta">${esc(e.date)}${e.category ? ' · ' + esc(e.category) : ''}${e.by ? ' · ' + esc(e.by) : ''}${tag}</div>
-        </div>
-        <div class="amt ${isRet?'ret':''}">${isRet?'+':''}${fmt(Math.abs(e.amount))}</div>
-        ${state.locked ? '' : `<button class="del" onclick="event.stopPropagation();delExpense('${e.id}')" aria-label="حذف">✕</button>`}
-      </div>`;
-  });
+  list.forEach(e => { expHtml += expRowHtml(e, saveNames); });
   $('expList').innerHTML = (pendHtml + expHtml) || '<div class="empty"><span class="emo">' + (state.expenses.length ? '🔍' : '🧾') + '</span><b>' + (state.expenses.length ? 'ماكو نتائج للفلتر.' : 'ماكو مصاريف مسجلة بهذا الشهر.') + '</b>' + (state.expenses.length ? 'جرّب تغيّر كلمة البحث أو الفلتر.' : 'سجّل أول مصروف من تبويب «الإضافة».') + '</div>';
+}
+
+/* ---------- صف حركة (مشترك بين قائمة المصاريف وحركات الصناديق) ---------- */
+function expRowHtml(e, saveNames){
+  const d = String(e.desc||'');
+  const isWd  = saveNames.has(e.category);
+  const isRet = e.amount < 0;
+  const isDep = isRet && d.indexOf('إيداع') === 0;
+  const isFund = isRet && !isWd && /^(تمويل|قرض) من صندوق/.test(d);
+  const isRepay = !isRet && !isWd && d.indexOf('سداد قرض لصندوق') === 0;
+  const isToFund = !isRet && !isWd && d.indexOf('إيداع لصندوق') === 0;
+  const dotCls = isRet ? 'ret' : (isWd ? 'wd' : '');
+  const icon = isFund ? '💸' : (isRepay ? '↩' : (isToFund ? '🏦' : (isDep ? '💰' : (isRet ? '↩' : (isWd ? '🏦' : esc((e.category||'؟').charAt(0)))))));
+  const label = e.desc || (isDep ? 'إيداع' : (isRet ? 'إرجاع' : (isWd ? 'سحب' : 'بدون تفاصيل')));
+  const tag = isFund ? ' · تمويل' : (isRepay ? ' · سداد' : (isToFund ? ' · لصندوق' : (isDep ? ' · إيداع' : (isRet ? ' · إرجاع' : (isWd ? ' · سحب' : '')))));
+  return `
+    <div class="exp" data-id="${e.id}" onclick="openEdit('${e.id}')">
+      <div class="cat-dot ${dotCls}">${icon}</div>
+      <div class="mid">
+        <div class="desc">${esc(label)}</div>
+        <div class="meta">${esc(e.date)}${e.category ? ' · ' + esc(e.category) : ''}${e.by ? ' · ' + esc(e.by) : ''}${tag}</div>
+      </div>
+      <div class="amt ${isRet?'ret':''}">${isRet?'+':''}${fmt(Math.abs(e.amount))}</div>
+      ${state.locked ? '' : `<button class="del" onclick="event.stopPropagation();delExpense('${e.id}')" aria-label="حذف">✕</button>`}
+    </div>`;
+}
+
+/* ---------- حركة صندوق؟ (سحب/إيداع/قرض/إرجاع/تمويل/سداد) ---------- */
+function isFundMove(e, saveNames){
+  if(saveNames.has(e.category)) return true;
+  const d = String(e.desc||'');
+  return /^(تمويل|قرض) من صندوق/.test(d) || d.indexOf('سداد قرض لصندوق') === 0;
+}
+
+/* ---------- قائمة حركات الصناديق (قسم «الصناديق» بتبويب المصروف) ---------- */
+function fundMoveKind(e, saveNames){
+  const d = String(e.desc||'');
+  if(saveNames.has(e.category)){
+    if(e.amount < 0) return d.indexOf('إيداع') === 0 ? 'dep' : 'ret';
+    return d.indexOf('قرض') === 0 ? 'loan' : 'wd';
+  }
+  if(d.indexOf('سداد قرض لصندوق') === 0) return 'ret';
+  return 'fund';   // تمويل/قرض داخل لتصنيف
+}
+function buildFundMoveFilters(){
+  const ff = $('fmFund');
+  if(!ff) return;
+  const cur = ff.value;
+  const funds = ((state.budget && state.budget.categories) || []).filter(c => c.type === 'save');
+  ff.innerHTML = '<option value="">كل الصناديق</option>' + funds.map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
+  ff.value = cur;
+}
+function renderFundMoves(){
+  const el = $('fundMovList');
+  if(!el) return;
+  const saveNames = new Set(((state.budget&&state.budget.categories)||[]).filter(c=>c.type==='save').map(c=>c.name));
+  const moves = state.expenses.filter(e => isFundMove(e, saveNames));
+  const ff = ($('fmFund') && $('fmFund').value) || '';
+  const fk = ($('fmKind') && $('fmKind').value) || '';
+  const list = moves.filter(e => {
+    if(ff){
+      /* حركة تخص الصندوق المختار: عليه مباشرة، أو تمويل/سداد يذكره بالوصف */
+      const onFund = e.category === ff || String(e.desc||'').indexOf('«' + ff + '»') !== -1;
+      if(!onFund) return false;
+    }
+    if(fk && fundMoveKind(e, saveNames) !== fk) return false;
+    return true;
+  });
+  let html = '';
+  list.forEach(e => { html += expRowHtml(e, saveNames); });
+  el.innerHTML = html || '<div class="empty"><span class="emo">🏦</span><b>' + (moves.length ? 'ماكو نتائج للفلتر.' : 'ماكو حركات صناديق بهذا الشهر.') + '</b>' + (moves.length ? 'جرّب تبدّل الصندوق أو النوع.' : 'اسحب أو ودّع أو سجّل قرض من البطاقات فوق.') + '</div>';
+  const fb = $('fmFilterBar');
+  if(fb) fb.style.display = moves.length ? 'flex' : 'none';
 }
 
 /* ---------- القفل ---------- */
@@ -1018,6 +1215,17 @@ function addRow(section, name, amount, carried, goal){
   liveFormat(amt);
   amt.addEventListener('input', updateAlloc);
   wrap.appendChild(div);
+  /* زر النقل بين التصنيفات — انتقل من اللوحة للميزانية (اللوحة صارت عرض فقط).
+     يظهر بس للتصنيفات المحفوظة أصلاً بالشهر وغير المقفل */
+  if(!isSave && name && !state.locked &&
+     ((state.budget && state.budget.categories) || []).some(c => c.name === name && c.type !== 'save')){
+    const tr = document.createElement('button');
+    tr.type = 'button';
+    tr.className = 'env-transfer';
+    tr.textContent = '⇄ نقل من هذا التصنيف لغيره';
+    tr.addEventListener('click', () => openTransferByName(name));
+    wrap.appendChild(tr);
+  }
   if(isSave){
     const goalRow = document.createElement('div');
     goalRow.className = 'goal-row';
@@ -1176,6 +1384,12 @@ window.openEdit = (id) => {
 };
 
 /* ---------- نقل مبلغ بين تصنيفات المصاريف ---------- */
+window.openTransferByName = (name) => {
+  const cats = (state.budget && state.budget.categories) || [];
+  const idx = cats.findIndex(c => c.name === name && c.type !== 'save');
+  if(idx < 0) return toast('احفظ الميزانية أول، بعدين انقل', true);
+  openTransfer(idx, Math.max(0, catAvailable(name)));
+};
 window.openTransfer = (idx, available) => {
   if(state.locked) return;
   /* ناخذ الاسم من الـstate بالفهرس — ما نمرر نصوص المستخدم داخل onclick (حماية XSS) */
@@ -1475,6 +1689,7 @@ window.openDeposit = async (idx) => {
       modalClose();
       toast(from ? ('انتقل من «'+from+'» للصندوق ✓ 💰') : 'انضاف للرصيد ✓ 💰');
       sndHappy();
+      try{ holmesReact('celebrate'); }catch(_){}
       await loadMonth(state.month);
     }catch(err){ toast('ما انضاف: ' + err.message, true); }
     finally{ loading(false); }
@@ -1561,7 +1776,7 @@ window.deleteWithdraw = async (id, fundIdx) => {
   const e = (state.expenses||[]).find(x => x.id === id);
   if(!e) return;
   const isLoan = String(e.desc||'').indexOf('قرض') === 0;
-  if(!confirm('حذف ' + (isLoan?'القرض':'السحب') + ' (' + fmt(e.amount) + ')؟\nراح ينحذف وياه الدين المرتبط وتمويل التصنيف إذا موجود، ويرجع المبلغ لرصيد الصندوق.')) return;
+  if(!(await confirmDel('تحذف ' + (isLoan?'القرض':'السحب') + ' (' + fmt(e.amount) + ')؟', 'ينحذف وياه الدين المرتبط وتمويل التصنيف إذا موجود، ويرجع المبلغ لرصيد الصندوق.'))) return;
   loading(true);
   try{
     const res = await apiPost({ action:'deleteWithdraw', id });
@@ -1597,7 +1812,7 @@ window.returnDebt = async (id) => {
 window.cancelDebt = async (id) => {
   const d = (state.debts||[]).find(x=>x.id===id);
   if(!d) return;
-  if(!confirm('شطب الدين «' + d.account + '» (' + fmt(d.amount) + ')؟\nالمبلغ يبقى مسحوب من الصندوق وما راح يرجع. متأكد؟')) return;
+  if(!(await confirmDel('تشطب الدين «' + d.account + '» (' + fmt(d.amount) + ')؟', 'المبلغ يبقى مسحوب من الصندوق وما راح يرجع.', 'اشطب'))) return;
   loading(true);
   try{
     const res = await apiPost({ action:'cancelDebt', id });
@@ -1638,7 +1853,7 @@ $('btnCopyLast').onclick = async () => {
 $('btnClearMonth').onclick = async () => {
   if(!apiReady()) return toast('اربط الموقع بالـ API أول', true);
   if(state.locked) return;
-  if(!confirm('تفريغ ميزانية شهر ' + state.month + '؟\n\nراح تنمسح الرواتب وكل التصنيفات والصناديق لهذا الشهر (المصاريف المسجلة والمبالغ المرحّلة تنمسح وياها).\nمتأكد؟')) return;
+  if(!(await confirmDel('تفرّغ ميزانية شهر ' + state.month + '؟', 'تنمسح الرواتب والتصنيفات (المصاريف المسجلة والصناديق المرحّلة برصيدها تبقى محفوظة).', 'فرّغ'))) return;
   loading(true);
   try{
     const res = await apiPost({ action:'clearMonth', month: state.month });
@@ -1676,16 +1891,17 @@ function renderSettings(){
   }).join('');
   const clockName = CLOCK_SKINS[clockIdx % CLOCK_SKINS.length].name;
 
+  /* أقسام مطوية — نحفظ اللي كان مفتوح قبل إعادة الرسم */
+  const wasOpen = new Set([...document.querySelectorAll('#settingsBody details[open]')].map(d => d.dataset.g));
+  const openAttr = g => (wasOpen.size ? (wasOpen.has(g) ? 'open' : '') : (g === 'acc' ? 'open' : ''));
+
   $('settingsBody').innerHTML = `
-    <div class="card">
-      <div class="set-sec" style="margin-top:0">العائلة</div>
+    <details class="card set-acc" data-g="acc" ${openAttr('acc')}>
+      <summary><span class="sa-ico">👤</span>الحساب والعائلة<span class="sa-chev">›</span></summary>
+      <div class="sa-body">
       <div class="hint" style="margin:0">كود عائلتك — انطيه لزوجك/زوجتك يدخّله وقت التسجيل حتى تصيرون بنفس المساحة وتشوفون نفس البيانات:</div>
       <div class="famcode"><b dir="ltr" id="famCode">…</b><button id="btnCopyCode">نسخ</button></div>
-    </div>
-
-    <div class="card">
-      <div class="set-sec" style="margin-top:0">الحساب — ${esc(session && session.name ? session.name : '')}</div>
-      <label>اسمك المعروض</label>
+      <label style="margin-top:12px">اسمك المعروض</label>
       <div style="display:flex;gap:8px">
         <input type="text" id="nmNew" value="${esc(session && session.name ? session.name : '')}" style="flex:1" placeholder="اسمك">
         <button class="btn" id="btnSaveName" style="margin:0;width:auto;padding:0 18px">حفظ</button>
@@ -1706,33 +1922,23 @@ function renderSettings(){
         <option value="30">بعد ٣٠ دقيقة</option>
         <option value="60">بعد ساعة</option>
       </select>
-    </div>
+      </div>
+    </details>
 
-    <div class="card">
-      <div class="set-sec" style="margin-top:0">المظهر</div>
+    <details class="card set-acc" data-g="look" ${openAttr('look')}>
+      <summary><span class="sa-ico">🎨</span>المظهر<span class="sa-chev">›</span></summary>
+      <div class="sa-body">
       <div class="set-toggle" style="margin-top:0">
         <span class="st-lbl">🌙 الوضع الداكن (دارك مود)</span>
         <label class="switch"><input type="checkbox" id="darkToggle" ${DARK_ON?'checked':''}><span class="track"></span><span class="knob"></span></label>
       </div>
+      <div class="set-toggle">
+        <span class="st-lbl">🕵️ شيرلوك هولمز باللوحة (يمشي ويحقق وينصح)</span>
+        <label class="switch"><input type="checkbox" id="holmesToggle" ${(typeof HOLMES_ON !== 'undefined' && HOLMES_ON)?'checked':''}><span class="track"></span><span class="knob"></span></label>
+      </div>
       <label>🎨 ثيم الألوان</label>
       <div class="pal-grid">${palCards}</div>
       <div class="hint" style="margin-top:2px">كل ثيم يصبغ لون الموقع + السماء (نهار/غروب/ليل والفصول) بنفس العائلة — يتطبّق فوراً وينحفظ بجهازك.</div>
-      <div class="set-toggle" style="margin-top:10px">
-        <span class="st-lbl">🌐 اللغة — ${LANG.cur==='en'?'English':'العربية'}</span>
-        <button class="btn ghost" id="btnLangS" style="margin:0;width:auto;padding:8px 16px">${LANG.cur==='en'?'حوّل للعربية':'Switch to English'}</button>
-      </div>
-      <div class="set-toggle">
-        <span class="st-lbl">🕰 شكل الساعة (بالكمبيوتر) — ${clockName}</span>
-        <button class="btn ghost" id="btnClockS" style="margin:0;width:auto;padding:8px 16px">غيّر الشكل</button>
-      </div>
-      <div class="set-toggle">
-        <span class="st-lbl">🧾 أظهر تبويب «فواتيري»</span>
-        <label class="switch"><input type="checkbox" id="billsToggle" ${BILLS_ON?'checked':''}><span class="track"></span><span class="knob"></span></label>
-      </div>
-      <div class="set-toggle">
-        <span class="st-lbl">🧮 أظهر تبويب «المطابقة»</span>
-        <label class="switch"><input type="checkbox" id="reconToggle" ${RECON_ON?'checked':''}><span class="track"></span><span class="knob"></span></label>
-      </div>
       <label style="margin-top:12px">🌤 ثيم الخلفية (الفصول)</label>
       <select id="seasonSel">
         ${Object.keys(SEASON_NAMES).map(k => `<option value="${k}">${SEASON_NAMES[k]}</option>`).join('')}
@@ -1741,11 +1947,6 @@ function renderSettings(){
       <label style="margin-top:12px">🌫️ تغويش الخلفية (${skyBlur}٪)</label>
       <div class="blur-row"><input type="range" id="skyBlurRange" min="0" max="100" step="1" value="${skyBlur}"><span class="blur-val" id="skyBlurVal">${skyBlur}</span></div>
       <div class="hint" style="margin-top:4px">يغوّش السماء والخلفية فقط — البطاقات تبقى واضحة.</div>
-      <label style="margin-top:12px">💵 العملة</label>
-      <select id="curSel">
-        ${Object.keys(CURRENCIES).map(k => `<option value="${k}">${CURRENCIES[k].name}</option>`).join('')}
-      </select>
-      <div class="hint" style="margin-top:4px">تتطبّق على كل المبالغ بالتطبيق فوراً.</div>
       <label style="margin-top:12px">🔤 نوع الخط</label>
       <select id="fontSel">
         ${Object.keys(FONTS).map(k => `<option value="${k}" style="font-family:${FONTS[k].stack}${FONT_FALLBACK}">${FONTS[k].name}</option>`).join('')}
@@ -1754,27 +1955,65 @@ function renderSettings(){
       <label style="margin-top:12px">🔠 حجم الخط (${fontScale}٪)</label>
       <div class="blur-row"><input type="range" id="fontScaleRange" min="80" max="140" step="5" value="${fontScale}"><span class="blur-val" id="fontScaleVal">${fontScale}</span></div>
       <div class="hint" style="margin-top:4px">يكبّر أو يصغّر كل نصوص التطبيق سوا — جرّب لين يريّح عينك.</div>
-    </div>
-
-    <div class="card">
-      <div class="set-sec" style="margin-top:0">الصوت</div>
       <div class="set-toggle">
+        <span class="st-lbl">🕰 شكل الساعة (بالكمبيوتر) — ${clockName}</span>
+        <button class="btn ghost" id="btnClockS" style="margin:0;width:auto;padding:8px 16px">غيّر الشكل</button>
+      </div>
+      </div>
+    </details>
+
+    <details class="card set-acc" data-g="snd" ${openAttr('snd')}>
+      <summary><span class="sa-ico">🔔</span>الأصوات والموسيقى<span class="sa-chev">›</span></summary>
+      <div class="sa-body">
+      <div class="set-toggle" style="margin-top:0">
         <span class="st-lbl">🔔 أصوات العمليات (إضافة / صرف / حذف)</span>
         <label class="switch"><input type="checkbox" id="sndToggle" ${SND.on?'checked':''}><span class="track"></span><span class="knob"></span></label>
       </div>
       <button class="btn ghost" id="btnMusicS" style="margin-top:8px">🎵 موسيقى الخلفية</button>
-    </div>
+      </div>
+    </details>
 
-    <div class="card">
-      <div class="set-sec" style="margin-top:0">التقارير والتصدير</div>
+    <details class="card set-acc" data-g="tabs" ${openAttr('tabs')}>
+      <summary><span class="sa-ico">🧩</span>التبويبات واللغة والعملة<span class="sa-chev">›</span></summary>
+      <div class="sa-body">
+      <div class="set-toggle" style="margin-top:0">
+        <span class="st-lbl">🧾 أظهر تبويب «فواتيري»</span>
+        <label class="switch"><input type="checkbox" id="billsToggle" ${BILLS_ON?'checked':''}><span class="track"></span><span class="knob"></span></label>
+      </div>
+      <div class="set-toggle">
+        <span class="st-lbl">🧮 أظهر تبويب «المطابقة»</span>
+        <label class="switch"><input type="checkbox" id="reconToggle" ${RECON_ON?'checked':''}><span class="track"></span><span class="knob"></span></label>
+      </div>
+      <div class="set-toggle">
+        <span class="st-lbl">🌐 اللغة — ${LANG.cur==='en'?'English':'العربية'}</span>
+        <button class="btn ghost" id="btnLangS" style="margin:0;width:auto;padding:8px 16px">${LANG.cur==='en'?'حوّل للعربية':'Switch to English'}</button>
+      </div>
+      <label style="margin-top:12px">💵 العملة</label>
+      <select id="curSel">
+        ${Object.keys(CURRENCIES).map(k => `<option value="${k}">${CURRENCIES[k].name}</option>`).join('')}
+      </select>
+      <div class="hint" style="margin-top:4px">تتطبّق على كل المبالغ بالتطبيق فوراً.</div>
+      </div>
+    </details>
+
+    <details class="card set-acc" data-g="rep" ${openAttr('rep')}>
+      <summary><span class="sa-ico">📊</span>التقارير والنسخ الاحتياطي<span class="sa-chev">›</span></summary>
+      <div class="sa-body">
       <button class="btn ghost" id="btnChartS" style="margin-top:0">📊 مقارنة الأشهر</button>
       <button class="btn ghost" id="btnPdf">🖨 طباعة / حفظ PDF — شهر ${esc(state.month)}</button>
       <button class="btn ghost" id="btnXlsMonth">📊 تصدير إكسل — شهر ${esc(state.month)}</button>
       <button class="btn ghost" id="btnXlsAll">🗂 تصدير إكسل — كل الأشهر</button>
       <button class="btn ghost" id="btnBackup">💾 نسخة احتياطية كاملة (ملف)</button>
-    </div>
+      </div>
+    </details>
 
-    ${session && session.admin ? `<div class="card"><div class="set-sec" style="margin-top:0">المشرف</div><button class="btn ghost" id="btnAdmin" style="margin-top:0">🛡 لوحة المشرف</button></div>` : ''}
+    ${session && session.admin ? `
+    <details class="card set-acc" data-g="adm" ${openAttr('adm')}>
+      <summary><span class="sa-ico">🛡</span>المشرف<span class="sa-chev">›</span></summary>
+      <div class="sa-body">
+      <button class="btn ghost" id="btnAdmin" style="margin-top:0">🛡 لوحة المشرف</button>
+      </div>
+    </details>` : ''}
   `;
 
   /* كود العائلة */
@@ -1854,6 +2093,9 @@ function renderSettings(){
     localStorage.setItem('mas_recon', RECON_ON ? 'on' : 'off');
     applyReconVisible();
     toast(RECON_ON ? 'ظهر تبويب المطابقة ✓' : 'انخفى تبويب المطابقة');
+  };
+  if($('holmesToggle')) $('holmesToggle').onchange = (e) => {
+    try{ setHolmes(e.target.checked); }catch(_){}
   };
   if($('darkToggle')) $('darkToggle').onchange = (e) => {
     DARK_ON = e.target.checked;
@@ -1955,7 +2197,7 @@ async function showAdmin(){
 window.adminDelete = async (id) => {
   const h = adminHH.find(x => x.id === id);
   const name = (h && h.name) || 'عائلة';
-  if(!confirm('حذف عائلة «' + name + '» نهائياً؟\n\nراح تنمسح كل بياناتها (المصاريف، الميزانيات، الصناديق، المستخدمين) وما ترجع.\nمتأكد ١٠٠٪؟')) return;
+  if(!(await confirmDel('تحذف عائلة «' + name + '» نهائياً؟', 'تنمسح كل بياناتها: المصاريف والميزانيات والصناديق والمستخدمين — وما ترجع أبداً.', 'احذف نهائياً'))) return;
   loading(true);
   try{
     const { error } = await sb.rpc('admin_delete_household', { p_id: id });
@@ -2266,18 +2508,30 @@ function confetti(){
 }
 
 /* ---------- أحداث ---------- */
+function gotoTab(id){
+  document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  const nb = document.querySelector('nav button[data-tab="'+id+'"]');
+  if(nb) nb.classList.add('active');
+  const t = $(id); if(t) t.classList.add('active');
+  if(id === 'tab-settings') renderSettings();
+  if(id === 'tab-bills') loadBills();
+  if(id === 'tab-recon') loadRecons();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
 document.querySelectorAll('nav button').forEach(btn => {
-  btn.onclick = () => {
-    document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
-    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-    btn.classList.add('active');
-    $(btn.dataset.tab).classList.add('active');
-    if(btn.dataset.tab === 'tab-settings') renderSettings();
-    if(btn.dataset.tab === 'tab-bills') loadBills();
-    if(btn.dataset.tab === 'tab-recon') loadRecons();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  btn.onclick = () => gotoTab(btn.dataset.tab);
 });
+
+/* ---------- سلايدر تبويب المصروف (مصاريف / صناديق) ---------- */
+window.setSeg = (id) => {
+  document.querySelectorAll('#opSeg .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.seg === id));
+  const se = $('seg-exp'), sf = $('seg-funds');
+  if(se) se.style.display = (id === 'seg-exp') ? '' : 'none';
+  if(sf) sf.style.display = (id === 'seg-funds') ? '' : 'none';
+};
+document.querySelectorAll('#opSeg .seg-btn').forEach(b => { b.onclick = () => setSeg(b.dataset.seg); });
+window.gotoFunds = () => { gotoTab('tab-add'); setSeg('seg-funds'); };
 
 $('btnLogin').onclick = doLogin;
 $('liPass').addEventListener('keydown', e => { if(e.key === 'Enter') doLogin(); });
@@ -2302,6 +2556,8 @@ $('monthPick').onchange = e => loadMonth(e.target.value || thisMonth());
 $('fltText').addEventListener('input', renderExpenseList);
 $('fltCat').addEventListener('change', () => render());   // يحدّث القائمة + تظليل الرسم
 $('fltBy').addEventListener('change', renderExpenseList);
+if($('fmFund')) $('fmFund').addEventListener('change', renderFundMoves);
+if($('fmKind')) $('fmKind').addEventListener('change', renderFundMoves);
 
 /* ---------- الأزرار السريعة ---------- */
 let quickItems = [], quickEditing = false;
@@ -2394,7 +2650,7 @@ window.toggleBill = async (id, paid) => {
 window.deleteBill = async (id) => {
   const b = billsItems.find(x=>x.id===id);
   const name = b ? b.name : '';
-  if(!confirm('حذف فاتورة «' + name + '»؟')) return;
+  if(!(await confirmDel('تحذف فاتورة «' + name + '»؟', 'تنحذف من قائمة هذا الشهر.'))) return;
   try{
     const { error } = await sb.rpc('delete_bill', { p_id:id });
     if(error) throw error;
@@ -2509,7 +2765,7 @@ function renderRecons(){
   }).join('');
 }
 window.deleteRecon = async (id) => {
-  if(!confirm('حذف هذه المطابقة من السجل؟')) return;
+  if(!(await confirmDel('تحذف هذه المطابقة من السجل؟', 'الجردة تنشال من السجل نهائياً.'))) return;
   try{
     const { error } = await sb.rpc('delete_recon', { p_id: id });
     if(error) throw error;
@@ -2571,7 +2827,8 @@ window.useQuick = async (id) => {
 };
 window.removeQuick = async (id) => {
   const q = quickItems.find(x => x.id === id);
-  if(!q || !confirm('حذف زر «' + q.label + '»؟')) return;
+  if(!q) return;
+  if(!(await confirmDel('تحذف زر «' + q.label + '»؟', 'الزر السريع ينشال عندك وعند العائلة.'))) return;
   try{
     const { error } = await sb.rpc('delete_quick', { p_id: id });
     if(error) throw error;
@@ -2630,6 +2887,7 @@ $('btnAddExp').onclick = async () => {
     $('expAmount').value=''; $('expDesc').value='';
     toast('انحفظ المصروف ✓');
     sndSad();
+    try{ holmesReact('expense'); }catch(_){}
     if(month === state.month){ await loadMonth(state.month); }
   }catch(err){
     if(isNetErr(err.message)){
@@ -2668,8 +2926,8 @@ async function flushOffline(){
   }
 }
 window.addEventListener('online', () => { flushOffline(); });
-window.removeOffline = (qid) => {
-  if(!confirm('حذف هذا المصروف المعلّق؟ (بعده ما انرفع للسيرفر)')) return;
+window.removeOffline = async (qid) => {
+  if(!(await confirmDel('تحذف هذا المصروف المعلّق؟', 'بعده ما انرفع للسيرفر — ينحذف من جهازك بس.'))) return;
   offlineRemove(qid);
   renderExpenseList();
   toast('انحذف من الطابور ✓');
@@ -2691,7 +2949,7 @@ window.delExpense = async (id) => {
       if(w) return deleteWithdraw(w.id);
     }
   }
-  if(!confirm('متأكد تريد تحذف هذا المصروف؟')) return;
+  if(!(await confirmDel('تحذف هذا المصروف' + (e ? ' («' + (e.desc||'بلا تفاصيل') + '» — ' + fmt(Math.abs(e.amount)) + ')' : '') + '؟', 'ينحذف نهائياً وما يرجع.'))) return;
   loading(true);
   try{
     const res = await apiPost({ action:'deleteExpense', id });

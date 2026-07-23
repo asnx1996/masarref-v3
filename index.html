@@ -131,71 +131,101 @@
 
   <div id="lockBanner" class="lock-banner"></div>
 
-  <!-- تبويب: مصروف جديد -->
+  <!-- تبويب: المصروف — سلايدر يفصل عالم المصاريف عن عالم الصناديق -->
   <section class="tab" id="tab-add">
-    <div class="add-col">
-    <div class="card">
-      <h2>سجّل مصروف</h2>
-      <div class="row">
-        <div>
-          <label id="amtCurLabel">المبلغ (د.ع)</label>
-          <input type="tel" id="expAmount" placeholder="50,000" inputmode="numeric">
-        </div>
-        <div>
-          <label>التاريخ</label>
-          <input type="date" id="expDate">
-        </div>
-      </div>
-      <div style="margin-top:10px">
-        <label>التفاصيل</label>
-        <input type="text" id="expDesc" placeholder="شنو اشتريت؟">
-      </div>
-      <div style="margin-top:10px">
-        <label>التصنيف</label>
-        <select id="expCat"><option value="">— بلا تصنيف —</option></select>
-      </div>
-      <button class="btn" id="btnAddExp">إضافة المصروف</button>
-      <div class="hint">المصروف ينحفظ فوراً ويظهر لحظياً عند كل أفراد العائلة، ويتسجل وياه منو دخّله. للسحب أو الإيداع بصندوق ادخار استعمل الأزرار باللوحة.</div>
+    <div class="seg-bar" id="opSeg">
+      <button class="seg-btn active" data-seg="seg-exp">🧾 المصاريف</button>
+      <button class="seg-btn" data-seg="seg-funds">🏦 الصناديق</button>
     </div>
 
-    <div class="card" id="quickCard">
-      <div class="qh">
-        <h2 style="margin:0">⚡ أزرار سريعة</h2>
-        <button class="qh-add" id="btnAddQuick">＋ زر جديد</button>
+    <div class="seg-view" id="seg-exp">
+      <div class="dash-col">
+      <div class="card">
+        <h2>سجّل مصروف</h2>
+        <div class="row">
+          <div>
+            <label id="amtCurLabel">المبلغ (د.ع)</label>
+            <input type="tel" id="expAmount" placeholder="50,000" inputmode="numeric">
+          </div>
+          <div>
+            <label>التاريخ</label>
+            <input type="date" id="expDate">
+          </div>
+        </div>
+        <div style="margin-top:10px">
+          <label>التفاصيل</label>
+          <input type="text" id="expDesc" placeholder="شنو اشتريت؟">
+        </div>
+        <div style="margin-top:10px">
+          <label>التصنيف</label>
+          <select id="expCat"><option value="">— بلا تصنيف —</option></select>
+        </div>
+        <button class="btn" id="btnAddExp">إضافة المصروف</button>
+        <div class="hint">المصروف ينحفظ فوراً ويظهر لحظياً عند كل أفراد العائلة، ويتسجل وياه منو دخّله. للسحب أو الإيداع بصندوق ادخار روح لقسم «الصناديق» فوق.</div>
       </div>
-      <div class="hint" style="margin:2px 0 12px">مصاريفك المتكررة (كهرباء، إيجار، بنزين...) — اضغط الزر ويتعبّى المبلغ والتصنيف، أو ينسجل فوراً. مشتركة بينك وبين العائلة.</div>
-      <div id="quickList"></div>
-    </div>
-    </div><!-- /add-col -->
 
-    <div class="card depth" id="decoCard" aria-hidden="true">
-      <div id="clockSkin" class="clock-wrap"></div>
-      <div class="deco-date" id="decoDate"></div>
-      <button class="clock-switch" id="btnClockSkin">🎨 غيّر شكل الساعة</button>
-      <div class="deco-sep"></div>
-      <div class="deco-mark">❝</div>
-      <div class="deco-quote" id="decoQuote"></div>
+      <div class="card" id="quickCard">
+        <div class="qh">
+          <h2 style="margin:0">⚡ أزرار سريعة</h2>
+          <button class="qh-add" id="btnAddQuick">＋ زر جديد</button>
+        </div>
+        <div class="hint" style="margin:2px 0 12px">مصاريفك المتكررة (كهرباء، إيجار، بنزين...) — اضغط الزر ويتعبّى المبلغ والتصنيف، أو ينسجل فوراً. مشتركة بينك وبين العائلة.</div>
+        <div id="quickList"></div>
+      </div>
+      </div>
+
+      <div class="dash-col">
+        <h2 style="margin:18px 4px 10px">سجل المصاريف</h2>
+        <div class="filter-bar" id="filterBar" style="display:none">
+          <input type="text" id="fltText" placeholder="🔎 دوّر بالتفاصيل...">
+          <select id="fltCat"><option value="">كل التصنيفات</option></select>
+          <select id="fltBy"><option value="">الكل</option></select>
+        </div>
+        <div id="expList"></div>
+      </div>
+    </div>
+
+    <div class="seg-view" id="seg-funds" style="display:none">
+      <div class="dash-col">
+        <div id="saveList"></div>
+      </div>
+      <div class="dash-col">
+        <div id="debtList"></div>
+        <h2 style="margin:18px 4px 10px">حركات الصناديق</h2>
+        <div class="filter-bar" id="fmFilterBar" style="display:none">
+          <select id="fmFund"><option value="">كل الصناديق</option></select>
+          <select id="fmKind">
+            <option value="">كل الأنواع</option>
+            <option value="wd">سحب −</option>
+            <option value="dep">إيداع +</option>
+            <option value="loan">قرض 🤝</option>
+            <option value="ret">إرجاع / سداد ↩</option>
+            <option value="fund">تمويل تصنيف 💸</option>
+          </select>
+        </div>
+        <div id="fundMovList"></div>
+      </div>
     </div>
   </section>
 
-  <!-- تبويب: اللوحة -->
+  <!-- تبويب: اللوحة — عرض ومراقبة فقط، ماكو أي زر يغيّر بيانات -->
   <section class="tab active" id="tab-dash">
+    <div class="dash-full"><div id="insightCard"></div></div>
     <div class="dash-full"><div id="summaryCard"></div></div>
     <div class="dash-col">
       <div id="envList"></div>
     </div>
     <div class="dash-col">
-      <div id="saveList"></div>
-      <div id="debtList"></div>
-    </div>
-    <div class="dash-full">
-      <h2 style="margin:18px 4px 10px">آخر المصاريف</h2>
-      <div class="filter-bar" id="filterBar" style="display:none">
-        <input type="text" id="fltText" placeholder="🔎 دوّر بالتفاصيل...">
-        <select id="fltCat"><option value="">كل التصنيفات</option></select>
-        <select id="fltBy"><option value="">الكل</option></select>
+      <div id="fundSummary"></div>
+      <div id="debtSummary"></div>
+      <div class="card depth" id="decoCard" aria-hidden="true">
+        <div id="clockSkin" class="clock-wrap"></div>
+        <div class="deco-date" id="decoDate"></div>
+        <button class="clock-switch" id="btnClockSkin">🎨 غيّر شكل الساعة</button>
+        <div class="deco-sep"></div>
+        <div class="deco-mark">❝</div>
+        <div class="deco-quote" id="decoQuote"></div>
       </div>
-      <div id="expList"></div>
     </div>
   </section>
 
@@ -235,7 +265,7 @@
       <h2>صناديق الادخار 🏦</h2>
       <div id="saveRows"></div>
       <button class="btn ghost" id="btnAddSave">+ إضافة صندوق ادخار</button>
-      <div class="hint">المبلغ الي تحطه = المبلغ الي تدّخره شهرياً. الصندوق يتراكم تلقائياً، والسحب منه من تبويب «اللوحة».</div>
+      <div class="hint">المبلغ الي تحطه = المبلغ الي تدّخره شهرياً. الصندوق يتراكم تلقائياً، والسحب منه من تبويب «مصروف ← الصناديق».</div>
     </div>
     </div>
     <div class="dash-full">
@@ -309,6 +339,7 @@
 </nav>
 
 <div class="modal" id="modal"><div class="modal-card" id="modalCard"></div></div>
+<div class="modal" id="cfModal"><div class="modal-card cf-card" id="cfCard"></div></div>
 <div class="toast" id="toast"></div>
 <div id="emojiFace"></div>
 <div id="loader"><div class="spin"></div></div>
@@ -319,6 +350,7 @@
 <script src="app.js"></script>
 <script src="i18n.js"></script>
 <script src="decor.js"></script>
+<script src="holmes.js"></script>
 <script src="boot.js"></script>
 </body>
 </html>

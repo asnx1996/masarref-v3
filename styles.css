@@ -612,13 +612,26 @@
     .head-stats .hstat .val{font-size:1.25rem}
   }
 
+  /* ---------- سلايدر تبويب المصروف (مصاريف / صناديق) ---------- */
+  .seg-bar{
+    display:flex;gap:4px;background:color-mix(in srgb, var(--ink) 7%, transparent);
+    border-radius:16px;padding:4px;margin:0 0 14px;position:sticky;top:8px;z-index:5;
+    backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  }
+  .seg-btn{
+    flex:1;border:none;background:transparent;color:var(--muted);font-family:inherit;
+    font-weight:700;font-size:.86rem;padding:11px 0;border-radius:13px;cursor:pointer;
+    transition:background .25s var(--ease),color .25s,box-shadow .25s;
+  }
+  .seg-btn.active{background:var(--card);color:var(--primary);box-shadow:var(--shadow)}
+  .seg-view{animation:fade .3s var(--ease)}
+
   /* ---------- بطاقة الساعة والحكمة (كمبيوتر فقط) ---------- */
-  .add-col{display:contents}
   #decoCard{display:none}
   @media (min-width:1000px){
-    #tab-add{max-width:1020px}
-    #tab-add.active{display:grid;grid-template-columns:1.02fr .98fr;gap:20px;align-items:stretch}
-    .add-col{display:block;min-width:0}
+    #tab-add{max-width:1020px;margin:0 auto}
+    .seg-view{display:grid;grid-template-columns:1.02fr .98fr;gap:0 20px;align-items:start}
+    .seg-view .dash-col{display:block;min-width:0}
     #decoCard{
       display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;
       gap:6px;min-height:460px;border:none;color:#fff;position:sticky;top:20px;
@@ -834,3 +847,132 @@
   /* ---------- صندوق مغلق (ما يترحّل للشهر الجاي) ---------- */
   .fund.closed{opacity:.75;border:1.5px dashed var(--line)}
   .fund.closed .fund-name{text-decoration:line-through;text-decoration-thickness:1px}
+
+  /* ---------- ملخصات اللوحة (صناديق وديون — عرض فقط) ---------- */
+  .env.clickable{cursor:pointer;transition:transform .18s var(--ease),box-shadow .2s}
+  @media (hover:hover){ .env.clickable:hover{transform:translateY(-2px);box-shadow:var(--shadow)} }
+  .fsum{
+    display:flex;align-items:center;gap:8px;padding:11px 4px;
+    border-bottom:1px solid var(--line);cursor:pointer;
+    transition:background .2s;
+  }
+  .fsum:last-of-type{border-bottom:none}
+  @media (hover:hover){ .fsum:hover{background:var(--primary-soft)} }
+  .fsum .fs-name{flex:1;font-weight:700;font-size:.85rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fsum .fs-name small{font-size:.68rem}
+  .fsum .fs-goal{font-size:.66rem;font-weight:700;color:var(--primary);background:var(--primary-soft);border-radius:8px;padding:3px 8px;white-space:nowrap}
+  .fsum .fs-bal{font-weight:800;font-size:.86rem;color:var(--primary);white-space:nowrap}
+  .fsum.off{opacity:.6}
+  .fsum.off .fs-name{text-decoration:line-through}
+
+  /* ---------- بطاقة الذكاء (ملاحظات التحقيق) ---------- */
+  .card.insight{
+    display:flex;align-items:center;gap:12px;padding:14px 17px;margin-bottom:14px;
+    background:var(--primary-soft);box-shadow:none;
+    border:1px solid color-mix(in srgb, var(--primary) 22%, transparent);
+  }
+  .card.insight .in-ico{font-size:1.25rem;flex:none}
+  .card.insight .in-txt{font-size:.84rem;font-weight:600;line-height:1.8;transition:opacity .35s ease;min-width:0}
+
+  /* ---------- دخول متدرّج عند تحميل الشهر (حركات بركات 😄) ---------- */
+  @keyframes riseIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+  @keyframes barGrow{from{width:0}}
+  .fresh .insight,.fresh .sum-card,.fresh .env,.fresh .fund,.fresh .fsum,.fresh .debt{animation:riseIn .5s var(--ease) both}
+  .fresh .env:nth-of-type(2),.fresh .fund:nth-of-type(2),.fresh .fsum:nth-of-type(2){animation-delay:.07s}
+  .fresh .env:nth-of-type(3),.fresh .fund:nth-of-type(3),.fresh .fsum:nth-of-type(3){animation-delay:.14s}
+  .fresh .env:nth-of-type(4),.fresh .fund:nth-of-type(4),.fresh .fsum:nth-of-type(4){animation-delay:.21s}
+  .fresh .env:nth-of-type(5),.fresh .fund:nth-of-type(5),.fresh .fsum:nth-of-type(5){animation-delay:.28s}
+  .fresh .env:nth-of-type(n+6),.fresh .fund:nth-of-type(n+6),.fresh .fsum:nth-of-type(n+6){animation-delay:.35s}
+  .fresh .bar i{animation:barGrow .9s var(--ease) .25s backwards}
+  @media (prefers-reduced-motion:reduce){
+    .fresh .insight,.fresh .sum-card,.fresh .env,.fresh .fund,.fresh .fsum,.fresh .debt,.fresh .bar i{animation:none!important}
+  }
+
+  /* ---------- أقسام الإعدادات المطوية ---------- */
+  details.set-acc{padding:0;overflow:hidden}
+  details.set-acc summary{
+    list-style:none;display:flex;align-items:center;gap:11px;
+    padding:17px 18px;font-weight:800;font-size:.94rem;cursor:pointer;
+    -webkit-tap-highlight-color:transparent;user-select:none;
+  }
+  details.set-acc summary::-webkit-details-marker{display:none}
+  details.set-acc .sa-ico{
+    width:38px;height:38px;border-radius:12px;background:var(--primary-soft);
+    display:flex;align-items:center;justify-content:center;font-size:1.05rem;flex:none;
+  }
+  details.set-acc .sa-chev{
+    margin-inline-start:auto;color:var(--muted);font-size:1.25rem;font-weight:400;
+    transform:rotate(180deg);transition:transform .3s var(--ease);
+  }
+  details.set-acc[open] .sa-chev{transform:rotate(270deg)}
+  details.set-acc .sa-body{padding:2px 18px 18px;animation:fade .3s var(--ease)}
+  @media (hover:hover){ details.set-acc summary:hover{color:var(--primary)} }
+
+  /* ---------- شيرلوك هولمز 🕵️ (شخصية اللوحة) ---------- */
+  #holmesStrip{
+    position:fixed;left:0;right:0;bottom:calc(64px + env(safe-area-inset-bottom));
+    height:98px;z-index:58;pointer-events:none;display:none;
+  }
+  body.holmes-show #holmesStrip{display:block}
+  #holmesChar{
+    position:absolute;bottom:0;left:24px;width:62px;
+    pointer-events:auto;cursor:pointer;
+    transition-property:left;transition-timing-function:linear;transition-duration:2s;
+    will-change:left;
+  }
+  #holmesChar .hl-body{transition:transform .3s var(--ease)}
+  #holmesChar.flip .hl-body{transform:scaleX(-1)}
+  .hl-bubble{
+    position:absolute;bottom:100%;left:50%;transform:translateX(-50%) translateY(6px);
+    background:var(--card);border:1px solid var(--line);box-shadow:var(--shadow);
+    border-radius:14px 14px 14px 4px;padding:8px 13px;margin-bottom:8px;
+    font-size:.72rem;font-weight:600;color:var(--ink);line-height:1.9;
+    width:max-content;max-width:225px;text-align:center;
+    opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;
+  }
+  .hl-bubble.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  /* الأطراف والحالات */
+  .hl-lids,.hl-zzz,.hl-puff{opacity:0}
+  #holmesChar.walk .hl-l1{animation:hstep1 .5s ease-in-out infinite}
+  #holmesChar.walk .hl-l2{animation:hstep2 .5s ease-in-out infinite}
+  #holmesChar.walk .hl-in{animation:hbob .5s ease-in-out infinite}
+  #holmesChar.walk .hl-mag{animation:hmag .5s ease-in-out infinite}
+  #holmesChar .hl-eyes{animation:hblink 4.2s linear infinite}
+  #holmesChar.inspect .hl-in{transform:rotate(9deg) translateY(3px);transition:transform .4s var(--ease)}
+  #holmesChar.inspect .hl-mag{transform:translateY(9px) scale(1.18);transition:transform .4s var(--ease)}
+  #holmesChar.sleep .hl-eyes{opacity:0;animation:none}
+  #holmesChar.sleep .hl-lids{opacity:1}
+  #holmesChar.sleep .hl-zzz{opacity:1;animation:hzzz 2.2s ease-in-out infinite}
+  #holmesChar.sleep .hl-in{transform:rotate(7deg);transition:transform .5s var(--ease)}
+  #holmesChar.think .hl-puff{animation:hpuff 2.4s ease-out infinite}
+  #holmesChar.celebrate .hl-in{animation:hjump .5s ease-in-out 4}
+  @keyframes hstep1{0%,100%{transform:rotate(16deg)}50%{transform:rotate(-16deg)}}
+  @keyframes hstep2{0%,100%{transform:rotate(-16deg)}50%{transform:rotate(16deg)}}
+  @keyframes hbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2.5px)}}
+  @keyframes hmag{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(8deg)}}
+  @keyframes hblink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.12)}}
+  @keyframes hzzz{0%{opacity:0;transform:translateY(0)}30%{opacity:1}100%{opacity:0;transform:translateY(-13px)}}
+  @keyframes hpuff{0%{opacity:0;transform:translate(0,0) scale(.5)}25%{opacity:.8}100%{opacity:0;transform:translate(-9px,-16px) scale(1.5)}}
+  @keyframes hjump{0%,100%{transform:translateY(0)}50%{transform:translateY(-13px)}}
+  /* حكمة الساعة يقولها هولمز بدل النص الثابت */
+  body.holmes-on .deco-sep,body.holmes-on .deco-mark,body.holmes-on .deco-quote{display:none}
+  @media (prefers-reduced-motion:reduce){ #holmesStrip{display:none!important} }
+  @media (max-width:520px){ #holmesChar{width:52px} #holmesChar svg{width:52px;height:77px} .hl-bubble{max-width:175px;font-size:.68rem} }
+
+  /* ---------- نافذة تأكيد الحذف ---------- */
+  #cfModal{z-index:390}
+  .cf-card{text-align:center}
+  .cf-ico{
+    width:54px;height:54px;border-radius:50%;background:var(--red-soft);
+    display:flex;align-items:center;justify-content:center;font-size:1.5rem;
+    margin:4px auto 12px;
+  }
+  .cf-title{font-weight:800;font-size:1.02rem;margin-bottom:6px}
+  .cf-sub{font-size:.8rem;color:var(--muted);line-height:1.9;margin-bottom:14px}
+  .cf-actions{display:flex;gap:10px}
+  .cf-actions .btn{flex:1;margin:0}
+  .cf-actions .cf-danger{
+    background:transparent;color:var(--red);border:1.5px solid var(--red);
+    box-shadow:none;
+  }
+  .cf-actions .cf-danger:active{transform:scale(.97)}
