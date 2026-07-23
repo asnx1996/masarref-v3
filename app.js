@@ -627,11 +627,16 @@ function render(){
   });
   const saveNames = new Set(cats.filter(c=>c.type==='save').map(c=>c.name));
 
-  /* المصروف حسب التصنيف (الإرجاعات السالبة تنطرح تلقائياً) */
-  const spentByCat = {};
+  /* المصروف حسب التصنيف (الإرجاعات السالبة تنطرح تلقائياً)
+     + نفرز حركات القروض/التمويل الداخلة من الصناديق (سالبة) وسدادها (موجب)
+     حتى نعرض «صرفت» = الصرف الفعلي، والقرض بسطر واضح لحاله */
+  const spentByCat = {}, fundInByCat = {}, repayByCat = {};
   state.expenses.forEach(e => {
     const k = e.category || '— بلا تصنيف —';
     spentByCat[k] = (spentByCat[k]||0) + e.amount;
+    const d = String(e.desc||'');
+    if(e.amount < 0 && /^(قرض|تمويل) من صندوق/.test(d)) fundInByCat[k] = (fundInByCat[k]||0) - e.amount;
+    else if(e.amount > 0 && d.indexOf('سداد قرض لصندوق') === 0) repayByCat[k] = (repayByCat[k]||0) + e.amount;
   });
 
   /* صرف المصاريف فقط (نتجاهل حركات الصناديق سحب/إرجاع) — والإيداعات تنحسب لأنها تنحجز من الفائض */
@@ -658,7 +663,11 @@ function render(){
   /* ===== ملخص + رسم ===== */
   const donutParts = [];
   const known = new Set(cats.map(c=>c.name));
-  cats.filter(c=>c.type!=='save').forEach(c => { const v = spentByCat[c.name]||0; if(v>0) donutParts.push({label:c.name, value:v}); });
+  // الدونات تعرض الصرف الفعلي (بدون حركات القرض/التمويل الداخلة من الصناديق)
+  cats.filter(c=>c.type!=='save').forEach(c => {
+    const v = (spentByCat[c.name]||0) + (fundInByCat[c.name]||0) - (repayByCat[c.name]||0);
+    if(v>0) donutParts.push({label:c.name, value:v});
+  });
   let other = 0;
   Object.keys(spentByCat).forEach(k => { if(!known.has(k) && !saveNames.has(k) && spentByCat[k]>0) other += spentByCat[k]; });
   if(other > 0) donutParts.push({ label:'أخرى', value:other });
@@ -701,10 +710,14 @@ function render(){
   cats.forEach((c, ci) => {
     if(c.type === 'save') return;
     const carried = Number(c.carried)||0;
-    const effective = (Number(c.amount)||0) + carried;
-    const spent = spentByCat[c.name] || 0;
-    const left = effective - spent;
-    const pct = effective > 0 ? Math.min(100, Math.round(spent / effective * 100)) : (spent>0?100:0);
+    const fundIn = fundInByCat[c.name] || 0;       // قروض/تمويل داخل من الصناديق
+    const repay  = repayByCat[c.name] || 0;        // سداد قروض راجعة للصناديق
+    const loanOut = fundIn - repay;                // القرض المتبقي (لسه ما انسدّ)
+    const netSpent = spentByCat[c.name] || 0;      // الصافي (مثل قبل — أساس الحسابات)
+    const realSpent = netSpent + fundIn - repay;   // الصرف الفعلي للعرض
+    const effective = (Number(c.amount)||0) + carried + loanOut;   // المتاح يشمل القرض
+    const left = effective - realSpent;            // نفس قيمة (المخصص+المرحّل−الصافي)
+    const pct = effective > 0 ? Math.min(100, Math.round(realSpent / effective * 100)) : (realSpent>0?100:0);
     const cls = pct >= 100 ? 'over' : (pct >= 80 ? 'warn' : '');
     envHtml += `
       <div class="env">
@@ -713,8 +726,9 @@ function render(){
           <span class="env-left ${left<0?'over':''}">${left<0 ? 'تجاوز ' + fmt(-left) : 'باقي ' + fmt(left)}</span>
         </div>
         <div class="bar"><i class="${cls}" style="width:${pct}%"></i></div>
-        <div class="env-sub"><span>صرفت ${fmt(spent)}</span><span>المتاح ${fmt(effective)}</span></div>
+        <div class="env-sub"><span>صرفت ${fmt(realSpent)}</span><span>المتاح ${fmt(effective)}</span></div>
         ${carried ? `<div class="env-carry">↩ منها مرحّل من الشهر الماضي: ${fmt(carried)}</div>` : ''}
+        ${loanOut > 0 ? `<div class="env-carry">🤝 منها قرض من الصناديق (لازم يرجع): ${fmt(loanOut)}</div>` : ''}
         ${(!state.locked && left>0) ? `<button class="env-transfer" onclick="openTransfer(${ci}, ${left})">⇄ نقل من هذا التصنيف</button>` : ''}
       </div>`;
     delete spentByCat[c.name];
