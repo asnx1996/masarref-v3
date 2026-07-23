@@ -211,7 +211,15 @@
   <!-- تبويب: اللوحة — عرض ومراقبة فقط، ماكو أي زر يغيّر بيانات -->
   <section class="tab active" id="tab-dash">
     <div class="dash-full"><div id="insightCard"></div></div>
-    <div class="dash-full"><div id="summaryCard"></div></div>
+    <div class="dash-full">
+      <div class="seg-bar ov-bar" id="ovSeg">
+        <button class="seg-btn active" data-ov="exp">🧾 المصاريف</button>
+        <button class="seg-btn" data-ov="save">🏦 الادخار</button>
+        <button class="seg-btn" data-ov="bills">📄 الفواتير</button>
+        <button class="seg-btn" data-ov="loans">🤝 القروض</button>
+      </div>
+      <div id="summaryCard"></div>
+    </div>
     <div class="dash-col">
       <div id="envList"></div>
     </div>

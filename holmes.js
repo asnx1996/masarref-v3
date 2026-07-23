@@ -122,20 +122,74 @@ function holmesLoop(){
   hlTimer = setTimeout(holmesLoop, next);
 }
 
-/* ---------- الكلام: ملاحظات التحقيق + الحكم + تعليقات ---------- */
-const HOLMES_FLAVOR = [
-  'همم… ملف مصاريف هذا الشهر مثير للاهتمام 🔍',
-  'عزيزي واطسون، الادخار عادة مو صدفة',
-  'أراقب كل دينار — ماكو شي يفلت من التحقيق 🕵️',
-  'الأدلة الأولية تشير إلى إدارة مالية ذكية',
-  'عندما تستبعد الصرف الزائد، فما يتبقى هو الادخار مهما بدا صعباً',
-  'القضية البسيطة: اعرف وين تروح فلوسك',
-  'لاحظت شيئاً؟ أنا ألاحظ كل شي 👁️'
-];
+/* ---------- الشخصيات: فكاهية / اعتيادية / جدية ----------
+   تنغيّر من الإعدادات ← المظهر ← «شخصية شيرلوك» */
+let HOLMES_MOOD = 'funny';
+try{ HOLMES_MOOD = ['funny','normal','serious'].includes(localStorage.getItem('mas_holmes_mood')) ? localStorage.getItem('mas_holmes_mood') : 'funny'; }catch(_){}
+
+const HOLMES_MOODS = {
+  funny: {   /* عراقي يحشش 😂 */
+    lines: [
+      'التحقيق بيّن: الفلوس ما تختفي… بس تحب البقالة أكثر منك 🛒😂',
+      'شفت مكبرتي؟ دا أدور بيها على الباقي من الراتب 🔍😅',
+      'واطسون سألني: وين راح الراتب؟ گتله هذا لغز أكبر مني 🤷',
+      'حققت ٣ أيام بالقضية… طلع المتهم: عشاء برّه البيت 🍔',
+      'خطتك المالية ممتازة… بس سؤال بسيط: وين الفلوس؟ 😂',
+      'مكبرتي تكبّر كلشي… إلا راتبك، جربت عليه ما نفع 😅',
+      'إذا الفلوس تحچي، مالتك چانت تصيح: ودّعني بصندوق تره أنهزم 😭',
+      'اليوم مشيت ألف خطوة بلوحتك ولا لگيت دينار ضايع — شاطر عيني 🕵️',
+      'لا تخاف من آخر الشهر… خليه هو يخاف منك 💪',
+      'همم… دا أشم ريحة مصروف جديد بالجو 👃😄',
+      'نمت وحلمت راتبك زاد… گعدت لگيت فاتورة الكهرباء واصلة ⚡😭'
+    ],
+    react: {
+      expense:   ['همم… مصروف جديد! المتهم دائماً يرجع لمسرح الجريمة 😂', 'لگيتها! فلوس دا تطير — سجّلتها بالمحضر 🔍', 'مصروف؟ زين سويت سجلته، لأن آني چنت راح أشوفه 😅'],
+      celebrate: ['عاشت إيدك! هيچي يسوون أبطال الادخار 🏆😄', 'إيداع؟! ثانية خل أتأكد مو حلم 😂🎩', 'الصندوق دا يضحك من الفرح — وآني وياه 🏦😄'],
+      warn:      ['يا معوّد… الميزانية دا تصيح 😅 شوية هدنة', 'التحقيق يگول: البطاقة تحتاج إجازة 😂']
+    }
+  },
+  normal: {   /* اعتيادية ومرحة 🙂 */
+    lines: [
+      'همم… ملف مصاريف هذا الشهر مثير للاهتمام 🔍',
+      'عزيزي واطسون، الادخار عادة مو صدفة',
+      'أراقب كل دينار — ماكو شي يفلت من التحقيق 🕵️',
+      'الأدلة الأولية تشير إلى إدارة مالية ذكية',
+      'عندما تستبعد الصرف الزائد، فما يتبقى هو الادخار مهما بدا صعباً',
+      'القضية البسيطة: اعرف وين تروح فلوسك',
+      'لاحظت شيئاً؟ أنا ألاحظ كل شي 👁️'
+    ],
+    react: {
+      expense:   ['همم… مصروف جديد. مثير للاهتمام 🔍', 'سجّلته بالملف — التحقيق مستمر 🕵️'],
+      celebrate: ['أحسنت! القضية تتقدم بالاتجاه الصحيح 🎩', 'خطوة ممتازة — الصندوق يكبر 🏦'],
+      warn:      ['الأدلة تشير لتجاوز بالميزانية… انتبه ⚠️']
+    }
+  },
+  serious: {   /* جدية وقلقة 🧐 */
+    lines: [
+      'الوضع المالي يتطلب انضباطاً صارماً… كل دينار يجب أن يُحاسَب.',
+      'أخشى أن معدل الصرف الحالي غير مستدام. راجع خطتك فوراً.',
+      'القضية جدية: الادخار هو خط الدفاع الأول والأخير.',
+      'راقب مواعيد القروض بدقة — التأجيل عدوّ التحقيق.',
+      'لا تستهن بالمصاريف الصغيرة… إنها تتراكم كالأدلة.',
+      'أنصح بمراجعة الفواتير غير المدفوعة قبل فوات الأوان.',
+      'القلق المالي لا يُعالَج بالتجاهل، بل بالأرقام.'
+    ],
+    react: {
+      expense:   ['مصروف جديد سُجّل. أتابع الوضع عن كثب.', 'أرجو أن يكون هذا الصرف مدروساً…'],
+      celebrate: ['قرار حكيم. الادخار يبني المستقبل.', 'هذا ما يمليه المنطق المالي السليم.'],
+      warn:      ['تحذير: الميزانية تجاوزت الحد الآمن. تدخّل فوراً.']
+    }
+  }
+};
+function holmesMood(){ return HOLMES_MOODS[HOLMES_MOOD] || HOLMES_MOODS.normal; }
+
+/* ---------- الكلام: ملاحظات التحقيق + الحكم + سوالف الشخصية ---------- */
 function holmesLines(){
   const tips = (typeof state !== 'undefined' && Array.isArray(state._insights)) ? state._insights : [];
-  const quotes = (typeof QUOTES !== 'undefined') ? QUOTES.map(q => q.ar) : [];
-  return tips.concat(quotes, HOLMES_FLAVOR);
+  const quotes = (HOLMES_MOOD !== 'funny' && typeof QUOTES !== 'undefined') ? QUOTES.map(q => q.ar) : [];
+  const mood = holmesMood().lines;
+  /* الفكاهي أغلب حچيه نكت، والباقي ملاحظات — نكرر سوالف الشخصية حتى تطغى */
+  return tips.concat(quotes, mood, mood);
 }
 function holmesSay(txt){
   const lines = holmesLines();
@@ -151,22 +205,26 @@ function holmesBubble(txt){
 }
 
 /* ---------- ردود أفعال من التطبيق (إضافة مصروف / إيداع...) ---------- */
+function holmesPick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
 window.holmesReact = (kind) => {
   try{
     if(!holmesActive()) return;
     clearTimeout(hlTimer); hlTimer = null;
-    if(kind === 'celebrate'){
-      holmesSet('celebrate');
-      holmesBubble('أحسنت! القضية تتقدم بالاتجاه الصحيح 🎩');
-    }else if(kind === 'expense'){
-      holmesSet('inspect');
-      holmesBubble('همم… مصروف جديد. مثير للاهتمام 🔍');
-    }else if(kind === 'warn'){
-      holmesSet('inspect');
-      holmesBubble('الأدلة تشير لتجاوز بالميزانية… انتبه ⚠️');
-    }
+    const rx = holmesMood().react;
+    if(kind === 'celebrate'){ holmesSet('celebrate'); holmesBubble(holmesPick(rx.celebrate)); }
+    else if(kind === 'expense'){ holmesSet('inspect'); holmesBubble(holmesPick(rx.expense)); }
+    else if(kind === 'warn'){ holmesSet('inspect'); holmesBubble(holmesPick(rx.warn)); }
     hlTimer = setTimeout(holmesLoop, 3200);
   }catch(_){}
+};
+
+/* ---------- تغيير الشخصية من الإعدادات ---------- */
+window.setHolmesMood = (m) => {
+  HOLMES_MOOD = HOLMES_MOODS[m] ? m : 'normal';
+  try{ localStorage.setItem('mas_holmes_mood', HOLMES_MOOD); }catch(_){}
+  const hello = { funny:'هلاو! شيرلوك المحشش بالخدمة 😂🔍', normal:'شيرلوك بالخدمة — التحقيق مستمر 🕵️', serious:'تم تفعيل الوضع الجدي. الأرقام لا تكذب.' };
+  holmesBubble(hello[HOLMES_MOOD]);
+  toast('انتغيّرت شخصية شيرلوك ✓ 🎭');
 };
 
 /* ---------- التشغيل/الإيقاف من الإعدادات ---------- */

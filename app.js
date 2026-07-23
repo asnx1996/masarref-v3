@@ -641,6 +641,144 @@ function donutSVG(parts){
     `<text x="64" y="76" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink)">${(total).toLocaleString('en-US')}</text></svg>`;
 }
 
+/* ============================================================
+   النظرة العامة باللوحة — تبويبات: مصاريف / ادخار / فواتير / قروض
+   كل تبويب يعرض تفاصيله برسم مختلف داخل نفس البطاقة
+   ============================================================ */
+let dashView = 'exp';
+try{ dashView = ['exp','save','bills','loans'].includes(localStorage.getItem('mas_dashview')) ? localStorage.getItem('mas_dashview') : 'exp'; }catch(_){}
+
+window.setDashView = (v) => {
+  dashView = v;
+  try{ localStorage.setItem('mas_dashview', v); }catch(_){}
+  document.querySelectorAll('#ovSeg .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.ov === v));
+  if(v === 'bills' && !billsItems.length){ loadBills().then(renderDashView).catch(()=>{}); }
+  renderDashView();
+};
+document.querySelectorAll('#ovSeg .seg-btn').forEach(b => { b.onclick = () => setDashView(b.dataset.ov); });
+
+function renderDashView(){
+  const el = $('summaryCard');
+  if(!el) return;
+  document.querySelectorAll('#ovSeg .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.ov === dashView));
+  const d = state._dash || { donutParts:[], dailyAvg:0, canDaily:0, prog:{left:0} };
+
+  /* ===== 🧾 المصاريف: الدونات + أعلى تصنيف ===== */
+  if(dashView === 'exp'){
+    const activeCat = ($('fltCat') && $('fltCat').value) || '';
+    const parts = d.donutParts;
+    const legend = parts.map((p,i)=>`<span class="lg-item${activeCat===p.label?' on':''}" data-cat="${esc(p.label)}"><span class="lg-dot" style="background:${PALETTE[i%PALETTE.length]}"></span><b>${esc(p.label)}</b>${fmt(p.value)}</span>`).join('');
+    const top = parts.reduce((a,b)=> (b.value > (a?a.value:0) ? b : a), null);
+    const total = parts.reduce((s,p)=> s + p.value, 0);
+    el.innerHTML = `
+      <div class="card sum-card depth">
+        <div class="sum-top">
+          <div class="donut${activeCat?' has-filter':''}" ${activeCat?`data-active="${esc(activeCat)}"`:''}>${donutSVG(parts)}</div>
+          <div class="sum-stats">
+            <div class="ss"><span>المعدل اليومي</span><b>${fmt(d.dailyAvg)}</b></div>
+            <div class="ss"><span>باقي بالشهر</span><b>${d.prog.left} يوم</b></div>
+            <div class="ss"><span>تقدر تصرف باليوم</span><b>${fmt(d.canDaily)}</b></div>
+          </div>
+        </div>
+        ${top ? `<div class="ov-top">🏆 أعلى مصرف: <b>«${esc(top.label)}»</b> — ${fmt(top.value)} (${Math.round(top.value/total*100)}٪ من صرفك)</div>` : ''}
+        ${legend ? `<div class="legend">${legend}</div>` : ''}
+        ${activeCat ? `<button class="lg-clear" onclick="filterByCat('')">✕ إلغاء الفلتر «${esc(activeCat)}»</button>` : ''}
+      </div>`;
+    el.onclick = (ev) => {
+      const t = ev.target.closest('[data-cat]');
+      if(t) filterByCat(t.dataset.cat);
+    };
+    const dn = el.querySelector('.donut.has-filter');
+    if(dn) dn.querySelectorAll('.dseg').forEach(sg => { if(sg.dataset.cat !== dn.dataset.active) sg.style.opacity = '.25'; });
+    animateDonut();
+    return;
+  }
+  el.onclick = null;
+
+  /* ===== 🏦 الادخار: منو قريب على هدفه ===== */
+  if(dashView === 'save'){
+    const funds = (state._dashFunds || []).slice();
+    if(!funds.length){ el.innerHTML = `<div class="card sum-card"><div class="empty" style="padding:18px"><span class="emo">🏦</span><b>ماكو صناديق ادخار بعد</b>أضف صندوق من تبويب «الميزانية».</div></div>`; return; }
+    const withGoal = funds.filter(f => f.goal > 0).sort((a,b)=> (b.bal/b.goal) - (a.bal/a.goal));
+    const noGoal = funds.filter(f => !(f.goal > 0));
+    const best = withGoal[0];
+    el.innerHTML = `
+      <div class="card sum-card depth">
+        ${best ? `<div class="ov-top">🎯 الأقرب لهدفه: <b>«${esc(best.name)}»</b> — ${Math.min(100, Math.round(best.bal/best.goal*100))}٪${best.bal>=best.goal?' ✓ تحقق!':''}</div>` : `<div class="ov-top">💡 حدد هدف 🎯 لصناديقك من الميزانية حتى نتابع تقدمك هنا</div>`}
+        ${withGoal.map((f,i) => {
+          const pct = Math.max(0, Math.min(100, Math.round(f.bal / f.goal * 100)));
+          return `
+          <div class="ov-row">
+            <div class="ov-line"><span>${f.closed?'🔒':'🏦'} ${esc(f.name)}</span><span><b>${fmt(f.bal)}</b> <small style="color:var(--muted)">من ${fmt(f.goal)}</small></span></div>
+            <div class="bar"><i class="${f.bal>=f.goal?'':'goalbar'}" style="width:${pct}%;background:${PALETTE[i%PALETTE.length]}"></i></div>
+            <div class="ov-sub"><span>${pct}٪</span><span>${f.bal>=f.goal?'🎉 تحقق الهدف!':'باقي ' + fmt(f.goal - f.bal)}</span></div>
+          </div>`;
+        }).join('')}
+        ${noGoal.length ? noGoal.map(f => `<div class="ov-line" style="padding:8px 2px;border-top:1px solid var(--line)"><span>${f.closed?'🔒':'🏦'} ${esc(f.name)} <small style="color:var(--muted)">(بلا هدف)</small></span><b>${fmt(f.bal)}</b></div>`).join('') : ''}
+      </div>`;
+    return;
+  }
+
+  /* ===== 📄 الفواتير: شنو انفدع وشنو باقي ===== */
+  if(dashView === 'bills'){
+    if(!billsItems.length){
+      el.innerHTML = `<div class="card sum-card"><div class="empty" style="padding:18px"><span class="emo">📄</span><b>ماكو فواتير مسجلة هالشهر</b>أضفها من تبويب «فواتيري» — وتنتسخ تلقائياً كل شهر.</div></div>`;
+      return;
+    }
+    const total  = billsItems.reduce((a,b)=> a + (Number(b.amount)||0), 0);
+    const paid   = billsItems.filter(b=>b.paid).reduce((a,b)=> a + (Number(b.amount)||0), 0);
+    const unpaid = total - paid;
+    const avail  = state._surplus || 0;
+    const pctPaid = total > 0 ? Math.round(paid / total * 100) : 0;
+    el.innerHTML = `
+      <div class="card sum-card depth">
+        <div class="ov-top">${unpaid <= 0 ? '🎉 كل فواتير الشهر مدفوعة — عاشت إيدك!' : (avail >= unpaid ? `✅ الباقي عندك (${fmt(avail)}) يغطي الفواتير الباقية (${fmt(unpaid)})` : `⚠️ ناقصك ${fmt(unpaid - avail)} للفواتير الباقية`)}</div>
+        <div class="ov-line"><span>المدفوع ${fmt(paid)}</span><span>الباقي ${fmt(unpaid)}</span></div>
+        <div class="bar" style="height:12px"><i style="width:${pctPaid}%;background:var(--green)"></i></div>
+        <div class="ov-sub"><span>${pctPaid}٪ مدفوع</span><span>الإجمالي ${fmt(total)}</span></div>
+        ${billsItems.map(b => `
+          <div class="ov-line" style="padding:8px 2px;border-top:1px solid var(--line)">
+            <span>${b.paid?'✅':'⏳'} ${esc(b.name)}${b.dueDay?` <small style="color:var(--muted)">· يوم ${b.dueDay} من كل شهر</small>`:''}</span>
+            <b style="${b.paid?'':'color:var(--amber)'}">${fmt(b.amount)}</b>
+          </div>`).join('')}
+        <div class="hint" style="margin:8px 2px 0">الدفع والتعديل من تبويب «فواتيري».</div>
+      </div>`;
+    return;
+  }
+
+  /* ===== 🤝 القروض: منو مديون وشوكت يرجّع ===== */
+  if(dashView === 'loans'){
+    const loans = state._dashDebts || [];
+    if(!loans.length){
+      el.innerHTML = `<div class="card sum-card"><div class="empty" style="padding:18px"><span class="emo">🤝</span><b>ماكو قروض مفتوحة</b>كل الفلوس براحتها بالصناديق 😌</div></div>`;
+      return;
+    }
+    const total = loans.reduce((s,d)=> s + (d.amount||0), 0);
+    const mx = Math.max(...loans.map(d=>d.amount||0), 1);
+    el.innerHTML = `
+      <div class="card sum-card depth">
+        <div class="ov-top">🤝 ${loans.length} ${loans.length === 1 ? 'قرض مفتوح' : 'قروض مفتوحة'} — الإجمالي <b>${fmt(total)}</b></div>
+        ${loans.map((dd,i) => {
+          let due = '', cls = '';
+          if(dd.dueDate){
+            const days = Math.floor((new Date(dd.dueDate) - new Date(todayISO())) / 86400000);
+            if(days < 0){ due = '⏰ فات موعده!'; cls = 'color:var(--red);font-weight:700'; }
+            else if(days === 0){ due = '⏰ يستحق اليوم'; cls = 'color:var(--red);font-weight:700'; }
+            else due = '⏰ باقي ' + days + ' يوم';
+          }
+          return `
+          <div class="ov-row">
+            <div class="ov-line"><span>${dd.toCategory?'🗂️':'👤'} <b>${esc(dd.account)}</b> <small style="color:var(--muted)">← «${esc(dd.fund)}»</small></span><b>${fmt(dd.amount)}</b></div>
+            <div class="bar"><i style="width:${Math.max(6, Math.round(dd.amount/mx*100))}%;background:${PALETTE[i%PALETTE.length]}"></i></div>
+            ${due ? `<div class="ov-sub"><span style="${cls}">${due}</span><span>${esc(dd.date)}</span></div>` : `<div class="ov-sub"><span></span><span>${esc(dd.date)}</span></div>`}
+          </div>`;
+        }).join('')}
+        <div class="hint" style="margin:8px 2px 0">الإرجاع والشطب من «مصروف ← الصناديق».</div>
+      </div>`;
+    return;
+  }
+}
+
 /* ---------- بطاقة الذكاء (تدوير الملاحظات) ---------- */
 let insTimer = null, insIdx = 0;
 function renderInsightCard(){
@@ -775,35 +913,8 @@ function render(){
   state._insights = insights;
   renderInsightCard();
 
-  const activeCat = ($('fltCat') && $('fltCat').value) || '';
-  const legend = donutParts.map((p,i)=>`<span class="lg-item${activeCat===p.label?' on':''}" data-cat="${esc(p.label)}"><span class="lg-dot" style="background:${PALETTE[i%PALETTE.length]}"></span><b>${esc(p.label)}</b>${fmt(p.value)}</span>`).join('');
-
-  $('summaryCard').innerHTML = `
-    <div class="card sum-card depth">
-      <div class="sum-top">
-        <div class="donut${activeCat?' has-filter':''}" ${activeCat?`data-active="${esc(activeCat)}"`:''}>${donutSVG(donutParts)}</div>
-        <div class="sum-stats">
-          <div class="ss"><span>المعدل اليومي</span><b>${fmt(dailyAvg)}</b></div>
-          <div class="ss"><span>باقي بالشهر</span><b>${prog.left} يوم</b></div>
-          <div class="ss"><span>تقدر تصرف باليوم</span><b>${fmt(canDaily)}</b></div>
-        </div>
-      </div>
-      ${legend ? `<div class="legend">${legend}</div>` : ''}
-      ${activeCat ? `<button class="lg-clear" onclick="filterByCat('')">✕ إلغاء الفلتر «${esc(activeCat)}»</button>` : ''}
-    </div>`;
-  // الرسم تفاعلي — دوس على قطعة أو اسم بالمفتاح حتى تنفلتر المصاريف
-  $('summaryCard').onclick = (ev) => {
-    const t = ev.target.closest('[data-cat]');
-    if(!t) return;
-    filterByCat(t.dataset.cat);
-  };
-  const dn = document.querySelector('.donut.has-filter');
-  if(dn){
-    dn.querySelectorAll('.dseg').forEach(sg => {
-      if(sg.dataset.cat !== dn.dataset.active) sg.style.opacity = '.25';
-    });
-  }
-  animateDonut();
+  /* بيانات النظرة العامة — تنخزن وتنرسم حسب التبويب المختار (renderDashView) */
+  state._dash = { donutParts, dailyAvg, canDaily, prog };
 
   /* ===== ظروف المصاريف ===== */
   let envHtml = '';
@@ -893,6 +1004,7 @@ function render(){
     state._fundTotal = totalBal;
   }
   $('saveList').innerHTML = saveHtml;
+  state._dashFunds = fundView;
 
   /* ملخص الصناديق باللوحة — عرض فقط، الضغط يوديك لقسم الصناديق */
   const fsEl = $('fundSummary');
@@ -947,6 +1059,7 @@ function render(){
     debtHtml = `<div class="save-head">ديون الصناديق ⏳ <span>الإجمالي: ${fmt(totalDebt)}</span></div>` + rows;
   }
   $('debtList').innerHTML = debtHtml;
+  state._dashDebts = open;
 
   /* ملخص الديون باللوحة — عرض فقط، الإرجاع والشطب من قسم الصناديق */
   const dsEl = $('debtSummary');
@@ -983,6 +1096,9 @@ function render(){
       </div>`;
   });
   $('envList').innerHTML = envHtml || '<div class="empty"><span class="emo">🗂️</span><b>ماكو ميزانية لهذا الشهر بعد</b>روح لتبويب «الميزانية» وحدد الرواتب والتصنيفات.</div>';
+
+  /* ===== النظرة العامة (البيانات صارت جاهزة كلها) ===== */
+  renderDashView();
 
   /* ===== فلتر + قائمة المصاريف + حركات الصناديق ===== */
   buildFilterOptions();
@@ -1936,6 +2052,13 @@ function renderSettings(){
         <span class="st-lbl">🕵️ شيرلوك هولمز باللوحة (يمشي ويحقق وينصح)</span>
         <label class="switch"><input type="checkbox" id="holmesToggle" ${(typeof HOLMES_ON !== 'undefined' && HOLMES_ON)?'checked':''}><span class="track"></span><span class="knob"></span></label>
       </div>
+      <label>🎭 شخصية شيرلوك</label>
+      <select id="holmesMood">
+        <option value="funny">فكاهية وغبية — عراقي يحشش 😂</option>
+        <option value="normal">اعتيادية ومرحة 🙂</option>
+        <option value="serious">جدية وقلقة 🧐</option>
+      </select>
+      <div class="hint" style="margin-top:4px">تحدد شلون يحچي ويّاك: نكت وسوالف، لو تحقيق مرح، لو محقق قلقان على فلوسك.</div>
       <label>🎨 ثيم الألوان</label>
       <div class="pal-grid">${palCards}</div>
       <div class="hint" style="margin-top:2px">كل ثيم يصبغ لون الموقع + السماء (نهار/غروب/ليل والفصول) بنفس العائلة — يتطبّق فوراً وينحفظ بجهازك.</div>
@@ -2097,6 +2220,10 @@ function renderSettings(){
   if($('holmesToggle')) $('holmesToggle').onchange = (e) => {
     try{ setHolmes(e.target.checked); }catch(_){}
   };
+  if($('holmesMood')){
+    try{ $('holmesMood').value = (typeof HOLMES_MOOD !== 'undefined') ? HOLMES_MOOD : 'funny'; }catch(_){}
+    $('holmesMood').onchange = (e) => { try{ setHolmesMood(e.target.value); }catch(_){} };
+  }
   if($('darkToggle')) $('darkToggle').onchange = (e) => {
     DARK_ON = e.target.checked;
     localStorage.setItem('mas_dark', DARK_ON ? 'on' : 'off');
@@ -2586,6 +2713,16 @@ async function loadBills(){
     const { data, error } = await sb.rpc('list_bills', { p_month: state.month });
     if(error) throw error;
     billsItems = data || [];
+    /* الفواتير متكررة شهرياً: شهر جديد بلا فواتير → ننسخ فواتير الشهر
+       الماضي تلقائياً (غير مدفوعة) — ما تحتاج تضيفها كل شهر من جديد */
+    if(!billsItems.length && state.month >= thisMonth() && !state.locked){
+      const { data: copied } = await sb.rpc('copy_bills', { p_from: prevMonthStr(state.month), p_to: state.month });
+      if(copied){
+        const r2 = await sb.rpc('list_bills', { p_month: state.month });
+        billsItems = (r2 && r2.data) || [];
+        if(billsItems.length) toast('انتسخت فواتيرك الشهرية تلقائياً ✓ 🧾');
+      }
+    }
   }catch(_){ billsItems = []; }
   renderBills();
 }
@@ -2621,16 +2758,18 @@ function renderBills(){
     let cls = b.paid ? 'paid' : '';
     let meta = '';
     if(b.dueDay){
-      const left = b.dueDay - today;
-      if(!b.paid && left < 0){ cls += ' overdue'; meta = 'فات موعدها (يوم ' + b.dueDay + ')'; }
+      /* الاستحقاق = يوم X من الشهر المعروض (متكرر كل شهر) — مو من شهر الإضافة */
+      const dueISO = state.month + '-' + ('0' + b.dueDay).slice(-2);
+      const left = Math.floor((new Date(dueISO) - new Date(todayISO())) / 86400000);
+      if(!b.paid && left < 0){ cls += ' overdue'; meta = 'فات موعدها (يوم ' + b.dueDay + ' من كل شهر)'; }
       else if(!b.paid && left <= 3){ cls += ' due-soon'; meta = left === 0 ? 'تستحق اليوم!' : 'باقي ' + left + ' يوم (يوم ' + b.dueDay + ')'; }
-      else meta = 'يوم ' + b.dueDay + ' بالشهر';
+      else meta = 'يوم ' + b.dueDay + ' من كل شهر';
     }
     return `
       <div class="bill ${cls}">
         <button class="bl-chk" onclick="toggleBill('${b.id}', ${!b.paid})">${b.paid ? '✓' : ''}</button>
-        <div class="bl-main">
-          <div class="bl-name">${esc(b.name)}</div>
+        <div class="bl-main" onclick="editBill('${b.id}')" style="cursor:pointer" title="اضغط للتعديل">
+          <div class="bl-name">${esc(b.name)} <span style="font-size:.62rem;color:var(--muted)">✎</span></div>
           ${meta ? `<div class="bl-meta">${esc(meta)}</div>` : ''}
         </div>
         <div class="bl-amt">${fmt(b.amount)}</div>
@@ -2638,6 +2777,44 @@ function renderBills(){
       </div>`;
   }).join('');
 }
+
+/* ---------- تعديل فاتورة (بدون حذف وإعادة إضافة) ---------- */
+window.editBill = (id) => {
+  const b = billsItems.find(x => x.id === id);
+  if(!b) return;
+  modalOpen(`
+    <h2>تعديل فاتورة «${esc(b.name)}» ✎</h2>
+    <label>اسم الفاتورة</label>
+    <input type="text" id="ebName" value="${esc(b.name)}">
+    <div class="row" style="margin-top:10px">
+      <div><label>المبلغ</label><input type="tel" id="ebAmount" inputmode="numeric" value="${(Number(b.amount)||0) ? Number(b.amount).toLocaleString('en-US') : ''}"></div>
+      <div><label>يوم الاستحقاق (من كل شهر)</label><input type="number" id="ebDay" min="1" max="31" value="${b.dueDay || ''}" placeholder="مثلاً: 5"></div>
+    </div>
+    <button class="btn" id="ebSave">حفظ التعديل</button>
+    <button class="btn ghost" onclick="modalClose()">إلغاء</button>
+  `);
+  liveFormat($('ebAmount'));
+  $('ebSave').onclick = async () => {
+    const name = $('ebName').value.trim();
+    if(!name) return toast('دخّل اسم الفاتورة', true);
+    const amount = num($('ebAmount').value);
+    const day = parseInt($('ebDay').value, 10) || null;
+    loading(true);
+    try{
+      const { error } = await sb.rpc('edit_bill', { p_id: id, p_name: name, p_amount: amount, p_due_day: day });
+      if(error){
+        if(/could not find|function/i.test(error.message)) throw new Error('ارفع ملف sql/edit-bill.sql على Supabase أول');
+        throw new Error(error.message);
+      }
+      b.name = name; b.amount = amount; b.dueDay = day;
+      modalClose();
+      renderBills();
+      renderDashView();
+      toast('انعدّلت الفاتورة ✓ ✎');
+    }catch(err){ toast('ما انعدّلت: ' + err.message, true); }
+    finally{ loading(false); }
+  };
+};
 window.toggleBill = async (id, paid) => {
   const b = billsItems.find(x=>x.id===id);
   if(b){ b.paid = paid; renderBills(); }   // تحديث فوري بالواجهة
