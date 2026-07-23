@@ -4,7 +4,7 @@
    ⚠️ مهم: كل ما تعدّل أي ملف من ملفات الواجهة (index.html / styles.css /
    core.js / app.js / i18n.js / decor.js / boot.js)، غيّر رقم النسخة بالسطر
    التحت (مثلاً masareef-v28 ← masareef-v29) حتى يوصل التحديث للتلفون. */
-const CACHE = 'masareef-v37';
+const CACHE = 'masareef-v38';
 const SHELL = [
   './', './index.html', './manifest.json', './icon-192.png', './icon-512.png',
   './fonts.css', './styles.css',

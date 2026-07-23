@@ -104,20 +104,15 @@ function startDeco(){
   renderClock();
   tickClock();
   setInterval(tickClock, 1000);
-  const dEl = $('decoDate');
-  const tickDate = () => { dEl.textContent = new Date().toLocaleDateString(LANG.cur==='en'?'en-GB':'ar-IQ-u-nu-latn', { weekday:'long', year:'numeric', month:'long', day:'numeric' }); };
-  tickDate(); setInterval(tickDate, 60000);
-  const qEl = $('decoQuote');
-  const setQuote = () => { qEl.textContent = QUOTES[quoteIdx][LANG.cur==='en'?'en':'ar']; };
-  setQuote();
-  setInterval(() => { qEl.style.opacity=0; setTimeout(()=>{ quoteIdx=(quoteIdx+1)%QUOTES.length; setQuote(); qEl.style.opacity=1; }, 450); }, 20000);
-  const btn = $('btnClockSkin');
-  if(btn) btn.onclick = () => {
+  /* الساعة صارت دائرة صغيرة بالهيدر — التاريخ والحكمة انشالوا
+     (الحكم صار يگولها شيرلوك 🕵️، وتغيير شكل الساعة من الإعدادات).
+     ضغطة على الساعة نفسها هم تبدّل شكلها */
+  $('clockSkin').addEventListener('click', () => {
     clockIdx = (clockIdx + 1) % CLOCK_SKINS.length;
     localStorage.setItem('mas_clock', clockIdx);
     renderClock(); tickClock();
-    toast('شكل: ' + CLOCK_SKINS[clockIdx].name);
-  };
+    toast('شكل الساعة: ' + CLOCK_SKINS[clockIdx].name + ' 🕰');
+  });
 }
 
 /* ============================================================

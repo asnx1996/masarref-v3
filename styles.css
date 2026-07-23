@@ -626,21 +626,22 @@
   .seg-btn.active{background:var(--card);color:var(--primary);box-shadow:var(--shadow)}
   .seg-view{animation:fade .3s var(--ease)}
 
-  /* ---------- بطاقة الساعة والحكمة (كمبيوتر فقط) ---------- */
-  #decoCard{display:none}
+  /* ---------- ساعة الهيدر (دائرة بس — كمبيوتر فقط) ---------- */
+  .head-clock{display:none}
   @media (min-width:1000px){
     #tab-add{max-width:1020px;margin:0 auto}
     .seg-view{display:grid;grid-template-columns:1.02fr .98fr;gap:0 20px;align-items:start}
     .seg-view .dash-col{display:block;min-width:0}
-    #decoCard{
-      display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;
-      gap:6px;min-height:460px;border:none;color:#fff;position:sticky;top:20px;
-      background:
-        radial-gradient(circle at 82% 12%, rgba(255,255,255,.14), transparent 42%),
-        radial-gradient(circle at 12% 88%, rgba(255,255,255,.10), transparent 45%),
-        linear-gradient(160deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 62%, #16222c) 100%);
+    .head-top{position:relative}
+    .head-clock{
+      display:block;position:absolute;left:50%;top:50%;
+      transform:translate(-50%,-50%);
+      width:72px;height:72px;cursor:pointer;
+      filter:drop-shadow(0 4px 12px rgba(0,0,0,.30));
+      transition:transform .25s var(--ease);
     }
-    .deco-quote{font-size:1.02rem;line-height:2;max-width:340px;opacity:1;transition:opacity .45s ease;min-height:96px;display:flex;align-items:center;justify-content:center}
+    .head-clock:hover{transform:translate(-50%,-50%) scale(1.08)}
+    .head-clock svg{width:100%;height:100%;display:block}
   }
 
   /* ---------- الأزرار السريعة ---------- */
@@ -671,16 +672,6 @@
   .goal-pct.done{color:var(--primary)}
   .bar i.goalbar{background:linear-gradient(90deg,var(--primary),color-mix(in srgb,var(--primary) 55%,#7DD3C0))}
   .goal-rem{font-size:.66rem;color:var(--muted);margin-top:5px}
-
-    .clock-wrap{filter:drop-shadow(0 8px 24px rgba(0,0,0,.28))}
-    .clock-wrap svg{display:block}
-    .clock-switch{margin-top:14px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;border-radius:12px;padding:9px 16px;font-family:inherit;font-weight:700;font-size:.78rem;cursor:pointer;transition:background .2s}
-    .clock-switch:hover{background:rgba(255,255,255,.24)}
-    .deco-date{font-size:.9rem;opacity:.85;margin-top:14px}
-    .deco-sep{width:44px;height:3px;border-radius:2px;background:rgba(255,255,255,.35);margin:16px 0}
-    .deco-quote{font-size:1.02rem;line-height:2;max-width:340px;opacity:1;transition:opacity .45s ease;min-height:96px;display:flex;align-items:center;justify-content:center}
-    .deco-mark{font-size:1.5rem;opacity:.5}
-  }
 
   /* ---------- وجه إيموجي يطلع مع الصوت ---------- */
   #emojiFace{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:400;font-size:8rem;opacity:0}
@@ -851,19 +842,6 @@
   /* ---------- ملخصات اللوحة (صناديق وديون — عرض فقط) ---------- */
   .env.clickable{cursor:pointer;transition:transform .18s var(--ease),box-shadow .2s}
   @media (hover:hover){ .env.clickable:hover{transform:translateY(-2px);box-shadow:var(--shadow)} }
-  .fsum{
-    display:flex;align-items:center;gap:8px;padding:11px 4px;
-    border-bottom:1px solid var(--line);cursor:pointer;
-    transition:background .2s;
-  }
-  .fsum:last-of-type{border-bottom:none}
-  @media (hover:hover){ .fsum:hover{background:var(--primary-soft)} }
-  .fsum .fs-name{flex:1;font-weight:700;font-size:.85rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .fsum .fs-name small{font-size:.68rem}
-  .fsum .fs-goal{font-size:.66rem;font-weight:700;color:var(--primary);background:var(--primary-soft);border-radius:8px;padding:3px 8px;white-space:nowrap}
-  .fsum .fs-bal{font-weight:800;font-size:.86rem;color:var(--primary);white-space:nowrap}
-  .fsum.off{opacity:.6}
-  .fsum.off .fs-name{text-decoration:line-through}
 
   /* ---------- تبويبات النظرة العامة باللوحة ---------- */
   .ov-bar{margin-bottom:12px;position:static}
@@ -890,15 +868,15 @@
   /* ---------- دخول متدرّج عند تحميل الشهر (حركات بركات 😄) ---------- */
   @keyframes riseIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
   @keyframes barGrow{from{width:0}}
-  .fresh .insight,.fresh .sum-card,.fresh .env,.fresh .fund,.fresh .fsum,.fresh .debt{animation:riseIn .5s var(--ease) both}
-  .fresh .env:nth-of-type(2),.fresh .fund:nth-of-type(2),.fresh .fsum:nth-of-type(2){animation-delay:.07s}
-  .fresh .env:nth-of-type(3),.fresh .fund:nth-of-type(3),.fresh .fsum:nth-of-type(3){animation-delay:.14s}
-  .fresh .env:nth-of-type(4),.fresh .fund:nth-of-type(4),.fresh .fsum:nth-of-type(4){animation-delay:.21s}
-  .fresh .env:nth-of-type(5),.fresh .fund:nth-of-type(5),.fresh .fsum:nth-of-type(5){animation-delay:.28s}
-  .fresh .env:nth-of-type(n+6),.fresh .fund:nth-of-type(n+6),.fresh .fsum:nth-of-type(n+6){animation-delay:.35s}
+  .fresh .insight,.fresh .sum-card,.fresh .env,.fresh .fund,.fresh .ov-row,.fresh .debt{animation:riseIn .5s var(--ease) both}
+  .fresh .env:nth-of-type(2),.fresh .fund:nth-of-type(2),.fresh .ov-row:nth-of-type(2){animation-delay:.07s}
+  .fresh .env:nth-of-type(3),.fresh .fund:nth-of-type(3),.fresh .ov-row:nth-of-type(3){animation-delay:.14s}
+  .fresh .env:nth-of-type(4),.fresh .fund:nth-of-type(4),.fresh .ov-row:nth-of-type(4){animation-delay:.21s}
+  .fresh .env:nth-of-type(5),.fresh .fund:nth-of-type(5),.fresh .ov-row:nth-of-type(5){animation-delay:.28s}
+  .fresh .env:nth-of-type(n+6),.fresh .fund:nth-of-type(n+6),.fresh .ov-row:nth-of-type(n+6){animation-delay:.35s}
   .fresh .bar i{animation:barGrow .9s var(--ease) .25s backwards}
   @media (prefers-reduced-motion:reduce){
-    .fresh .insight,.fresh .sum-card,.fresh .env,.fresh .fund,.fresh .fsum,.fresh .debt,.fresh .bar i{animation:none!important}
+    .fresh .insight,.fresh .sum-card,.fresh .env,.fresh .fund,.fresh .ov-row,.fresh .debt,.fresh .bar i{animation:none!important}
   }
 
   /* ---------- أقسام الإعدادات المطوية ---------- */
@@ -967,8 +945,6 @@
   @keyframes hzzz{0%{opacity:0;transform:translateY(0)}30%{opacity:1}100%{opacity:0;transform:translateY(-13px)}}
   @keyframes hpuff{0%{opacity:0;transform:translate(0,0) scale(.5)}25%{opacity:.8}100%{opacity:0;transform:translate(-9px,-16px) scale(1.5)}}
   @keyframes hjump{0%,100%{transform:translateY(0)}50%{transform:translateY(-13px)}}
-  /* حكمة الساعة يقولها هولمز بدل النص الثابت */
-  body.holmes-on .deco-sep,body.holmes-on .deco-mark,body.holmes-on .deco-quote{display:none}
   @media (prefers-reduced-motion:reduce){ #holmesStrip{display:none!important} }
   @media (max-width:520px){ #holmesChar{width:52px} #holmesChar svg{width:52px;height:77px} .hl-bubble{max-width:175px;font-size:.68rem} }
 

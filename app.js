@@ -662,10 +662,9 @@ function renderDashView(){
   if(!el) return;
   document.querySelectorAll('#ovSeg .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.ov === dashView));
 
-  /* التبويب يفلتر كل اللوحة: كل قسم يظهر بس بتبويبه */
-  const envEl = $('envList');  if(envEl) envEl.style.display  = dashView === 'exp'   ? '' : 'none';
-  const fsEl2 = $('fundSummary'); if(fsEl2) fsEl2.style.display = dashView === 'save' ? '' : 'none';
-  const dsEl2 = $('debtSummary'); if(dsEl2) dsEl2.style.display = dashView === 'loans' ? '' : 'none';
+  /* التبويب يفلتر كل اللوحة: ظروف التصنيفات تظهر بس بتبويب المصاريف،
+     والادخار والقروض تفاصيلهم كلها داخل البطاقة نفسها (بلا تكرار) */
+  const envEl = $('envList');  if(envEl) envEl.style.display  = dashView === 'exp' ? '' : 'none';
 
   /* الفواتير محتاجينها بالنظرة العامة وتبويب الفواتير */
   if((dashView === 'ov' || dashView === 'bills') && session && _billsSeen !== state.month){
@@ -740,7 +739,7 @@ function renderDashView(){
   }
   el.onclick = null;
 
-  /* ===== 🏦 الادخار: منو قريب على هدفه ===== */
+  /* ===== 🏦 الادخار: كل الصناديق + منو قريب على هدفه (بلا تكرار بمكان ثاني) ===== */
   if(dashView === 'save'){
     const funds = (state._dashFunds || []).slice();
     if(!funds.length){ el.innerHTML = `<div class="card sum-card"><div class="empty" style="padding:18px"><span class="emo">🏦</span><b>ماكو صناديق ادخار بعد</b>أضف صندوق من تبويب «الميزانية».</div></div>`; return; }
@@ -749,17 +748,21 @@ function renderDashView(){
     const best = withGoal[0];
     el.innerHTML = `
       <div class="card sum-card depth">
-        ${best ? `<div class="ov-top">🎯 الأقرب لهدفه: <b>«${esc(best.name)}»</b> — ${Math.min(100, Math.round(best.bal/best.goal*100))}٪${best.bal>=best.goal?' ✓ تحقق!':''}</div>` : `<div class="ov-top">💡 حدد هدف 🎯 لصناديقك من الميزانية حتى نتابع تقدمك هنا</div>`}
+        <div class="ov-top" style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <span>${best ? `🎯 الأقرب لهدفه: <b>«${esc(best.name)}»</b> — ${Math.min(100, Math.round(best.bal/best.goal*100))}٪${best.bal>=best.goal?' ✓ تحقق!':''}` : '💡 حدد هدف 🎯 لصناديقك من الميزانية حتى نتابع تقدمك هنا'}</span>
+          <b>الإجمالي: ${fmt(state._fundTotal || 0)}</b>
+        </div>
         ${withGoal.map((f,i) => {
           const pct = Math.max(0, Math.min(100, Math.round(f.bal / f.goal * 100)));
           return `
-          <div class="ov-row">
+          <div class="ov-row" onclick="gotoFunds()" style="cursor:pointer" title="السحب والإيداع والقرض من مصروف ← الصناديق">
             <div class="ov-line"><span>${f.closed?'🔒':'🏦'} ${esc(f.name)}</span><span><b>${fmt(f.bal)}</b> <small style="color:var(--muted)">من ${fmt(f.goal)}</small></span></div>
             <div class="bar"><i class="${f.bal>=f.goal?'':'goalbar'}" style="width:${pct}%;background:${PALETTE[i%PALETTE.length]}"></i></div>
             <div class="ov-sub"><span>${pct}٪</span><span>${f.bal>=f.goal?'🎉 تحقق الهدف!':'باقي ' + fmt(f.goal - f.bal)}</span></div>
           </div>`;
         }).join('')}
-        ${noGoal.length ? noGoal.map(f => `<div class="ov-line" style="padding:8px 2px;border-top:1px solid var(--line)"><span>${f.closed?'🔒':'🏦'} ${esc(f.name)} <small style="color:var(--muted)">(بلا هدف)</small></span><b>${fmt(f.bal)}</b></div>`).join('') : ''}
+        ${noGoal.length ? noGoal.map(f => `<div class="ov-line" onclick="gotoFunds()" style="padding:8px 2px;border-top:1px solid var(--line);cursor:pointer"><span>${f.closed?'🔒':'🏦'} ${esc(f.name)} <small style="color:var(--muted)">(بلا هدف)</small></span><b>${fmt(f.bal)}</b></div>`).join('') : ''}
+        <div class="hint" style="margin:8px 2px 0">اضغط أي صندوق للسحب/الإيداع/القرض (مصروف ← الصناديق).</div>
       </div>`;
     return;
   }
@@ -812,13 +815,13 @@ function renderDashView(){
             else due = '⏰ باقي ' + days + ' يوم';
           }
           return `
-          <div class="ov-row">
+          <div class="ov-row" onclick="gotoFunds()" style="cursor:pointer" title="الإرجاع والشطب من مصروف ← الصناديق">
             <div class="ov-line"><span>${dd.toCategory?'🗂️':'👤'} <b>${esc(dd.account)}</b> <small style="color:var(--muted)">← «${esc(dd.fund)}»</small></span><b>${fmt(dd.amount)}</b></div>
             <div class="bar"><i style="width:${Math.max(6, Math.round(dd.amount/mx*100))}%;background:${PALETTE[i%PALETTE.length]}"></i></div>
             ${due ? `<div class="ov-sub"><span style="${cls}">${due}</span><span>${esc(dd.date)}</span></div>` : `<div class="ov-sub"><span></span><span>${esc(dd.date)}</span></div>`}
           </div>`;
         }).join('')}
-        <div class="hint" style="margin:8px 2px 0">الإرجاع والشطب من «مصروف ← الصناديق».</div>
+        <div class="hint" style="margin:8px 2px 0">اضغط أي قرض للإرجاع أو الشطب (مصروف ← الصناديق).</div>
       </div>`;
     return;
   }
@@ -1055,22 +1058,6 @@ function render(){
   $('saveList').innerHTML = saveHtml;
   state._dashFunds = fundView;
 
-  /* ملخص الصناديق باللوحة — عرض فقط، الضغط يوديك لقسم الصناديق */
-  const fsEl = $('fundSummary');
-  if(fsEl){
-    fsEl.innerHTML = fundView.length ? `
-      <div class="card">
-        <div class="save-head">صناديق الادخار 🏦 <span>الإجمالي: ${fmt(state._fundTotal)}</span></div>
-        ${fundView.map(f => `
-          <div class="fsum${f.closed?' off':''}" onclick="gotoFunds()" title="الإدارة من تبويب المصروف ← الصناديق">
-            <span class="fs-name">${f.closed?'🔒':'🏦'} ${esc(f.name)}</span>
-            ${f.goal>0 ? `<span class="fs-goal">🎯 ${Math.max(0, Math.min(100, Math.round(f.bal / f.goal * 100)))}%</span>` : ''}
-            <span class="fs-bal">${fmt(f.bal)}</span>
-          </div>`).join('')}
-        <div class="hint" style="margin:8px 2px 0">السحب والإيداع والقرض من تبويب «مصروف ← الصناديق» — اضغط أي صندوق يوديك هناك.</div>
-      </div>` : '';
-  }
-
   /* ===== ديون الصناديق ===== */
   // نعرض بس القروض هنا — السحب والإيداع ما يظهرون كبطاقة دين (حسب طلب المستخدم).
   // القرض بس هو اللي يبقى «مطلوب» يترجّع أو ينشطب.
@@ -1109,27 +1096,6 @@ function render(){
   }
   $('debtList').innerHTML = debtHtml;
   state._dashDebts = open;
-
-  /* ملخص الديون باللوحة — عرض فقط، الإرجاع والشطب من قسم الصناديق */
-  const dsEl = $('debtSummary');
-  if(dsEl){
-    dsEl.innerHTML = open.length ? `
-      <div class="card">
-        <div class="save-head">ديون الصناديق ⏳ <span>الإجمالي: ${fmt(open.reduce((s,d)=> s + (d.amount||0), 0))}</span></div>
-        ${open.map(d => {
-          let due = '';
-          if(d.dueDate){
-            const days = Math.floor((new Date(d.dueDate) - new Date(todayISO())) / 86400000);
-            due = days < 0 ? ' · ⏰ فات موعده!' : (days === 0 ? ' · ⏰ يستحق اليوم!' : ' · باقي ' + days + ' يوم');
-          }
-          return `
-          <div class="fsum" onclick="gotoFunds()" title="الإرجاع والشطب من تبويب المصروف ← الصناديق">
-            <span class="fs-name">🤝 ${esc(d.account)}<small style="color:var(--muted);font-weight:400"> ← «${esc(d.fund)}»${due}</small></span>
-            <span class="fs-bal">${fmt(d.amount)}</span>
-          </div>`;
-        }).join('')}
-      </div>` : '';
-  }
 
   /* مصاريف على تصنيفات غير موجودة بالميزانية */
   Object.keys(spentByCat).forEach(k => {
