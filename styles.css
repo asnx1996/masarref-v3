@@ -176,7 +176,20 @@
     padding:9px 10px;font-family:inherit;font-size:.82rem;font-weight:500;
   }
   .month-pick::-webkit-calendar-picker-indicator{filter:invert(1)}
-  .head-stats{display:flex;gap:9px;margin-top:16px}
+  /* شريط الفترة — اسم الفترة ومداها، وضغطة عليه تفتح التعديل */
+  .period-bar{
+    display:flex;align-items:center;gap:8px;width:100%;margin-top:12px;
+    background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);
+    border-radius:13px;padding:9px 12px;color:#fff;
+    font-family:inherit;text-align:start;cursor:pointer;
+    backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+    transition:transform .18s var(--ease),background .2s;
+  }
+  .period-bar:active{transform:scale(.985)}
+  .period-bar .pb-name{font-size:.86rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .period-bar .pb-range{font-size:.66rem;font-weight:300;opacity:.82;margin-inline-start:auto;white-space:nowrap}
+  .period-bar .pb-edit{font-size:.78rem;opacity:.7}
+  .head-stats{display:flex;gap:9px;margin-top:12px}
   .hstat{flex:1;background:rgba(255,255,255,.13);border-radius:15px;padding:11px 12px;backdrop-filter:var(--blur)}
   .hstat .lbl{font-size:.65rem;font-weight:300;opacity:.85}
   .hstat .val{font-size:1.02rem;font-weight:700;margin-top:3px;white-space:nowrap}
@@ -531,6 +544,29 @@
     border:none;background:var(--primary);color:#fff;border-radius:10px;padding:8px 14px;
     font-family:inherit;font-weight:700;font-size:.72rem;cursor:pointer;
   }
+
+  /* ---------- بطاقة عضو العائلة (إدارة الأعضاء للأدمن) ---------- */
+  .mem{
+    background:color-mix(in srgb, var(--ink) 4%, transparent);
+    border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:9px;
+  }
+  .mem-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .mem-name{font-size:.88rem;font-weight:700;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .mem-tag{
+    font-size:.62rem;font-weight:600;padding:2px 8px;border-radius:999px;
+    background:var(--primary-soft);color:var(--primary);
+  }
+  .mem-tag.you{background:color-mix(in srgb, var(--ink) 9%, transparent);color:var(--muted)}
+  .mem-mail{font-size:.68rem;color:var(--muted);margin-top:3px;word-break:break-all}
+  .mem-actions{display:flex;gap:7px;margin-top:10px;flex-wrap:wrap}
+  .mem-actions button{
+    flex:1;min-width:130px;border:none;border-radius:10px;padding:8px 10px;
+    font-family:inherit;font-weight:700;font-size:.7rem;cursor:pointer;
+    transition:transform .18s var(--ease);
+  }
+  .mem-actions button:active{transform:scale(.95)}
+  .mem-pw{background:var(--primary-soft);color:var(--primary)}
+  .mem-rm{background:color-mix(in srgb, var(--red) 12%, transparent);color:var(--red)}
 
   /* ---------- التقرير (مشترك بين الطباعة والـ PDF) ---------- */
   #pdfStage{position:absolute;top:0;right:-11000px;width:794px;background:#fff;padding:28px;color:#000;z-index:-1}

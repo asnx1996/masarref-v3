@@ -36,13 +36,75 @@ const dateInMonth = m => {
   return m + (m < t.slice(0,7) ? '-' + ('0'+daysInMonth(m)).slice(-2) : '-01');
 };
 
-function monthProgress(m){
+/* ============================================================
+   الفترة (اللي چان اسمها «شهر») — اسم تختاره + بداية ونهاية
+   مفتاحها بعده 'YYYY-MM' بس هذا مفتاح داخلي، مو شهر تقويمي.
+   ============================================================ */
+const PERIOD_DAYS = 30;   /* المدة الافتراضية لفترة جديدة */
+
+/* جمع/طرح أيام على تاريخ ISO — بتوقيت محلي (مو UTC) */
+const addDays = (iso, n) => {
+  const p = String(iso).slice(0,10).split('-').map(Number);
+  const d = new Date(p[0], p[1]-1, p[2]);
+  d.setDate(d.getDate() + n);
+  return localISO(d);
+};
+/* عدد الأيام بين تاريخين — شامل الطرفين (يوم واحد = 1) */
+const daysBetween = (a, b) => {
+  const pa = String(a).slice(0,10).split('-').map(Number);
+  const pb = String(b).slice(0,10).split('-').map(Number);
+  const da = new Date(pa[0], pa[1]-1, pa[2]), db = new Date(pb[0], pb[1]-1, pb[2]);
+  return Math.round((db - da) / 86400000) + 1;
+};
+/* هل الفترة إلها تواريخ مضبوطة؟ */
+const hasPeriodDates = p => !!(p && p.startDate && p.endDate);
+/* الاسم المعروض للفترة */
+const periodLabel = (p, m) => (p && p.title) ? p.title : ('شهر ' + (m || ''));
+/* اسم مقترح للفترة الجاية: نزيد آخر رقم بالاسم السابق (عربي أو إنكليزي).
+   ما بيه رقم أو ماكو اسم سابق → «مصاريف شهر N» حسب مفتاح الفترة. */
+const AR_DIGITS = '٠١٢٣٤٥٦٧٨٩';
+const toArDigits = n => String(n).replace(/\d/g, d => AR_DIGITS[+d]);
+function suggestPeriodTitle(prevTitle, month){
+  const t = String(prevTitle || '').trim();
+  const m = t && t.match(/([0-9٠-٩]+)(?!.*[0-9٠-٩])/);
+  if(m){
+    const isAr = /[٠-٩]/.test(m[1]);
+    const val = Number(m[1].replace(/[٠-٩]/g, d => AR_DIGITS.indexOf(d))) + 1;
+    return t.slice(0, m.index) + (isAr ? toArDigits(val) : String(val)) + t.slice(m.index + m[1].length);
+  }
+  if(t) return t + ' — التالي';
+  return 'مصاريف شهر ' + toArDigits(Number(String(month || '').slice(5,7)) || '');
+}
+
+/* تقدّم الفترة: تعتمد تواريخ البداية/النهاية إذا موجودة، وإلا
+   ترجع للسلوك القديم (الشهر التقويمي) حتى الفترات القديمة تشتغل */
+function monthProgress(m, period){
+  if(hasPeriodDates(period)){
+    const total = Math.max(1, daysBetween(period.startDate, period.endDate));
+    const t = todayISO();
+    if(t < period.startDate) return { elapsed: 0, left: total, total };
+    if(t > period.endDate)   return { elapsed: total, left: 0, total };
+    const elapsed = Math.min(total, Math.max(1, daysBetween(period.startDate, t)));
+    return { elapsed, left: Math.max(0, total - elapsed), total };
+  }
   const total = daysInMonth(m);
   const cur = thisMonth();
   if(m < cur) return { elapsed: total, left: 0, total };
   if(m > cur) return { elapsed: 0, left: total, total };
   const day = new Date().getDate();
   return { elapsed: day, left: Math.max(0, total - day), total };
+}
+
+/* التاريخ الافتراضي لفورم الإضافة داخل فترة معيّنة:
+   اليوم إذا داخل الفترة، وإلا أقرب طرف من أطرافها */
+function periodDefaultDate(period, m){
+  const t = todayISO();
+  if(hasPeriodDates(period)){
+    if(t < period.startDate) return period.startDate;
+    if(t > period.endDate)   return period.endDate;
+    return t;
+  }
+  return dateInMonth(m);
 }
 
 function toast(msg, isErr){

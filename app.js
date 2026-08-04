@@ -491,10 +491,13 @@ async function apiPost(p){
       call = sb.rpc('clear_month', { p_month:p.month });
       break;
     case 'returnDebt':
-      call = sb.rpc('return_debt', { p_id:p.id, p_date:p.date||'' });
+      call = sb.rpc('return_debt', { p_id:p.id, p_date:p.date||'', p_month:p.month||'' });
       break;
     case 'addDeposit':
-      call = sb.rpc('add_deposit', { p_fund:p.fund, p_amount:p.amount, p_date:p.date||'', p_descr:p.desc||'', p_from_category:p.fromCategory||'' });
+      call = sb.rpc('add_deposit', { p_fund:p.fund, p_amount:p.amount, p_date:p.date||'', p_descr:p.desc||'', p_from_category:p.fromCategory||'', p_month:p.month||'' });
+      break;
+    case 'setPeriod':
+      call = sb.rpc('set_period', { p_month:p.month, p_title:p.title||'', p_start:p.start||'', p_end:p.end||'' });
       break;
     case 'withdrawFund':
       call = sb.rpc('withdraw_fund', { p_month:p.month, p_date:p.date, p_amount:p.amount, p_descr:p.desc||'', p_fund:p.fund, p_debt_account:p.debtAccount||'', p_to_category:p.toCategory||'' });
@@ -576,10 +579,6 @@ function showSkeleton(){
 async function loadMonth(month){
   state.month = month;
   $('monthPick').value = month;
-  /* تاريخ فورم الإضافة يتبع الشهر المعروض — لو اليوم من شهر ثاني (مقفل
-     مثلاً) ما نخلي المصروف يروح له بالغلط */
-  const ed = $('expDate');
-  if(ed && (ed.value||'').slice(0,7) !== month) ed.value = dateInMonth(month);
   if(!apiReady()){ render(); return; }
   inFlight = true;
   showSkeleton();
@@ -591,6 +590,9 @@ async function loadMonth(month){
     state.budget = res.budget;
     state.expenses = res.expenses;
     state.debts = res.debts || [];
+    /* تاريخ فورم الإضافة: اليوم إذا داخل الفترة، وإلا أقرب طرف منها */
+    const ed = $('expDate');
+    if(ed) ed.value = periodDefaultDate(state.budget, month);
     /* دخول متدرّج للبطاقات — بس عند تحميل شهر (مو بكل إعادة رسم صغيرة) */
     const am = $('appMain');
     if(am){ am.classList.add('fresh'); clearTimeout(am._ft); am._ft = setTimeout(() => am.classList.remove('fresh'), 1400); }
@@ -914,7 +916,7 @@ function render(){
   Object.keys(spentByCat).forEach(k => { if(!known.has(k) && !saveNames.has(k) && spentByCat[k]>0) other += spentByCat[k]; });
   if(other > 0) donutParts.push({ label:'أخرى', value:other });
 
-  const prog = monthProgress(state.month);
+  const prog = monthProgress(state.month, state.budget);
   const dailyAvg = prog.elapsed > 0 ? Math.round(realSpending / prog.elapsed) : 0;
   const canDaily = prog.left > 0 ? Math.max(0, Math.round(remain / prog.left)) : 0;
 
@@ -1140,9 +1142,27 @@ function render(){
   if(!document.querySelector('#catRows .cat-row')) addRow('spend','','',0);
   updateAlloc();
 
+  /* شريط الفترة */
+  renderPeriodBar();
+
   /* حالة القفل */
-  $('btnCloseMonth').textContent = state.locked ? '🔒 الشهر مقفل' : 'إقفال الشهر وترحيل الباقي ✓';
+  $('btnCloseMonth').textContent = state.locked ? '🔒 الفترة مقفلة' : 'إقفال الفترة وترحيل الباقي ✓';
   applyLock(state.locked);
+}
+
+/* ---------- شريط الفترة بالهيدر ---------- */
+function renderPeriodBar(){
+  const bar = $('periodBar');
+  if(!bar) return;
+  const p = state.budget || {};
+  $('pbName').textContent = (state.locked ? '🔒 ' : '') + periodLabel(p, state.month);
+  if(hasPeriodDates(p)){
+    const pr = monthProgress(state.month, p);
+    const left = pr.left > 0 ? ' · باقي ' + pr.left + ' يوم' : ' · انتهت';
+    $('pbRange').textContent = p.startDate + ' ← ' + p.endDate + left;
+  }else{
+    $('pbRange').textContent = 'بلا تواريخ — اضغط لتحديدها';
+  }
 }
 
 /* ---------- خيارات الفلتر ---------- */
@@ -1605,7 +1625,7 @@ window.openWithdraw = (idx) => {
     <div class="hint" style="margin:0 0 8px">السحب ينقص رصيد الصندوق. لو سجّلته على حساب، يبقى مطلوب للصندوق لين ترجعه أو تشطبه.</div>
     <div class="row">
       <div><label>المبلغ</label><input type="tel" id="wdAmount" inputmode="numeric" placeholder="0"></div>
-      <div><label>التاريخ</label><input type="date" id="wdDate" value="${dateInMonth(state.month)}"></div>
+      <div><label>التاريخ</label><input type="date" id="wdDate" value="${periodDefaultDate(state.budget, state.month)}"></div>
     </div>
     <label>💸 أضف المبلغ لتصنيف مصروف (اختياري)</label>
     <select id="wdTo">${catOpts}</select>
@@ -1621,16 +1641,16 @@ window.openWithdraw = (idx) => {
   $('wdSave').onclick = async () => {
     const amount = num($('wdAmount').value);
     if(amount <= 0) return toast('دخّل المبلغ', true);
-    /* السحب ينسجل بالشهر المعروض — مو بشهر اليوم (اللي ممكن يكون مقفل) */
-    const date = $('wdDate').value || dateInMonth(state.month);
-    if(date.slice(0,7) !== state.month) return toast('التاريخ لازم يكون بشهر ' + state.month + ' (الشهر المعروض)', true);
+    /* السحب ينسجل بالفترة المعروضة — والتاريخ حر (فترة ٢٠ تموز ← ٢٠ آب
+       تحتوي تاريخين من شهرين تقويميين مختلفين) */
+    const date = $('wdDate').value || periodDefaultDate(state.budget, state.month);
     const reason = $('wdDesc').value.trim();
     const acc = $('wdAcc').value.trim();
     const toCat = $('wdTo').value;
     loading(true);
     try{
       const res = await apiPost({
-        action:'withdrawFund', month:date.slice(0,7), date, amount,
+        action:'withdrawFund', month: state.month, date, amount,
         desc: reason ? ('سحب: '+reason) : (toCat ? ('سحب لـ'+toCat) : (acc ? ('سحب على: '+acc) : 'سحب')),
         fund: c.name,
         debtAccount: acc,
@@ -1661,7 +1681,7 @@ window.openLoan = (idx) => {
     <div class="hint" style="margin:0 0 8px">القرض ينقص رصيد الصندوق (الحالي: <b style="color:var(--primary)">${fmt(bal)}</b>) ويظل مسجّل لين يرجّعه — والترجيع يرجع للصندوق نفسه، مو للفائض.</div>
     <div class="row">
       <div><label>المبلغ</label><input type="tel" id="lnAmount" inputmode="numeric" placeholder="0"></div>
-      <div><label>التاريخ</label><input type="date" id="lnDate" value="${dateInMonth(state.month)}"></div>
+      <div><label>التاريخ</label><input type="date" id="lnDate" value="${periodDefaultDate(state.budget, state.month)}"></div>
     </div>
     <label style="margin-top:10px">القرض على منو؟</label>
     <div class="ln-seg" style="display:flex;gap:8px;margin:2px 0 4px">
@@ -1697,9 +1717,8 @@ window.openLoan = (idx) => {
   $('lnSave').onclick = async () => {
     const amount = num($('lnAmount').value);
     if(amount <= 0) return toast('دخّل المبلغ', true);
-    /* القرض ينسجل بالشهر المعروض — مو بشهر اليوم (اللي ممكن يكون مقفل) */
-    const date = $('lnDate').value || dateInMonth(state.month);
-    if(date.slice(0,7) !== state.month) return toast('التاريخ لازم يكون بشهر ' + state.month + ' (الشهر المعروض)', true);
+    /* القرض ينسجل بالفترة المعروضة — والتاريخ حر */
+    const date = $('lnDate').value || periodDefaultDate(state.budget, state.month);
     let acc = '', toCat = '', dueDate = '';
     if(lnType === 'cat'){
       toCat = ($('lnCat') && $('lnCat').value) || '';
@@ -1713,7 +1732,7 @@ window.openLoan = (idx) => {
     loading(true);
     try{
       const res = await apiPost({
-        action:'addLoan', month: date.slice(0,7), date, amount,
+        action:'addLoan', month: state.month, date, amount,
         fund: c.name, account: acc, toCategory: toCat, dueDate, desc: $('lnDesc').value.trim()
       });
       if(guardAuth(res)) return;
@@ -1773,7 +1792,7 @@ window.openDeposit = async (idx) => {
     <div class="hint" id="dpHint" style="margin:6px 0 0"></div>
     <div class="row" style="margin-top:10px">
       <div><label>المبلغ</label><input type="tel" id="dpAmount" inputmode="numeric" placeholder="0"></div>
-      <div><label>التاريخ</label><input type="date" id="dpDate" value="${dateInMonth(state.month)}"></div>
+      <div><label>التاريخ</label><input type="date" id="dpDate" value="${periodDefaultDate(state.budget, state.month)}"></div>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
       <button class="btn ghost" id="dpMax" style="margin:0;width:auto;padding:8px 14px;font-size:.75rem">كل المتاح</button>
@@ -1809,12 +1828,11 @@ window.openDeposit = async (idx) => {
     const cap = capNow(), from = $('dpSrc').value;
     if(amount <= 0) return toast('دخّل المبلغ', true);
     if(amount > cap) return toast('المبلغ أكثر من المتاح (' + fmt(cap) + ')', true);
-    /* الإيداع ينسجل بالشهر المعروض — الفائض محسوب عليه أصلاً */
-    const dpDate = $('dpDate').value || dateInMonth(state.month);
-    if(dpDate.slice(0,7) !== state.month) return toast('التاريخ لازم يكون بشهر ' + state.month + ' (الشهر المعروض)', true);
+    /* الإيداع ينسجل بالفترة المعروضة — الفائض محسوب عليها أصلاً — والتاريخ حر */
+    const dpDate = $('dpDate').value || periodDefaultDate(state.budget, state.month);
     loading(true);
     try{
-      const res = await apiPost({ action:'addDeposit', fund:c.name, amount, date: dpDate, desc: $('dpDesc').value.trim(), fromCategory: from });
+      const res = await apiPost({ action:'addDeposit', month: state.month, fund:c.name, amount, date: dpDate, desc: $('dpDesc').value.trim(), fromCategory: from });
       if(guardAuth(res)) return;
       if(!res.ok) throw new Error(res.error || 'خطأ');
       modalClose();
@@ -1887,8 +1905,7 @@ window.openEditWithdraw = (id, fundIdx) => {
   $('ewSave').onclick = async () => {
     const amount = num($('ewAmount').value);
     if(amount <= 0) return toast('دخّل المبلغ', true);
-    const date = $('ewDate').value || e.date;
-    if(date.slice(0,7) !== state.month) return toast('التاريخ لازم يبقى بنفس الشهر', true);
+    const date = $('ewDate').value || e.date;   /* التاريخ حر — الفترة ما تتغيّر */
     loading(true);
     try{
       const res = await apiPost({ action:'editWithdraw', id, amount, date, desc: $('ewDesc').value.trim() });
@@ -1924,14 +1941,13 @@ window.deleteWithdraw = async (id, fundIdx) => {
 window.returnDebt = async (id) => {
   const d = (state.debts||[]).find(x=>x.id===id);
   if(!d) return;
-  /* الإرجاع ينسجل بالشهر المعروض (المفتوح) — مو بشهر اليوم، لأن شهر
-     اليوم ممكن يكون مقفل إذا قفلته من وقت استلام راتب الشهر الجاي */
-  if(state.locked) return toast('هذا الشهر مقفل — روح للشهر المفتوح (الجاي) وسوي الإرجاع منه', true);
-  const retDate = dateInMonth(state.month);
-  if(!confirm('ترجيع ' + fmt(d.amount) + ' لصندوق «' + d.fund + '»؟\nراح يرجع المبلغ لرصيد الصندوق ويتسجّل بتاريخ ' + retDate + '.')) return;
+  /* الإرجاع ينسجل بالفترة المعروضة (المفتوحة) — والتاريخ حر */
+  if(state.locked) return toast('هذه الفترة مقفلة — روح للفترة المفتوحة وسوي الإرجاع منها', true);
+  const retDate = periodDefaultDate(state.budget, state.month);
+  if(!confirm('ترجيع ' + fmt(d.amount) + ' لصندوق «' + d.fund + '»؟\nراح يرجع المبلغ لرصيد الصندوق ويتسجّل بتاريخ ' + retDate + ' ضمن «' + periodLabel(state.budget, state.month) + '».')) return;
   loading(true);
   try{
-    const res = await apiPost({ action:'returnDebt', id, date: retDate });
+    const res = await apiPost({ action:'returnDebt', id, date: retDate, month: state.month });
     if(guardAuth(res)) return;
     if(!res.ok) throw new Error(res.error || 'خطأ');
     toast('انرجّع للصندوق ✓');
@@ -1953,6 +1969,173 @@ window.cancelDebt = async (id) => {
     await loadMonth(state.month);
   }catch(err){ toast('ما انشطب: ' + err.message, true); }
   finally{ loading(false); }
+};
+
+/* ============================================================
+   إدارة أعضاء العائلة — للأدمن بس
+   تمر عبر Edge Function اسمها household-admin، لأن تغيير باسورد
+   يوزر ثاني يحتاج مفتاح service_role — وهذا المفتاح ممنوع يوصل
+   للمتصفح أبداً (يتجاوز كل حماية RLS). الدالة بالسيرفر تتأكد إن
+   اللي يطلب أدمن نفس العائلة قبل ما تسوي أي شي.
+   ============================================================ */
+async function callAdminFn(payload){
+  const { data, error } = await sb.functions.invoke('household-admin', { body: payload });
+  if(error){
+    /* رسالة الخطأ الحقيقية تجي بجسم الرد — نحاول نقراها */
+    let msg = error.message || 'خطأ بالخادم';
+    try{ const j = await error.context.json(); if(j && j.error) msg = j.error; }catch(_){}
+    return { ok:false, error: msg };
+  }
+  if(data && data.error) return { ok:false, error: data.error };
+  return { ok:true, ...(data||{}) };
+}
+
+async function loadMembers(){
+  const box = $('memList');
+  if(!box) return;
+  box.innerHTML = '<div class="hint">دا أجيب الأعضاء…</div>';
+  const res = await callAdminFn({ action:'list' });
+  if(!res.ok){ box.innerHTML = '<div class="hint" style="color:var(--red)">ما كدرت أجيب الأعضاء: ' + esc(res.error) + '</div>'; return; }
+  const list = res.members || [];
+  if(!list.length){ box.innerHTML = '<div class="hint">ماكو أعضاء</div>'; return; }
+  box.innerHTML = list.map(m => `
+    <div class="mem">
+      <div class="mem-top">
+        <span class="mem-name">${esc(m.name || 'بلا اسم')}${m.admin ? '<span class="mem-tag">🛡 أدمن</span>' : ''}${m.self ? '<span class="mem-tag you">إنت</span>' : ''}</span>
+      </div>
+      <div class="mem-mail" dir="ltr">${esc(m.email || '—')}</div>
+      <div class="mem-actions">
+        <button class="mem-pw" onclick="memSetPassword('${m.id}')">🔑 غيّر الباسورد</button>
+        ${(m.self || m.admin) ? '' : `<button class="mem-rm" onclick="memRemove('${m.id}')">✕ شيله من العائلة</button>`}
+      </div>
+    </div>`).join('');
+}
+
+window.memSetPassword = (id) => {
+  modalOpen(`
+    <h2>🔑 تغيير باسورد عضو</h2>
+    <div class="hint" style="margin:0 0 12px">راح ينتغيّر فوراً بلا ما نسأل عن باسورده القديم. انطيه الباسورد الجديد وخله يغيّره بنفسه بعدين من الإعدادات.</div>
+    <label>الباسورد الجديد</label>
+    <input type="password" id="mpNew" autocomplete="new-password" placeholder="٦ خانات على الأقل">
+    <label>تأكيد الباسورد</label>
+    <input type="password" id="mpNew2" autocomplete="new-password" placeholder="أعد كتابته">
+    <button class="btn" id="mpSave">غيّر الباسورد ✓</button>
+    <button class="btn ghost" onclick="modalClose()">إلغاء</button>
+  `);
+  setTimeout(() => { try{ $('mpNew').focus(); }catch(_){} }, 260);
+  $('mpSave').onclick = async () => {
+    const np = $('mpNew').value, np2 = $('mpNew2').value;
+    if(np.length < 6) return toast('الباسورد قصير — ٦ خانات على الأقل', true);
+    if(np !== np2) return toast('التأكيد ما يطابق', true);
+    loading(true);
+    try{
+      const res = await callAdminFn({ action:'setPassword', userId:id, password:np });
+      if(!res.ok) throw new Error(res.error);
+      modalClose();
+      toast('انتغيّر باسورد «' + (res.name || 'العضو') + '» ✓ 🔑');
+    }catch(err){ toast('ما انتغيّر: ' + err.message, true); }
+    finally{ loading(false); }
+  };
+};
+
+window.memRemove = async (id) => {
+  if(!(await confirmDel('تشيل هذا العضو من العائلة؟', 'حسابه يبقى موجود بس ما يعود يشوف بيانات العائلة. تكدر ترجّعه بكود العائلة.', 'شيله'))) return;
+  loading(true);
+  try{
+    const res = await callAdminFn({ action:'remove', userId:id });
+    if(!res.ok) throw new Error(res.error);
+    toast('انشال «' + (res.name || 'العضو') + '» من العائلة ✓');
+    loadMembers();
+  }catch(err){ toast('ما انشال: ' + err.message, true); }
+  finally{ loading(false); }
+};
+
+/* ============================================================
+   الفترة — اسم وتاريخ بداية ونهاية
+   الفترة مو شهر تقويمي: تبدي وقت ما يوصل الراتب وتنتهي وقت ما
+   تحدده إنت. المفتاح 'YYYY-MM' بقى داخلي بس.
+   ============================================================ */
+
+/* اقتراحات فترة جديدة، مبنية على الفترة اللي قبلها */
+async function suggestPeriod(month){
+  let prev = null;
+  try{
+    const r = await sb.rpc('load_month', { p_month: prevMonthStr(month) });
+    if(!r.error && r.data) prev = r.data.budget;
+  }catch(_){}
+  const start = (prev && prev.endDate) ? addDays(prev.endDate, 1) : todayISO();
+  return {
+    title: suggestPeriodTitle(prev && prev.title, month),
+    start,
+    end: addDays(start, PERIOD_DAYS - 1)
+  };
+}
+
+/* p_isNew = شاشة «بداية فترة جديدة» بعد الإقفال */
+window.openPeriodSetup = async (month, isNew) => {
+  month = month || state.month;
+  const cur = (month === state.month) ? (state.budget || {}) : {};
+  let vals = { title: cur.title || '', start: cur.startDate || '', end: cur.endDate || '' };
+  if(!vals.title || !vals.start || !vals.end){
+    loading(true);
+    try{
+      const s = await suggestPeriod(month);
+      vals = { title: vals.title || s.title, start: vals.start || s.start, end: vals.end || s.end };
+    }finally{ loading(false); }
+  }
+  modalOpen(`
+    <h2>${isNew ? '🎉 بداية فترة جديدة' : '✎ تعديل الفترة'}</h2>
+    <div class="hint" style="margin:0 0 12px">${isNew
+      ? 'انقفلت الفترة السابقة وانرحّل باقيها. سمّي الفترة الجديدة وحدد مداها — مو لازم تطابق الشهر التقويمي.'
+      : 'الاسم والتواريخ للعرض والحساب بس — ما يمسّون أي مبلغ مسجّل.'}</div>
+    <label>اسم الفترة</label>
+    <input type="text" id="pdTitle" placeholder="مثلاً: مصاريف شهر ٨" value="${esc(vals.title)}">
+    <div class="row" style="margin-top:10px">
+      <div><label>تبدي من</label><input type="date" id="pdStart" value="${esc(vals.start)}"></div>
+      <div><label>تنتهي بـ</label><input type="date" id="pdEnd" value="${esc(vals.end)}"></div>
+    </div>
+    <div class="hint" id="pdLen" style="margin:6px 0 0"></div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button type="button" class="btn ghost pd-quick" data-days="30" style="flex:1;margin:0;font-size:.74rem">٣٠ يوم</button>
+      <button type="button" class="btn ghost pd-quick" data-days="35" style="flex:1;margin:0;font-size:.74rem">٣٥ يوم</button>
+      <button type="button" class="btn ghost pd-quick" data-days="40" style="flex:1;margin:0;font-size:.74rem">٤٠ يوم</button>
+    </div>
+    <button class="btn" id="pdSave" style="margin-top:14px">${isNew ? 'يلا نبدي 🚀' : 'حفظ ✓'}</button>
+    ${isNew ? '' : '<button class="btn ghost" onclick="modalClose()">إلغاء</button>'}
+  `);
+  const refreshLen = () => {
+    const s = $('pdStart').value, e = $('pdEnd').value;
+    if(!s || !e){ $('pdLen').textContent = 'حدد التاريخين حتى نحسب المدة'; return; }
+    if(e < s){ $('pdLen').innerHTML = '<b style="color:var(--red)">⚠ النهاية قبل البداية</b>'; return; }
+    $('pdLen').innerHTML = 'مدة الفترة: <b style="color:var(--primary)">' + daysBetween(s, e) + ' يوم</b>';
+  };
+  refreshLen();
+  $('pdStart').addEventListener('change', refreshLen);
+  $('pdEnd').addEventListener('change', refreshLen);
+  document.querySelectorAll('.pd-quick').forEach(b => {
+    b.onclick = () => {
+      const s = $('pdStart').value || todayISO();
+      $('pdStart').value = s;
+      $('pdEnd').value = addDays(s, Number(b.dataset.days) - 1);
+      refreshLen();
+    };
+  });
+  $('pdSave').onclick = async () => {
+    const title = $('pdTitle').value.trim();
+    const start = $('pdStart').value, end = $('pdEnd').value;
+    if(!title) return toast('اكتب اسم الفترة', true);
+    if(start && end && end < start) return toast('تاريخ النهاية لازم يكون بعد البداية', true);
+    loading(true);
+    try{
+      const res = await apiPost({ action:'setPeriod', month, title, start, end });
+      if(guardAuth(res)) return;
+      if(!res.ok) throw new Error(res.error || 'خطأ');
+      modalClose();
+      toast(isNew ? ('بدت «' + title + '» ✓ 🚀') : 'انحفظت الفترة ✓');
+      if(month === state.month) await loadMonth(state.month);
+    }catch(err){ toast('ما انحفظت: ' + err.message, true); }
+    finally{ loading(false); }
+  };
 };
 
 /* ---------- نسخ الشهر الماضي ---------- */
@@ -2072,8 +2255,9 @@ function renderSettings(){
         <option value="funny">فكاهية وغبية — عراقي يحشش 😂</option>
         <option value="normal">اعتيادية ومرحة 🙂</option>
         <option value="serious">جدية وقلقة 🧐</option>
+        <option value="mean">متنمّرة — يعايرك بفلوسك 😈</option>
       </select>
-      <div class="hint" style="margin-top:4px">تحدد شلون يحچي ويّاك: نكت وسوالف، لو تحقيق مرح، لو محقق قلقان على فلوسك.</div>
+      <div class="hint" style="margin-top:4px">تحدد شلون يحچي ويّاك: نكت وسوالف، لو تحقيق مرح، لو محقق قلقان على فلوسك، لو متنمّر ما يرحم.</div>
       <label>🎨 ثيم الألوان</label>
       <div class="pal-grid">${palCards}</div>
       <div class="hint" style="margin-top:2px">كل ثيم يصبغ لون الموقع + السماء (نهار/غروب/ليل والفصول) بنفس العائلة — يتطبّق فوراً وينحفظ بجهازك.</div>
@@ -2146,6 +2330,15 @@ function renderSettings(){
     </details>
 
     ${session && session.admin ? `
+    <details class="card set-acc" data-g="mem" ${openAttr('mem')}>
+      <summary><span class="sa-ico">👥</span>أعضاء العائلة<span class="sa-chev">›</span></summary>
+      <div class="sa-body">
+      <div class="hint" style="margin:0 0 10px">تكدر تغيّر باسورد أي عضو بعائلتك (لو نسى باسورده) أو تشيله منها. <b>ملاحظة:</b> لو إنت نسيت باسوردك، غيّره من لوحة Supabase ← Authentication ← Users.</div>
+      <div id="memList"><div class="hint">…</div></div>
+      <button class="btn ghost" id="btnReloadMembers">↻ تحديث القائمة</button>
+      </div>
+    </details>
+
     <details class="card set-acc" data-g="adm" ${openAttr('adm')}>
       <summary><span class="sa-ico">🛡</span>المشرف<span class="sa-chev">›</span></summary>
       <div class="sa-body">
@@ -2182,6 +2375,11 @@ function renderSettings(){
     }catch(err){ toast('ما انتغيّر: ' + err.message, true); }
     finally{ loading(false); }
   };
+  /* أعضاء العائلة (للأدمن بس) */
+  if($('memList')){
+    loadMembers();
+    $('btnReloadMembers').onclick = () => loadMembers();
+  }
   if($('idleSel')){
     $('idleSel').value = String(autoLogoutMin);
     $('idleSel').onchange = (e) => {
@@ -2693,6 +2891,7 @@ $('btnSignup').onclick = doSignup;
 $('suCode').addEventListener('keydown', e => { if(e.key === 'Enter') doSignup(); });
 
 $('monthPick').onchange = e => loadMonth(e.target.value || thisMonth());
+$('periodBar').onclick = () => openPeriodSetup(state.month, false);
 
 /* فلتر المصاريف */
 $('fltText').addEventListener('input', renderExpenseList);
@@ -3002,12 +3201,12 @@ window.useQuick = async (id) => {
     const date = $('expDate').value || todayISO();
     loading(true);
     try{
-      const res = await apiPost({ action:'addExpense', month: date.slice(0,7), date, amount: q.amount, desc: q.label, category: q.category });
+      const res = await apiPost({ action:'addExpense', month: state.month, date, amount: q.amount, desc: q.label, category: q.category });
       if(guardAuth(res)) return;
       if(!res.ok) throw new Error(res.error || 'خطأ');
       toast('انسجّل «' + q.label + '» ✓ ⚡');
       sndSad();
-      if(date.slice(0,7) === state.month) await loadMonth(state.month);
+      await loadMonth(state.month);
     }catch(err){ toast('ما انسجّل: ' + err.message, true); }
     finally{ loading(false); }
   }else{
@@ -3065,7 +3264,10 @@ $('btnAddExp').onclick = async () => {
   const amount = num($('expAmount').value);
   if(amount <= 0) return toast('دخّل المبلغ', true);
   const date = $('expDate').value || todayISO();
-  const month = date.slice(0,7);
+  /* 🔑 المصروف يروح للفترة المعروضة (المفتوحة) — مو لشهر تاريخه.
+     هيچي تكدر تسجّل مصروف تاريخه ٢٥ تموز ضمن فترة «شهر ٨» اللي
+     بدت يوم ٢٠ تموز، بدون ما يوصل للفترة المقفلة. */
+  const month = state.month;
   const payload = {
     action:'addExpense', month, date, amount,
     desc: $('expDesc').value.trim(),
@@ -3243,25 +3445,30 @@ $('btnCloseMonth').onclick = () => {
   if(remain > 0) return toast('باقي عندك ' + fmt(remain) + ' للصرف — ادّخره بصندوق (زر «إيداع +») حتى يصير صفر، بعدين اقفل 🏦', true);
   if(remain < 0) return toast('صرفك زايد بـ' + fmt(-remain) + ' — اسحب من صندوق لتصنيف حتى يتصفّر الباقي، بعدين اقفل', true);
   modalOpen(`
-    <h2>إقفال شهر ${esc(state.month)}</h2>
-    <div class="hint" style="margin:0 0 12px">راح ينقفل الشهر للعرض فقط (تكدر تفتحه بعدين)، ويترحّل باقي كل تصنيف وصندوق للشهر الجاي، وينتقلك التطبيق للشهر الجديد.</div>
-    <button class="btn" id="doClose">إقفال الشهر ✓</button>
+    <h2>إقفال «${esc(periodLabel(state.budget, state.month))}»</h2>
+    <div class="hint" style="margin:0 0 12px">راح تنقفل الفترة للعرض فقط (تكدر تفتحها بعدين)، ويترحّل باقي كل تصنيف وصندوق للفترة الجاية، وبعدها نسألك عن اسم الفترة الجديدة ومداها.</div>
+    <button class="btn" id="doClose">إقفال الفترة ✓</button>
     <button class="btn ghost" onclick="modalClose()">إلغاء</button>
   `);
   $('doClose').onclick = async () => {
     const closed = state.month;
+    const closedName = periodLabel(state.budget, closed);
     modalClose();
     loading(true);
+    let ok = false;
     try{
       const res = await apiPost({ action:'closeMonth', month: closed });
       if(guardAuth(res)) return;
       if(!res.ok) throw new Error(res.error || 'خطأ');
-      toast('انقفل شهر ' + closed + ' ✓ أهلاً بالشهر الجديد 🎉');
+      toast('انقفلت «' + closedName + '» ✓ 🎉');
       confetti();
-      // ننتقل مباشرة للشهر الجاي — راتب الشهر الجديد وصل 💵
+      // ننتقل مباشرة للفترة الجاية — راتب الفترة الجديدة وصل 💵
       await loadMonth(nextMonthStr(closed));
-    }catch(err){ toast('ما انقفل: ' + err.message, true); }
+      ok = true;
+    }catch(err){ toast('ما انقفلت: ' + err.message, true); }
     finally{ loading(false); }
+    /* شاشة «بداية فترة جديدة» — اسم مقترح + بداية ونهاية */
+    if(ok) openPeriodSetup(state.month, true);
   };
 };
 

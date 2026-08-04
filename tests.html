@@ -86,6 +86,55 @@ test('monthProgress: الشهر الحالي منقضي = يوم اليوم', ()
   eq(p.left, p.total - p.elapsed, 'left');
 });
 
+/* ---------- الفترات: اسم + بداية/نهاية حرة ---------- */
+test('addDays: يعبر نهاية الشهر', () => eq(addDays('2026-07-30', 5), '2026-08-04'));
+test('addDays: يعبر نهاية السنة', () => eq(addDays('2026-12-31', 1), '2027-01-01'));
+test('addDays: بالسالب يرجع للورا', () => eq(addDays('2026-08-01', -1), '2026-07-31'));
+test('daysBetween: نفس اليوم = ١', () => eq(daysBetween('2026-07-20','2026-07-20'), 1));
+test('daysBetween: فترة ٢٠ تموز ← ١٨ آب = ٣٠ يوم', () => eq(daysBetween('2026-07-20','2026-08-18'), 30));
+test('daysBetween: عكس addDays للمدة الافتراضية', () =>
+  eq(daysBetween('2026-07-20', addDays('2026-07-20', PERIOD_DAYS - 1)), PERIOD_DAYS));
+
+test('hasPeriodDates: يحتاج التاريخين سوا', () => {
+  eq(hasPeriodDates({ startDate:'2026-07-20', endDate:'2026-08-18' }), true, 'الاثنين');
+  eq(hasPeriodDates({ startDate:'2026-07-20' }), false, 'بداية بس');
+  eq(hasPeriodDates(null), false, 'فاضي');
+});
+test('periodLabel: الاسم إذا موجود وإلا «شهر MM»', () => {
+  eq(periodLabel({ title:'مصاريف شهر ٨' }, '2026-08'), 'مصاريف شهر ٨', 'بيه اسم');
+  eq(periodLabel({}, '2026-08'), 'شهر 2026-08', 'بلا اسم');
+});
+test('suggestPeriodTitle: يزيد الرقم العربي', () => eq(suggestPeriodTitle('مصاريف شهر ٧', '2026-08'), 'مصاريف شهر ٨'));
+test('suggestPeriodTitle: يزيد الرقم الإنكليزي', () => eq(suggestPeriodTitle('Month 7', '2026-08'), 'Month 8'));
+test('suggestPeriodTitle: ٩ ← ١٠', () => eq(suggestPeriodTitle('شهر ٩', '2026-10'), 'شهر ١٠'));
+test('suggestPeriodTitle: بلا اسم سابق يبني من المفتاح', () => eq(suggestPeriodTitle('', '2026-08'), 'مصاريف شهر ٨'));
+
+test('monthProgress: بلا تواريخ يظل يشتغل بالشهر التقويمي', () =>
+  eq(monthProgress('2000-01', {}), { elapsed:31, left:0, total:31 }));
+test('monthProgress: فترة كاملة بالماضي', () =>
+  eq(monthProgress('2026-07', { startDate:'2000-07-20', endDate:'2000-08-18' }), { elapsed:30, left:0, total:30 }));
+test('monthProgress: فترة كلها بالمستقبل', () =>
+  eq(monthProgress('2099-01', { startDate:'2099-01-01', endDate:'2099-01-30' }), { elapsed:0, left:30, total:30 }));
+test('monthProgress: فترة شغّالة هسه — اليوم الأول', () => {
+  const p = monthProgress('2026-08', { startDate: todayISO(), endDate: addDays(todayISO(), 29) });
+  eq(p.total, 30, 'total');
+  eq(p.elapsed, 1, 'elapsed');
+  eq(p.left, 29, 'left');
+});
+
+test('periodDefaultDate: اليوم إذا داخل الفترة', () =>
+  eq(periodDefaultDate({ startDate: addDays(todayISO(), -3), endDate: addDays(todayISO(), 10) }, '2026-08'), todayISO()));
+test('periodDefaultDate: قبل البداية ينط للبداية', () => {
+  const s = addDays(todayISO(), 5);
+  eq(periodDefaultDate({ startDate:s, endDate: addDays(s, 29) }, '2026-08'), s);
+});
+test('periodDefaultDate: بعد النهاية ينط للنهاية', () => {
+  const e = addDays(todayISO(), -2);
+  eq(periodDefaultDate({ startDate: addDays(e, -29), endDate:e }, '2026-07'), e);
+});
+test('periodDefaultDate: بلا تواريخ يرجع لـdateInMonth', () =>
+  eq(periodDefaultDate({}, thisMonth()), dateInMonth(thisMonth())));
+
 /* ---------- طابور الأوفلاين ---------- */
 test('طابور الأوفلاين: إضافة وحذف', () => {
   const bak = localStorage.getItem(OFFLINE_KEY);   // نحفظ الطابور الحقيقي وما نخربه

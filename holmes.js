@@ -125,7 +125,7 @@ function holmesLoop(){
 /* ---------- الشخصيات: فكاهية / اعتيادية / جدية ----------
    تنغيّر من الإعدادات ← المظهر ← «شخصية شيرلوك» */
 let HOLMES_MOOD = 'funny';
-try{ HOLMES_MOOD = ['funny','normal','serious'].includes(localStorage.getItem('mas_holmes_mood')) ? localStorage.getItem('mas_holmes_mood') : 'funny'; }catch(_){}
+try{ HOLMES_MOOD = ['funny','normal','serious','mean'].includes(localStorage.getItem('mas_holmes_mood')) ? localStorage.getItem('mas_holmes_mood') : 'funny'; }catch(_){}
 
 const HOLMES_MOODS = {
   funny: {   /* عراقي يحشش 😂 */
@@ -179,6 +179,27 @@ const HOLMES_MOODS = {
       celebrate: ['قرار حكيم. الادخار يبني المستقبل.', 'هذا ما يمليه المنطق المالي السليم.'],
       warn:      ['تحذير: الميزانية تجاوزت الحد الآمن. تدخّل فوراً.']
     }
+  },
+  mean: {   /* متنمّر — يعايرك بفلوسك 😈 (تنمّر ودّي… على المصاريف مو عليك) */
+    lines: [
+      'راجعت ميزانيتك… وضحكت. آسف، مو مهني بس ضحكت 😈',
+      'أنت متأكد هاي ميزانية؟ آني حسبتها قائمة أمنيات 📝',
+      'ثلاثين سنة تحقيق، وأول مرة أشوف واحد يهرب من فلوسه بهالسرعة 🏃',
+      'صندوق الادخار مالتك يسألني: هو ناسيني لو متعمّد؟ 🏦',
+      'خطتك المالية؟ عفواً، شفت بس نوايا حسنة ومجموعة إيصالات 🧾',
+      'واطسون گال «خلي نساعده»… گتله بعده ما وصل مرحلة القابلية للمساعدة 😏',
+      'ما أريد أحرجك… بس آخر الشهر يريد يحرجك هو 📉',
+      'تحسبها فلوس؟ لا حبيبي، هاي وديعة مؤقتة عند البقالة 🛒',
+      'مكبرتي كبّرت رصيدك ٤٠ ضعف… لسه صغير 🔍😬',
+      'أدخل حسابك؟ بس خلّي أجيب نظارة القراءة، الأرقام صغيرة 👓',
+      'لو الادخار مسابقة، أنت الجمهور مو المتسابق 🏆',
+      'استمر بهالمستوى وراح ينكتب اسمك بكتاب «قضايا بلا حل» 📕'
+    ],
+    react: {
+      expense:   ['هاي؟ صرفتها؟ زين… كنت أظن عندك خطة 😈', 'مصروف جديد! أكيد ضروري جداً… مثل الباقي 🙄', 'سجّلته. لأ مو للمحاسبة — للأرشيف الفكاهي 📁😏'],
+      celebrate: ['أوهو! ادّخرت؟ خل أگعد، دايخ من الصدمة 😲', 'أخيراً. چنت راح أفقد الأمل بيك… بس مو زايد 👏😏', 'حلوة منك. سوّيها ٢٠ مرة وهم نحچي 🏦'],
+      warn:      ['گلتلك. گلتلك. بس منو يسمع؟ 😈', 'الميزانية طلعت من الخط… مثل كل شهر، ماكو جديد 📉', 'انتبه! لا، خلاص فات الوقت. انتبه للجاي 🙃']
+    }
   }
 };
 function holmesMood(){ return HOLMES_MOODS[HOLMES_MOOD] || HOLMES_MOODS.normal; }
@@ -186,7 +207,8 @@ function holmesMood(){ return HOLMES_MOODS[HOLMES_MOOD] || HOLMES_MOODS.normal; 
 /* ---------- الكلام: ملاحظات التحقيق + الحكم + سوالف الشخصية ---------- */
 function holmesLines(){
   const tips = (typeof state !== 'undefined' && Array.isArray(state._insights)) ? state._insights : [];
-  const quotes = (HOLMES_MOOD !== 'funny' && typeof QUOTES !== 'undefined') ? QUOTES.map(q => q.ar) : [];
+  /* الفكاهي والمتنمّر ما يليگ بيهم حچي الحكم — يكسر الشخصية */
+  const quotes = (HOLMES_MOOD !== 'funny' && HOLMES_MOOD !== 'mean' && typeof QUOTES !== 'undefined') ? QUOTES.map(q => q.ar) : [];
   const mood = holmesMood().lines;
   /* الفكاهي أغلب حچيه نكت، والباقي ملاحظات — نكرر سوالف الشخصية حتى تطغى */
   return tips.concat(quotes, mood, mood);
@@ -222,7 +244,7 @@ window.holmesReact = (kind) => {
 window.setHolmesMood = (m) => {
   HOLMES_MOOD = HOLMES_MOODS[m] ? m : 'normal';
   try{ localStorage.setItem('mas_holmes_mood', HOLMES_MOOD); }catch(_){}
-  const hello = { funny:'هلاو! شيرلوك المحشش بالخدمة 😂🔍', normal:'شيرلوك بالخدمة — التحقيق مستمر 🕵️', serious:'تم تفعيل الوضع الجدي. الأرقام لا تكذب.' };
+  const hello = { funny:'هلاو! شيرلوك المحشش بالخدمة 😂🔍', normal:'شيرلوك بالخدمة — التحقيق مستمر 🕵️', serious:'تم تفعيل الوضع الجدي. الأرقام لا تكذب.', mean:'زين، فعّلت الوضع المتنمّر. لا تندم بعدين 😈' };
   holmesBubble(hello[HOLMES_MOOD]);
   toast('انتغيّرت شخصية شيرلوك ✓ 🎭');
 };
