@@ -568,6 +568,31 @@
   .mem-pw{background:var(--primary-soft);color:var(--primary)}
   .mem-rm{background:color-mix(in srgb, var(--red) 12%, transparent);color:var(--red)}
 
+  /* ---------- ربط الأسماء القديمة بأصحابها ---------- */
+  .orph-wrap{
+    background:color-mix(in srgb, var(--amber) 10%, transparent);
+    border-radius:var(--radius-sm);padding:12px 14px;margin-top:12px;
+  }
+  .orph-head{font-size:.8rem;font-weight:700;margin-bottom:4px}
+  .orph{margin-top:10px}
+  .orph-name{font-size:.8rem;font-weight:600}
+  .orph-n{font-size:.66rem;color:var(--muted);font-weight:400}
+  .orph-row{display:flex;gap:7px;margin-top:5px}
+  .orph-row select{flex:1;margin:0}
+  .orph-go{
+    border:none;background:var(--primary);color:#fff;border-radius:10px;padding:8px 14px;
+    font-family:inherit;font-weight:700;font-size:.7rem;cursor:pointer;white-space:nowrap;
+  }
+  .orph-go:active{transform:scale(.95)}
+
+  /* زر أعضاء العائلة بلوحة المشرف */
+  .af-btns{display:flex;flex-direction:column;gap:6px}
+  .af-mem{
+    border:none;background:var(--primary-soft);color:var(--primary);border-radius:10px;
+    padding:7px 12px;font-family:inherit;font-weight:700;font-size:.68rem;cursor:pointer;white-space:nowrap;
+  }
+  .af-mem:active{transform:scale(.95)}
+
   /* ---------- التقرير (مشترك بين الطباعة والـ PDF) ---------- */
   #pdfStage{position:absolute;top:0;right:-11000px;width:794px;background:#fff;padding:28px;color:#000;z-index:-1}
   .report-doc h1{font-size:1.4rem;margin-bottom:4px;color:var(--primary)}

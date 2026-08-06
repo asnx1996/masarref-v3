@@ -8,10 +8,15 @@
 //   - هنا المفتاح يبقى بالسيرفر بس، والدالة تتأكد بنفسها إن اللي يطلب
 //     هو أدمن نفس العائلة قبل ما تسوي أي شي.
 //
+//  الصلاحية: is_admin بهذا التطبيق = «المشرف العام» (مو أدمن عائلة).
+//  نفس الحساب اللي يفتح لوحة المشرف ويشوف كل العوائل ويحذفها
+//  (admin_overview / admin_delete_household). فالإدارة هنا تشمل كل
+//  العوائل — تمرّر householdId لأي عائلة، وبدونه تشتغل على عائلتك.
+//
 //  الإجراءات:
-//   list        → قائمة أعضاء عائلتك (الاسم + الإيميل + هل هو أدمن)
-//   setPassword → غيّر باسورد عضو بعائلتك
-//   remove      → شيله من العائلة (حسابه يبقى موجود بس بلا عائلة)
+//   list        → قائمة أعضاء عائلة (افتراضياً عائلتك، أو أي عائلة بـhouseholdId)
+//   setPassword → غيّر باسورد أي عضو
+//   remove      → شيله من عائلته (حسابه يبقى موجود بس بلا عائلة)
 //
 //  ⚠️ ما يغطي حالة: الأدمن نفسه نسى باسورده. وقتها من لوحة Supabase:
 //     Authentication ← Users ← اليوزر ← Reset password
@@ -54,7 +59,7 @@ Deno.serve(async (req) => {
     if (authErr || !authData?.user) return json({ error: 'الدخول مطلوب' }, 401);
     const callerId = authData.user.id;
 
-    // ---------- ٢) هل هو أدمن؟ وأي عائلة؟ ----------
+    // ---------- ٢) هل هو مشرف؟ ----------
     const { data: me, error: meErr } = await admin
       .from('profiles')
       .select('household_id, is_admin')
@@ -62,18 +67,24 @@ Deno.serve(async (req) => {
       .single();
 
     if (meErr || !me) return json({ error: 'ما لكيت حسابك' }, 403);
-    if (!me.is_admin) return json({ error: 'هذا الإجراء للأدمن بس' }, 403);
-    if (!me.household_id) return json({ error: 'حسابك مو مربوط بعائلة' }, 403);
+    if (!me.is_admin) return json({ error: 'هذا الإجراء للمشرف بس' }, 403);
 
     const body = await req.json().catch(() => ({}));
     const action = String(body.action || '');
 
     // ---------- ٣) قائمة الأعضاء ----------
     if (action === 'list') {
+      // بدون householdId → عائلتك. مع householdId → أي عائلة (المشرف العام)
+      const hhId = String(body.householdId || '') || me.household_id;
+      if (!hhId) return json({ error: 'حدد العائلة' }, 400);
+
+      const { data: hh } = await admin
+        .from('households').select('name').eq('id', hhId).single();
+
       const { data: members, error } = await admin
         .from('profiles')
         .select('id, display_name, is_admin')
-        .eq('household_id', me.household_id)
+        .eq('household_id', hhId)
         .order('is_admin', { ascending: false });
       if (error) return json({ error: error.message }, 500);
 
@@ -90,10 +101,10 @@ Deno.serve(async (req) => {
           };
         }),
       );
-      return json({ ok: true, members: withEmail });
+      return json({ ok: true, householdName: hh?.name || '', members: withEmail });
     }
 
-    // الإجراءات الباقية كلها تحتاج هدف — ولازم يكون بنفس العائلة
+    // الإجراءات الباقية كلها تحتاج هدف
     const targetId = String(body.userId || '');
     if (!targetId) return json({ error: 'حدد العضو' }, 400);
 
@@ -104,10 +115,6 @@ Deno.serve(async (req) => {
       .single();
 
     if (tErr || !target) return json({ error: 'العضو غير موجود' }, 404);
-    // 🔒 الحاجز الأهم: ممنوع تلمس أي واحد برّا عائلتك
-    if (target.household_id !== me.household_id) {
-      return json({ error: 'هذا العضو مو بعائلتك' }, 403);
-    }
 
     // ---------- ٤) تغيير الباسورد ----------
     if (action === 'setPassword') {
@@ -121,8 +128,10 @@ Deno.serve(async (req) => {
 
     // ---------- ٥) شيله من العائلة ----------
     if (action === 'remove') {
+      // 🔒 حاجزين يبقون بأي حال: لا تشيل نفسك، ولا تشيل مشرف ثاني
       if (targetId === callerId) return json({ error: 'ما تكدر تشيل نفسك من العائلة' }, 400);
-      if (target.is_admin) return json({ error: 'ما تكدر تشيل أدمن ثاني' }, 400);
+      if (target.is_admin) return json({ error: 'ما تكدر تشيل مشرف ثاني' }, 400);
+      if (!target.household_id) return json({ error: 'هذا العضو أصلاً بلا عائلة' }, 400);
 
       // الحساب يبقى موجود — بس ينفكّ عن العائلة (ما يعود يشوف بياناتها)
       const { error } = await admin

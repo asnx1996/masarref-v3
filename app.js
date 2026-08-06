@@ -1972,7 +1972,60 @@ window.cancelDebt = async (id) => {
 };
 
 /* ============================================================
-   إدارة أعضاء العائلة — للأدمن بس
+   أسماء قديمة غير مرتبطة
+   المصاريف صارت تنخزن بهوية صاحبها (expenses.user_id)، فتغيير
+   الاسم يمشي على كل التاريخ. بس السجلات اللي انكتبت قبل هالتغيير
+   ما عندها هوية — بس اسم نصي. هنا نربطها بصاحبها مرة وحدة.
+   ============================================================ */
+async function loadOrphanNames(){
+  const box = $('orphanBox');
+  if(!box) return;
+  box.innerHTML = '';
+  let d;
+  try{
+    const { data, error } = await sb.rpc('list_authors');
+    if(error) return;
+    d = data;
+  }catch(_){ return; }
+  const orphans = (d && d.orphans) || [];
+  const members = (d && d.members) || [];
+  if(!orphans.length || !members.length) return;
+
+  const opts = members.map(m => `<option value="${esc(m.id)}">${esc(m.name)}</option>`).join('');
+  box.innerHTML = `
+    <div class="orph-wrap">
+      <div class="orph-head">🔗 أسماء قديمة غير مرتبطة (${orphans.length})</div>
+      <div class="hint" style="margin:0 0 10px">هذي أسماء انسجّلت بمصاريف قديمة قبل ما نربط المصروف بصاحبه. اختر منو صاحبها حتى تندمج ويّاه بفلتر «منو صرف».</div>
+      ${orphans.map((o, i) => `
+        <div class="orph">
+          <div class="orph-name">«${esc(o.name || 'بلا اسم')}» <span class="orph-n">${o.count} مصروف</span></div>
+          <div class="orph-row">
+            <select id="orphSel${i}">${opts}</select>
+            <button class="orph-go" onclick="mergeAuthor(${i}, ${JSON.stringify(o.name || '').replace(/"/g,'&quot;')})">اربطه</button>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+window.mergeAuthor = async (i, oldName) => {
+  const sel = $('orphSel' + i);
+  if(!sel) return;
+  const userId = sel.value;
+  const who = sel.options[sel.selectedIndex].textContent;
+  if(!(await confirmDel('تربط «' + oldName + '» بـ«' + who + '»؟', 'كل مصاريف هذا الاسم راح تنحسب على ' + who + ' وتندمج ويّا مصاريفه.', 'اربطه'))) return;
+  loading(true);
+  try{
+    const { data, error } = await sb.rpc('merge_author', { p_old_name: oldName, p_user_id: userId });
+    if(error) throw new Error(error.message);
+    toast('انربط ' + (data || 0) + ' مصروف بـ«' + who + '» ✓ 🔗');
+    await loadOrphanNames();
+    await loadMonth(state.month);
+  }catch(err){ toast('ما انربط: ' + err.message, true); }
+  finally{ loading(false); }
+};
+
+/* ============================================================
+   إدارة أعضاء العائلة — للمشرف بس
    تمر عبر Edge Function اسمها household-admin، لأن تغيير باسورد
    يوزر ثاني يحتاج مفتاح service_role — وهذا المفتاح ممنوع يوصل
    للمتصفح أبداً (يتجاوز كل حماية RLS). الدالة بالسيرفر تتأكد إن
@@ -1990,28 +2043,37 @@ async function callAdminFn(payload){
   return { ok:true, ...(data||{}) };
 }
 
-async function loadMembers(){
+/* يرسم بطاقات الأعضاء داخل #memList — نفس الشكل بالإعدادات وبلوحة المشرف.
+   hhId يمرر بس لمن نكون بلوحة المشرف (حتى إعادة التحميل ترجع لنفس العائلة) */
+function renderMemberCards(list, hhId){
   const box = $('memList');
   if(!box) return;
-  box.innerHTML = '<div class="hint">دا أجيب الأعضاء…</div>';
-  const res = await callAdminFn({ action:'list' });
-  if(!res.ok){ box.innerHTML = '<div class="hint" style="color:var(--red)">ما كدرت أجيب الأعضاء: ' + esc(res.error) + '</div>'; return; }
-  const list = res.members || [];
-  if(!list.length){ box.innerHTML = '<div class="hint">ماكو أعضاء</div>'; return; }
+  const arg = hhId ? `,'${hhId}'` : '';
   box.innerHTML = list.map(m => `
     <div class="mem">
       <div class="mem-top">
-        <span class="mem-name">${esc(m.name || 'بلا اسم')}${m.admin ? '<span class="mem-tag">🛡 أدمن</span>' : ''}${m.self ? '<span class="mem-tag you">إنت</span>' : ''}</span>
+        <span class="mem-name">${esc(m.name || 'بلا اسم')}${m.admin ? '<span class="mem-tag">🛡 مشرف</span>' : ''}${m.self ? '<span class="mem-tag you">إنت</span>' : ''}</span>
       </div>
       <div class="mem-mail" dir="ltr">${esc(m.email || '—')}</div>
       <div class="mem-actions">
-        <button class="mem-pw" onclick="memSetPassword('${m.id}')">🔑 غيّر الباسورد</button>
-        ${(m.self || m.admin) ? '' : `<button class="mem-rm" onclick="memRemove('${m.id}')">✕ شيله من العائلة</button>`}
+        <button class="mem-pw" onclick="memSetPassword('${m.id}'${arg})">🔑 غيّر الباسورد</button>
+        ${(m.self || m.admin) ? '' : `<button class="mem-rm" onclick="memRemove('${m.id}'${arg})">✕ شيله من العائلة</button>`}
       </div>
     </div>`).join('');
 }
 
-window.memSetPassword = (id) => {
+async function loadMembers(hhId){
+  const box = $('memList');
+  if(!box) return;
+  box.innerHTML = '<div class="hint">دا أجيب الأعضاء…</div>';
+  const res = await callAdminFn(hhId ? { action:'list', householdId:hhId } : { action:'list' });
+  if(!res.ok){ box.innerHTML = '<div class="hint" style="color:var(--red)">ما كدرت أجيب الأعضاء: ' + esc(res.error) + '</div>'; return; }
+  const list = res.members || [];
+  if(!list.length){ box.innerHTML = '<div class="hint">ماكو أعضاء</div>'; return; }
+  renderMemberCards(list, hhId);
+}
+
+window.memSetPassword = (id, hhId) => {
   modalOpen(`
     <h2>🔑 تغيير باسورد عضو</h2>
     <div class="hint" style="margin:0 0 12px">راح ينتغيّر فوراً بلا ما نسأل عن باسورده القديم. انطيه الباسورد الجديد وخله يغيّره بنفسه بعدين من الإعدادات.</div>
@@ -2033,19 +2095,21 @@ window.memSetPassword = (id) => {
       if(!res.ok) throw new Error(res.error);
       modalClose();
       toast('انتغيّر باسورد «' + (res.name || 'العضو') + '» ✓ 🔑');
+      /* لو جينا من لوحة المشرف، نرجّع قائمة نفس العائلة */
+      if(hhId) setTimeout(() => adminMembers(hhId), 200);
     }catch(err){ toast('ما انتغيّر: ' + err.message, true); }
     finally{ loading(false); }
   };
 };
 
-window.memRemove = async (id) => {
+window.memRemove = async (id, hhId) => {
   if(!(await confirmDel('تشيل هذا العضو من العائلة؟', 'حسابه يبقى موجود بس ما يعود يشوف بيانات العائلة. تكدر ترجّعه بكود العائلة.', 'شيله'))) return;
   loading(true);
   try{
     const res = await callAdminFn({ action:'remove', userId:id });
     if(!res.ok) throw new Error(res.error);
     toast('انشال «' + (res.name || 'العضو') + '» من العائلة ✓');
-    loadMembers();
+    loadMembers(hhId);
   }catch(err){ toast('ما انشال: ' + err.message, true); }
   finally{ loading(false); }
 };
@@ -2220,6 +2284,8 @@ function renderSettings(){
         <input type="text" id="nmNew" value="${esc(session && session.name ? session.name : '')}" style="flex:1" placeholder="اسمك">
         <button class="btn" id="btnSaveName" style="margin:0;width:auto;padding:0 18px">حفظ</button>
       </div>
+      <div class="hint" style="margin-top:4px">تغيير الاسم يمشي على كل مصاريفك القديمة تلقائياً — ما يصير «شخص جديد».</div>
+      <div id="orphanBox"></div>
       <label style="margin-top:12px">الباسورد الحالي</label>
       <input type="password" id="pwCur" autocomplete="current-password" placeholder="••••••">
       <label>الباسورد الجديد</label>
@@ -2375,11 +2441,13 @@ function renderSettings(){
     }catch(err){ toast('ما انتغيّر: ' + err.message, true); }
     finally{ loading(false); }
   };
-  /* أعضاء العائلة (للأدمن بس) */
+  /* أعضاء العائلة (للمشرف بس) */
   if($('memList')){
     loadMembers();
     $('btnReloadMembers').onclick = () => loadMembers();
   }
+  /* أسماء قديمة غير مرتبطة بأي عضو */
+  if($('orphanBox')) loadOrphanNames();
   if($('idleSel')){
     $('idleSel').value = String(autoLogoutMin);
     $('idleSel').onchange = (e) => {
@@ -2506,7 +2574,10 @@ async function showAdmin(){
             <div class="af-meta">${h.members} فرد · ${h.expenses} مصروف · ${h.months} شهر · آخر نشاط ${last}</div>
             <div class="af-meta">👥 ${esc(h.member_names || '—')} · كود: <b dir="ltr">${esc(h.code||'—')}</b></div>
           </div>
-          ${mine ? '' : `<button class="af-del" onclick="adminDelete('${h.id}')">حذف</button>`}
+          <div class="af-btns">
+            <button class="af-mem" onclick="adminMembers('${h.id}')">👥 الأعضاء</button>
+            ${mine ? '' : `<button class="af-del" onclick="adminDelete('${h.id}')">حذف</button>`}
+          </div>
         </div>`;
     });
 
@@ -2534,6 +2605,23 @@ async function showAdmin(){
   }catch(err){ toast('ما كدرت أفتح اللوحة: ' + err.message, true); }
   finally{ loading(false); }
 }
+/* أعضاء أي عائلة — من لوحة المشرف */
+window.adminMembers = async (hhId) => {
+  loading(true);
+  let res;
+  try{ res = await callAdminFn({ action:'list', householdId: hhId }); }
+  finally{ loading(false); }
+  if(!res.ok) return toast('ما كدرت أجيب الأعضاء: ' + res.error, true);
+  const list = res.members || [];
+  modalOpen(`
+    <h2>👥 أعضاء «${esc(res.householdName || 'عائلة')}»</h2>
+    <div class="hint" style="margin:0 0 12px">تكدر تغيّر باسورد أي عضو أو تشيله من عائلته. الشطب ما يحذف حسابه — بس يفكّه عن العائلة.</div>
+    <div id="memList">${list.length ? '' : '<div class="empty">ماكو أعضاء بهذه العائلة</div>'}</div>
+    <button class="btn ghost" onclick="modalClose();setTimeout(showAdmin,150)" style="margin-top:14px">رجوع للوحة</button>
+  `);
+  if(list.length) renderMemberCards(list, hhId);
+};
+
 window.adminDelete = async (id) => {
   const h = adminHH.find(x => x.id === id);
   const name = (h && h.name) || 'عائلة';
