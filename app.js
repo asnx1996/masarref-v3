@@ -1359,7 +1359,8 @@ function addRow(section, name, amount, carried, goal){
   div.innerHTML = `
     <input type="text" class="cname" placeholder="${ph}" value="${esc(name||'')}" ${lockedFund?'readonly style="opacity:.75"':''}>
     <input type="tel" class="camt" placeholder="${phAmt}" inputmode="numeric" value="${amount ? Number(amount).toLocaleString('en-US') : ''}">
-    ${lockedFund ? '<span class="rm" style="border:none;background:none" title="صندوق مرحّل — محمي">🔒</span>' : '<button class="rm" aria-label="حذف">✕</button>'}`;
+    ${isSave ? '' : '<span class="cat-slot"></span>'}
+    ${lockedFund ? '<span class="rm" style="border:none;background:none" title="صندوق مرحّل — محمي">🔒</span>' : `<button class="rm" aria-label="حذف ${esc(name||'التصنيف')}">✕</button>`}`;
   const rm = div.querySelector('button.rm');
   if(rm) rm.onclick = () => { wrap.remove(); updateAlloc(); };
   const amt = div.querySelector('.camt');
@@ -1367,15 +1368,18 @@ function addRow(section, name, amount, carried, goal){
   amt.addEventListener('input', updateAlloc);
   wrap.appendChild(div);
   /* زر النقل بين التصنيفات — انتقل من اللوحة للميزانية (اللوحة صارت عرض فقط).
-     يظهر بس للتصنيفات المحفوظة أصلاً بالشهر وغير المقفل */
+     يظهر بس للتصنيفات المحفوظة أصلاً بالشهر وغير المقفل.
+     صار أيقونة داخل الصف بدل شريط كامل تحته — كان يضاعف طول العمود */
   if(!isSave && name && !state.locked &&
      ((state.budget && state.budget.categories) || []).some(c => c.name === name && c.type !== 'save')){
     const tr = document.createElement('button');
     tr.type = 'button';
-    tr.className = 'env-transfer';
-    tr.textContent = '⇄ نقل من هذا التصنيف لغيره';
+    tr.className = 'cat-xfer';
+    tr.textContent = '⇄';
+    tr.title = 'نقل من هذا التصنيف لغيره';
+    tr.setAttribute('aria-label', 'نقل مبلغ من تصنيف ' + name + ' لتصنيف ثاني');
     tr.addEventListener('click', () => openTransferByName(name));
-    wrap.appendChild(tr);
+    div.querySelector('.cat-slot').appendChild(tr);
   }
   if(isSave){
     const goalRow = document.createElement('div');

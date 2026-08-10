@@ -145,7 +145,7 @@
     </div>
 
     <div class="seg-view" id="seg-exp">
-      <div class="dash-col">
+      <div class="dash-col stick-col">
       <div class="card">
         <h2>سجّل مصروف</h2>
         <div class="row">
@@ -234,7 +234,8 @@
   <!-- تبويب: الميزانية -->
   <section class="tab" id="tab-budget">
     <div class="dash-full"><button class="btn ghost" id="btnCopyLast" style="margin-top:0">⧉ انسخ تصنيفات الشهر الماضي</button></div>
-    <div class="dash-col">
+    <div class="cols-wrap">
+    <div class="dash-col stick-col">
     <div class="card" style="margin-top:14px">
       <div class="qh">
         <h2 style="margin:0">رواتب الشهر</h2>
@@ -270,6 +271,7 @@
       <div class="hint">المبلغ الي تحطه = المبلغ الي تدّخره شهرياً. الصندوق يتراكم تلقائياً، والسحب منه من تبويب «مصروف ← الصناديق».</div>
     </div>
     </div>
+    </div>
     <div class="dash-full">
     <button class="btn" id="btnSaveBudget">حفظ ميزانية الشهر</button>
     <button class="btn warn-btn" id="btnCloseMonth">إقفال الشهر وترحيل الباقي ✓</button>
@@ -282,7 +284,7 @@
   <!-- تبويب: فواتيري -->
   <section class="tab" id="tab-bills">
     <div class="card" id="billsSummary"></div>
-    <div class="card">
+    <div class="card" id="billsCard">
       <div class="qh">
         <h2 style="margin:0">🧾 فواتير الشهر</h2>
         <button class="qh-add" id="btnCopyBills">⧉ انسخ الشهر الماضي</button>
@@ -290,7 +292,7 @@
       <div class="hint" style="margin:2px 0 12px">اكتب فواتيرك المطلوبة هالشهر، وأشّر ✓ على اللي دفعته. الموقع يراقب إذا الباقي يكفّي للفواتير الباقية.</div>
       <div id="billsList"></div>
     </div>
-    <div class="card">
+    <div class="card stick-col">
       <h2>➕ إضافة فاتورة</h2>
       <label>اسم الفاتورة</label>
       <input type="text" id="blName" placeholder="مثلاً: كهرباء / إيجار / نت">
@@ -305,7 +307,7 @@
   <!-- تبويب: المطابقة -->
   <section class="tab" id="tab-recon">
     <div class="card" id="reconSystem"></div>
-    <div class="card">
+    <div class="card stick-col">
       <h2>✍️ سجّل جردة اليوم</h2>
       <div class="hint" style="margin:2px 0 12px">عدّ فلوسك الفعلية اللي بإيدك وسجّلها هنا — نقارنها ويا رصيد النظام. لو طلع نقص، معناها أكو مصاريف نسيت تسجّلها.</div>
       <div class="row">
@@ -319,7 +321,7 @@
       <input type="text" id="rcNote" placeholder="مثلاً: جردة نص الشهر">
       <button class="btn" id="btnAddRecon">حفظ المطابقة</button>
     </div>
-    <div class="card">
+    <div class="card" id="reconLog">
       <h2 style="margin-bottom:2px">🗂 سجل المطابقات</h2>
       <div class="hint" style="margin:0 0 10px">آخر المطابقات المسجلة — تشوف منها إذا فلوسك ماشية صح.</div>
       <div id="reconList"></div>

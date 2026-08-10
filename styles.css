@@ -14,6 +14,12 @@
     --red-soft:#F8E6E3;
     --radius:22px;
     --radius-sm:16px;
+    /* مقياس التباعد — أساس 4px. كل الهوامش تطلع من هنا بدل أرقام متفرقة */
+    --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px;
+    --gap-card:14px;   /* بين بطاقة وبطاقة */
+    --gap-col:20px;    /* بين عمود وعمود */
+    --control-h:46px;  /* ارتفاع موحّد للمدخلات وأزرار الصف */
+    --stick-top:16px;  /* مسافة تثبيت العمود القصير */
     --shadow:0 1px 2px rgba(70,45,25,.05), 0 6px 20px rgba(70,45,25,.07);
     --shadow-lg:0 12px 44px rgba(60,35,15,.20);
     --blur:saturate(160%) blur(20px);
@@ -235,7 +241,7 @@
   .card{
     background:var(--card);border:1px solid var(--line);
     border-radius:var(--radius);box-shadow:var(--shadow);
-    padding:16px;margin-bottom:14px;
+    padding:var(--sp-4);margin-bottom:var(--gap-card);
   }
   h2{font-size:.96rem;font-weight:700;margin-bottom:12px}
   label{display:block;font-size:.75rem;font-weight:500;color:var(--muted);margin-bottom:5px}
@@ -369,12 +375,36 @@
   .exp .del:hover{background:var(--red-soft);color:var(--red)}
 
   /* ---------- صفوف التصنيفات بالميزانية ---------- */
-  .cat-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
-  .cat-row input.cname{flex:1.4}
-  .cat-row input.camt{flex:1}
+  /* grid بدل flex: يضمن إن كل الصفوف بنفس أعرض الأعمدة ومحاذاة وحدة،
+     حتى لو صف بيه زر نقل وصف لا */
+  .cat-row{
+    display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) var(--control-h);
+    gap:var(--sp-2);margin-bottom:var(--sp-2);align-items:center;
+  }
+  /* تصنيفات المصاريف بيها خانة إضافية لزر النقل */
+  #catRows .cat-row{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) var(--control-h) var(--control-h)}
+  .cat-row input{min-height:var(--control-h)}
   .cat-row .rm{
     border:none;background:var(--red-soft);color:var(--red);
-    width:42px;height:46px;border-radius:12px;cursor:pointer;font-size:1rem;flex-shrink:0;
+    inline-size:var(--control-h);block-size:var(--control-h);
+    border-radius:12px;cursor:pointer;font-size:1rem;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .cat-slot{display:flex}
+  .cat-xfer{
+    inline-size:var(--control-h);block-size:var(--control-h);
+    border:1px solid var(--line);background:transparent;color:var(--muted);
+    border-radius:12px;cursor:pointer;font-family:inherit;font-size:1rem;
+    display:flex;align-items:center;justify-content:center;
+    transition:border-color .18s,color .18s;
+  }
+  .cat-xfer:hover{border-color:var(--primary);color:var(--primary)}
+  /* موبايل: نضيّق الأزرار والفواصل حتى خانة الاسم تبقى مقروءة
+     بعد ما دخل زر النقل داخل الصف */
+  @media (max-width:560px){
+    .cat-row{gap:var(--sp-1)}
+    #catRows .cat-row{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) 40px 40px}
+    #catRows .cat-xfer,#catRows .rm{inline-size:40px}
   }
   .cat-carry{font-size:.68rem;color:var(--primary);font-weight:600;margin:-3px 2px 10px}
   .alloc-line{
@@ -484,8 +514,6 @@
   .lg-switch a{color:var(--primary);font-weight:700;cursor:pointer;text-decoration:none}
 
   /* ---------- أزرار الصندوق (سحب / إيداع / سجل) ---------- */
-  .env-transfer{margin-top:9px;width:100%;border:1px dashed var(--line);background:transparent;color:var(--muted);border-radius:10px;padding:8px;font-family:inherit;font-size:.76rem;font-weight:600;cursor:pointer;transition:all .18s}
-  .env-transfer:hover{border-color:var(--primary);color:var(--primary)}
   .fa-del2{flex:0 0 auto;width:42px;border:1px solid var(--red-soft,#f3d0d0);background:transparent;color:var(--red,#c0392b);border-radius:12px;cursor:pointer;font-size:.9rem}
   .fund-actions{display:flex;gap:8px;margin-top:11px}
   .fund-actions button{
@@ -634,6 +662,20 @@
   /* ---------- واجهة الكمبيوتر ---------- */
   .dash-col{display:contents}
   .dash-full{min-width:0}
+  /* لافّة العمودين — شبكة مستقلة حتى العمود المثبّت ينحبس داخلها
+     وما يطلع فوق أزرار الحفظ اللي تحتها. بالموبايل شفافة تماماً. */
+  .cols-wrap{display:contents}
+
+  /* ---------- تابلت / موبايل أفقي (640–999) ----------
+     قبل: main يبقى 560px لحد 1000px، فيصير فراغ ميت على الجهتين.
+     هسه العرض يكبر تدريجياً وتبقى الواجهة عمود واحد مرتّب. */
+  @media (min-width:640px){
+    main{max-width:720px;padding:var(--sp-4) var(--sp-5)}
+  }
+  @media (min-width:820px){
+    main{max-width:820px}
+  }
+
   @media (min-width:1000px){
     body{padding-bottom:32px;padding-right:104px}
     nav{
@@ -650,15 +692,28 @@
     main{max-width:1080px;padding:20px 24px}
     #tab-bills,#tab-recon{max-width:1080px;margin:0 auto}
     #tab-settings{max-width:1080px;margin:0 auto}
-    /* الفواتير + المطابقة: بطاقة الملخص عريضة فوق، والباقي عمودين */
-    #tab-bills.active,#tab-recon.active{display:grid;grid-template-columns:1fr 1fr;gap:0 20px;align-items:start}
-    #tab-bills.active>#billsSummary,#tab-recon.active>#reconSystem{grid-column:1/-1}
+    /* الفواتير + المطابقة
+       قبل: بطاقة الملخص تمتد بعرض كامل فوق، فيبقى عمود النموذج القصير
+       (263px) جنب قائمة طويلة (698px) = فراغ 435px.
+       هسه: الملخص ينزل بعمود النموذج نفسه، والقائمة الطويلة تمتد الصفّين.
+       فيتقارب طول العمودين ويقلّ الفراغ للنص تقريباً. */
+    #tab-bills.active,#tab-recon.active{
+      display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr;
+      gap:0 var(--gap-col);align-items:start;
+    }
+    #billsSummary,#reconSystem{grid-column:2;grid-row:1}
+    #billsCard,#reconLog{grid-column:1;grid-row:1/span 2}
+    #tab-bills.active>.stick-col,#tab-recon.active>.stick-col{grid-column:2;grid-row:2}
     /* الإعدادات: بطاقاتها كلها داخل #settingsBody، فنوزّعها على عمودين (masonry) */
     #settingsBody{columns:2;column-gap:20px}
     #settingsBody>.card{break-inside:avoid;-webkit-column-break-inside:avoid;display:inline-block;width:100%;vertical-align:top}
     #tab-dash.active,#tab-budget.active{display:grid;grid-template-columns:1.05fr .95fr;gap:0 20px;align-items:start}
     .dash-full{grid-column:1/-1;min-width:0}
     #tab-budget.active{grid-template-columns:1fr 1fr;max-width:1080px}
+    .cols-wrap{
+      display:grid;grid-column:1/-1;min-width:0;
+      grid-template-columns:1fr 1fr;gap:0 var(--gap-col);align-items:start;
+    }
     /* لوحة أوضح: رسم أكبر + إحصائيات على شكل بطاقات */
     .donut{width:215px;height:215px}
     .sum-top{gap:30px;align-items:center}
@@ -671,6 +726,57 @@
     .modal{align-items:center}
     .modal-card{border-radius:24px;max-height:86vh}
     .head-stats .hstat .val{font-size:1.25rem}
+
+    /* ============================================================
+       إصلاح الفراغ الميت
+       المشكلة: العمودين بطول مختلف تماماً — عمود الرواتب/الملخص يخلص
+       بـ500px والعمود الثاني يستمر 1500px، فيبقى فراغ أبيض هائل.
+       الحل جزئين:
+       (١) العمود القصير يتثبّت (sticky) وينزل ويّا التمرير — ما يبقى
+           تحته فراغ أبداً، وبنفس الوقت يبقى «الباقي بلا توزيع»
+           قدام عينك وأنت توزّع.
+       (٢) القوائم الطويلة (السجلات) تاخذ تمرير داخلي بدل ما تمدّ
+           العمود بلا نهاية.
+       ============================================================ */
+    .stick-col{
+      position:sticky;top:var(--stick-top);
+      max-height:calc(100vh - (var(--stick-top) * 2));
+      overflow-y:auto;overscroll-behavior:contain;
+    }
+    /* هامش صغير حتى ظلال البطاقات ما تنقص عند حافة التمرير.
+       يتطبّق بس لمن المثبّت عمود يلفّ بطاقات، مو بطاقة بنفسها. */
+    .dash-col.stick-col{padding:2px 4px;margin:-2px -4px}
+    /* بتبويب «مصروف» أكو شريط سلايدر مثبّت فوق (top:8px) —
+       ننزّل العمود المثبّت تحته حتى ما يمرّون فوق بعض */
+    #seg-exp .stick-col{top:68px;max-height:calc(100vh - 84px)}
+
+    /* السجلات الطويلة: تمرير داخلي بدل تمديد العمود */
+    #expList,#fundMovList,#reconList,#billsList{
+      /* سقف فقط — بلا min-height، حتى القوائم القصيرة ما تفتعل فراغ */
+      max-height:calc(100vh - 300px);
+      overflow-y:auto;overscroll-behavior:contain;
+      scrollbar-gutter:stable;
+      padding-inline-end:var(--sp-1);
+    }
+
+    /* شريط تمرير نحيف ومتناسق ويّا الثيم */
+    .stick-col,#expList,#fundMovList,#reconList,#billsList{
+      scrollbar-width:thin;scrollbar-color:var(--line) transparent;
+    }
+    .stick-col::-webkit-scrollbar,
+    #expList::-webkit-scrollbar,#fundMovList::-webkit-scrollbar,
+    #reconList::-webkit-scrollbar,#billsList::-webkit-scrollbar{width:8px}
+    .stick-col::-webkit-scrollbar-thumb,
+    #expList::-webkit-scrollbar-thumb,#fundMovList::-webkit-scrollbar-thumb,
+    #reconList::-webkit-scrollbar-thumb,#billsList::-webkit-scrollbar-thumb{
+      background:var(--line);border-radius:99px;
+    }
+    .stick-col::-webkit-scrollbar-track,
+    #expList::-webkit-scrollbar-track,#fundMovList::-webkit-scrollbar-track,
+    #reconList::-webkit-scrollbar-track,#billsList::-webkit-scrollbar-track{background:transparent}
+
+    /* آخر بطاقة بأي عمود ما تحتاج هامش سفلي — كان يزيد الفراغ */
+    .dash-col > .card:last-child{margin-bottom:0}
   }
 
   /* ---------- سلايدر تبويب المصروف (مصاريف / صناديق) ---------- */
