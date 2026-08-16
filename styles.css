@@ -1,17 +1,49 @@
+  /* ============================================================
+     الألوان — طبقتان: قيمة خام، ودور
+     ------------------------------------------------------------
+     ألوان الثيم (--primary / --amber / --green / --red) يشتقّها app.js
+     بـ OKLCH ويحطّها هنا كمتغيّرات جاهزة. لكل لون ثلاث وظائف مختلفة،
+     وما تنفع قيمة وحدة للثلاثة:
+
+       --x          تعبئة صلبة (خلفية زر، شريط تقدّم) — النص الأبيض فوقها
+       --x-text     نص أو أيقونة فوق سطح (بطاقة، خلفية ناعمة)
+       --x-soft     سطح ناعم مصبوغ (شارة، زر ثانوي)
+
+     و--x-text تختلف بين الفاتح والداكن: نفس الصبغة، إضاءة معكوسة.
+     app.js يحضّر النسختين (-text-l / -text-d) وهنا نختار وحدة منهن
+     حسب الوضع، فتبديل الوضع الداكن ما يحتاج يعيد أي حساب.
+
+     الأرقام كلها مقاسة بـ APCA على الخلفية اللي تنعرض عليها فعلاً:
+     نص الجسم Lc 75، النص الثانوي Lc 60، عناصر الواجهة Lc 30.
+     ============================================================ */
   :root{
     --bg:#FBF7F1;
     --bg-2:#FFFFFF;
     --card:#FFFFFF;
     --ink:#2A2018;
-    --muted:#93887C;
-    --line:#EBE2D6;
-    --primary:#C86B4A;
-    --primary-soft:#F6E7DE;
-    --amber:#D9962F;
-    --green:#3F9E7A;
-    --green-soft:#E1F1EA;
-    --red:#C0453E;
-    --red-soft:#F8E6E3;
+    --muted:#5E5449;          /* Lc 81 على --bg — كان #93887C بـ Lc 58 */
+    --line:#D8CBB8;           /* فاصل/حافة بطاقة — Lc 27 على البطاقة */
+    --line-strong:#9B9287;    /* حافة مُدخل أو زر — عنصر واجهة، 3:1 على الأبيض */
+
+    /* قيم احتياطية لحد ما يشتغل app.js (ثيم «بحر هادئ») */
+    --primary:#1580A1;   --primary-text-l:#007797; --primary-text-d:#7CD9FC;
+    --primary-soft-l:#E4EFF3; --primary-soft-d:#20353D;
+    --amber:#CE913B;     --amber-text-l:#945F00;   --amber-text-d:#FCBD6A;
+    --amber-soft-l:#F8F0E4;   --amber-soft-d:#3A3020;
+    --green:#2FA98A;     --green-text-l:#007F65;   --green-text-d:#72E3C2;
+    --green-soft-l:#E3F2ED;   --green-soft-d:#20372F;
+    --red:#B93E37;       --red-text-l:#A52A27;     --red-text-d:#FFD2CC;
+    --red-soft-l:#F4D0CB;     --red-soft-d:#542A21;
+
+    /* الدور المختار حسب الوضع — body.dark يقلب هذولا وبس */
+    --primary-text:var(--primary-text-l); --primary-soft:var(--primary-soft-l);
+    --amber-text:var(--amber-text-l);     --amber-soft:var(--amber-soft-l);
+    --green-text:var(--green-text-l);     --green-soft:var(--green-soft-l);
+    --red-text:var(--red-text-l);         --red-soft:var(--red-soft-l);
+
+    --surface-sunken:#F2EDE5; /* سطح غاطس محايد (بانر، مُدخل) */
+    --input-bg:#fff;
+    --placeholder:#7C7266;
     --radius:22px;
     --radius-sm:16px;
     /* مقياس التباعد — أساس 4px. كل الهوامش تطلع من هنا بدل أرقام متفرقة */
@@ -24,35 +56,39 @@
     --shadow-lg:0 12px 44px rgba(60,35,15,.20);
     --blur:saturate(160%) blur(20px);
     --ease:cubic-bezier(.32,.72,0,1);
-    --header-grad:linear-gradient(160deg, var(--primary), color-mix(in srgb, var(--primary) 74%, #3a1c0e 26%));
+    --header-grad:linear-gradient(160deg in oklab, var(--primary), color-mix(in oklab, var(--primary) 74%, #3a1c0e 26%));
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 
-  /* ---------- الوضع الداكن (دارك مود) ---------- */
+  /* ---------- الوضع الداكن (دارك مود) ----------
+     مو انعكاس ميكانيكي للفاتح: الأسطح تنقلب، بس ألوان الثيم تاخذ
+     نسختها الداكنة (إضاءة أعلى، نفس الصبغة) — بدونها كان اللون
+     الأساسي بثيم «رصاصي» يطلع Lc 7 على البطاقة، يعني مختفي. */
   body.dark{
     --bg:#1C1712;
     --bg-2:#241C15;
     --card:#2A2018;
     --ink:#F3E9DD;
-    --muted:#B9A996;
-    --line:#3A2E23;
-    --primary-soft:color-mix(in srgb, var(--primary) 26%, #2A2018);
-    --green-soft:color-mix(in srgb, var(--green) 24%, #2A2018);
-    --red-soft:#3E241F;
+    --muted:#E2D2C0;          /* Lc -78 على البطاقة — كان #B9A996 بـ Lc -55 */
+    --line:#64574B;           /* حافة بطاقة تنشاف فعلاً — كانت Lc -4 */
+    --line-strong:#8A7C6F;    /* حافة مُدخل — Lc 32 / 3.9:1 على البطاقة */
+
+    --primary-text:var(--primary-text-d); --primary-soft:var(--primary-soft-d);
+    --amber-text:var(--amber-text-d);     --amber-soft:var(--amber-soft-d);
+    --green-text:var(--green-text-d);     --green-soft:var(--green-soft-d);
+    --red-text:var(--red-text-d);         --red-soft:var(--red-soft-d);
+
+    --surface-sunken:#221A13;
+    --input-bg:#33271D;
+    --placeholder:#A2917D;
     --shadow:0 1px 2px rgba(0,0,0,.40), 0 6px 22px rgba(0,0,0,.34);
     --shadow-lg:0 12px 44px rgba(0,0,0,.58);
     color:#F3E9DD;
   }
-  body.dark input,body.dark select{background:#33271D;color:var(--ink);border-color:var(--line)}
-  body.dark input::placeholder{color:#8A7A68}
   body.dark .month-pick{background:rgba(255,255,255,.10)}
-  body.dark .hstat.main{background:#33271D;color:var(--green)}
-  body.dark .hstat.main .lbl{opacity:.75}
+  body.dark .hstat.main{background:var(--input-bg);color:var(--green-text)}
   body.dark .warn-btn{background:var(--card)}
   body.dark ::-webkit-calendar-picker-indicator{filter:invert(1)}
-  body.dark .rc-diff.warn,body.dark .rc-badge.extra{background:#3A3320;color:#F0C063}
-  body.dark .save-head span{color:color-mix(in srgb, var(--primary) 55%, #fff)}
-  body.dark .lg-item:hover,body.dark .lg-item.on{outline-color:color-mix(in srgb, var(--primary) 60%, #fff)}
   html{-webkit-text-size-adjust:100%}
   body{
     font-family:'Rubik','Alexandria',-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;
@@ -150,10 +186,10 @@
     animation:pop .4s var(--ease);
   }
   @keyframes pop{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:none}}
-  .login-card .lg-brand{font-weight:800;font-size:1.6rem;color:var(--primary);text-align:center}
+  .login-card .lg-brand{font-weight:800;font-size:1.6rem;color:var(--primary-text);text-align:center}
   .login-card .lg-sub{font-size:.78rem;color:var(--muted);text-align:center;margin:4px 0 18px}
   .login-card label{margin-top:12px}
-  .login-err{color:var(--red);font-size:.78rem;margin-top:10px;min-height:1.1em;text-align:center}
+  .login-err{color:var(--red-text);font-size:.78rem;margin-top:10px;min-height:1.1em;text-align:center}
 
   /* ---------- الهيدر ---------- */
   header{
@@ -166,7 +202,7 @@
   }
   .head-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
   .brand{font-weight:800;font-size:1.18rem;letter-spacing:0}
-  .brand small{display:block;font-weight:300;font-size:.7rem;opacity:.85;margin-top:2px}
+  .brand small{display:block;font-weight:300;font-size:.7rem;opacity:.88;margin-top:2px}
   .head-actions{display:flex;align-items:center;gap:8px}
   .icon-btn{
     width:38px;height:38px;flex-shrink:0;border-radius:12px;cursor:pointer;
@@ -193,16 +229,16 @@
   }
   .period-bar:active{transform:scale(.985)}
   .period-bar .pb-name{font-size:.86rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .period-bar .pb-range{font-size:.66rem;font-weight:300;opacity:.82;margin-inline-start:auto;white-space:nowrap}
-  .period-bar .pb-edit{font-size:.78rem;opacity:.7}
+  .period-bar .pb-range{font-size:.66rem;font-weight:300;opacity:.88;margin-inline-start:auto;white-space:nowrap}
+  .period-bar .pb-edit{font-size:.78rem;opacity:.88}
   .head-stats{display:flex;gap:9px;margin-top:12px}
   .hstat{flex:1;background:rgba(255,255,255,.13);border-radius:15px;padding:11px 12px;backdrop-filter:var(--blur)}
-  .hstat .lbl{font-size:.65rem;font-weight:300;opacity:.85}
+  .hstat .lbl{font-size:.65rem;font-weight:300;opacity:.88}
   .hstat .val{font-size:1.02rem;font-weight:700;margin-top:3px;white-space:nowrap}
-  .hstat.main{background:#fff;color:var(--green)}
-  .hstat.main .lbl{opacity:.7}
+  .hstat.main{background:#fff;color:var(--green-text)}
+  .hstat.main .lbl{opacity:1;color:var(--muted)}
   .hstat .val.neg{color:#FFD9D7}
-  .hstat.main .val.neg{color:var(--red)}
+  .hstat.main .val.neg{color:var(--red-text)}
   .head-user{display:flex;align-items:center;justify-content:space-between;margin-top:13px}
   .head-user .uname{font-size:.72rem;font-weight:500;opacity:.92}
   .logout-btn{
@@ -230,7 +266,7 @@
   }
   nav button .ic{font-size:1.3rem;line-height:1;transition:transform .2s var(--ease)}
   nav button:active{transform:scale(.92)}
-  nav button.active{color:var(--primary);background:var(--primary-soft)}
+  nav button.active{color:var(--primary-text);background:var(--primary-soft)}
   nav button.active .ic{transform:translateY(-1px)}
 
   /* ---------- عام ---------- */
@@ -245,12 +281,16 @@
   }
   h2{font-size:.96rem;font-weight:700;margin-bottom:12px}
   label{display:block;font-size:.75rem;font-weight:500;color:var(--muted);margin-bottom:5px}
+  /* حافة المُدخل عنصر واجهة مو زخرفة — لازم تنشاف. --line كانت Lc 14
+     على الأبيض و-1 على البطاقة الداكنة، يعني الخانة ما تبيّن أصلاً. */
   input,select{
-    width:100%;border:1px solid var(--line);border-radius:12px;
-    padding:12px 13px;font-family:inherit;font-size:.95rem;background:#fff;color:var(--ink);
+    width:100%;border:1px solid var(--line-strong);border-radius:12px;
+    padding:12px 13px;font-family:inherit;font-size:.95rem;
+    background:var(--input-bg);color:var(--ink);
     transition:border-color .2s, box-shadow .2s;
   }
-  input:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent)}
+  input::placeholder{color:var(--placeholder)}
+  input:focus,select:focus{outline:none;border-color:var(--primary-text);box-shadow:0 0 0 3px color-mix(in srgb, var(--primary-text) 22%, transparent)}
   input:disabled,select:disabled,button:disabled{opacity:.5}
   .row{display:flex;gap:10px}
   .row>div{flex:1}
@@ -263,9 +303,9 @@
   }
   .btn:active{transform:scale(.97)}
   .btn:disabled{opacity:.5;box-shadow:none}
-  .btn.ghost{background:var(--primary-soft);color:var(--primary);margin-top:10px;font-weight:600;box-shadow:none}
-  .btn.warn-btn{background:#fff;color:var(--primary);border:1.5px solid var(--primary);margin-top:10px;box-shadow:none}
-  .btn.danger{background:var(--red-soft);color:var(--red);box-shadow:none;font-weight:600;margin-top:10px}
+  .btn.ghost{background:var(--primary-soft);color:var(--primary-text);margin-top:10px;font-weight:600;box-shadow:none}
+  .btn.warn-btn{background:#fff;color:var(--primary-text);border:1.5px solid var(--primary);margin-top:10px;box-shadow:none}
+  .btn.danger{background:var(--red-soft);color:var(--red-text);box-shadow:none;font-weight:600;margin-top:10px}
   .hint{font-size:.7rem;color:var(--muted);margin-top:8px;line-height:1.7}
 
   /* ---------- ملخص اللوحة + الرسم ---------- */
@@ -282,9 +322,9 @@
   .donut:not(.has-filter) .dseg:hover{opacity:.75}
   .lg-item{cursor:pointer;border-radius:9px;padding:3px 7px;margin:-3px -7px;transition:background .15s}
   .lg-item:hover{background:var(--primary-soft)}
-  .lg-item.on{background:var(--primary-soft);outline:1.5px solid var(--primary)}
+  .lg-item.on{background:var(--primary-soft);outline:1.5px solid var(--primary-text)}
   .lg-clear{margin-top:12px;border:1.5px solid var(--line);background:var(--card);color:var(--muted);border-radius:11px;padding:8px 14px;font-family:inherit;font-weight:700;font-size:.72rem;cursor:pointer}
-  .lg-clear:hover{border-color:var(--red);color:var(--red)}
+  .lg-clear:hover{border-color:var(--red-text);color:var(--red-text)}
   .lg-dot{width:9px;height:9px;border-radius:3px;display:inline-block}
 
   /* ---------- ظروف الميزانية (الداشبورد) ---------- */
@@ -294,30 +334,30 @@
   }
   .env-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
   .env-name{font-weight:600;font-size:.9rem}
-  .env-left{font-size:.78rem;font-weight:700;color:var(--primary);white-space:nowrap}
-  .env-left.over{color:var(--red)}
+  .env-left{font-size:.78rem;font-weight:700;color:var(--primary-text);white-space:nowrap}
+  .env-left.over{color:var(--red-text)}
   .bar{height:8px;background:var(--primary-soft);border-radius:99px;margin-top:9px;overflow:hidden}
-  .bar i{display:block;height:100%;background:var(--primary);border-radius:99px;transition:width .5s var(--ease)}
-  .bar i.warn{background:var(--amber)}
-  .bar i.over{background:var(--red)}
+  .bar i{display:block;height:100%;background:var(--primary-text);border-radius:99px;transition:width .5s var(--ease)}
+  .bar i.warn{background:var(--amber-text)}
+  .bar i.over{background:var(--red-text)}
   .env-sub{display:flex;justify-content:space-between;font-size:.68rem;color:var(--muted);margin-top:6px}
-  .env-carry{font-size:.66rem;color:var(--primary);font-weight:600;margin-top:5px}
+  .env-carry{font-size:.66rem;color:var(--primary-text);font-weight:600;margin-top:5px}
   .sec-head{font-weight:700;font-size:.95rem;margin:18px 4px 10px}
 
   /* ---------- صناديق الادخار (اللوحة) ---------- */
   .save-head{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:.95rem;margin:18px 4px 10px}
-  .save-head span{color:var(--primary);font-weight:800}
+  .save-head span{color:var(--primary-text);font-weight:800}
   .fund{
     background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);
     box-shadow:var(--shadow);padding:13px 14px;margin-bottom:10px;
   }
   .fund-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
   .fund-name{font-weight:700;font-size:.92rem}
-  .fund-bal{font-weight:800;font-size:1.02rem;color:var(--primary);white-space:nowrap}
+  .fund-bal{font-weight:800;font-size:1.02rem;color:var(--primary-text);white-space:nowrap}
   .fund-sub{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:.66rem;color:var(--muted);margin-top:7px}
   .fund-wd{
     margin-top:11px;width:100%;border:1.5px solid var(--primary);background:var(--primary-soft);
-    color:var(--primary);border-radius:12px;padding:10px;font-family:inherit;font-weight:600;font-size:.8rem;cursor:pointer;
+    color:var(--primary-text);border-radius:12px;padding:10px;font-family:inherit;font-weight:600;font-size:.8rem;cursor:pointer;
     transition:transform .18s var(--ease);
   }
   .fund-wd:active{transform:scale(.98)}
@@ -326,11 +366,11 @@
   /* ---------- ديون الصناديق ---------- */
   .debt{
     background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);
-    box-shadow:var(--shadow);padding:13px 14px;margin-bottom:10px;border-right:3px solid var(--amber);
+    box-shadow:var(--shadow);padding:13px 14px;margin-bottom:10px;border-right:3px solid var(--amber-text);
   }
   .debt-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
   .debt-acc{font-weight:700;font-size:.9rem}
-  .debt-amt{font-weight:800;font-size:.98rem;color:var(--amber);white-space:nowrap}
+  .debt-amt{font-weight:800;font-size:.98rem;color:var(--amber-text);white-space:nowrap}
   .debt-sub{font-size:.66rem;color:var(--muted);margin-top:5px}
   .debt-actions{display:flex;gap:8px;margin-top:11px}
   .debt-actions button{
@@ -338,8 +378,8 @@
     transition:transform .18s var(--ease);
   }
   .debt-actions button:active{transform:scale(.97)}
-  .db-return{background:var(--primary-soft);color:var(--primary)}
-  .db-cancel{background:var(--red-soft);color:var(--red)}
+  .db-return{background:var(--primary-soft);color:var(--primary-text)}
+  .db-cancel{background:var(--red-soft);color:var(--red-text)}
 
   /* ---------- قائمة المصاريف + فلتر ---------- */
   .filter-bar{display:flex;gap:8px;margin-bottom:10px}
@@ -355,24 +395,24 @@
   .exp:active{transform:scale(.99)}
   .exp .cat-dot{
     width:44px;height:44px;border-radius:14px;flex-shrink:0;
-    background:var(--primary-soft);color:var(--primary);
+    background:var(--primary-soft);color:var(--primary-text);
     display:flex;align-items:center;justify-content:center;
     font-weight:800;font-size:1.08rem;
     box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--primary) 14%, transparent);
   }
-  .exp .cat-dot.wd{background:color-mix(in srgb, var(--amber) 16%, var(--card));color:var(--amber);box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--amber) 22%, transparent)}
-  .exp .cat-dot.ret{background:color-mix(in srgb, var(--green) 15%, var(--card));color:var(--green);box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--green) 22%, transparent)}
+  .exp .cat-dot.wd{background:var(--amber-soft);color:var(--amber-text);box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--amber) 22%, transparent)}
+  .exp .cat-dot.ret{background:var(--green-soft);color:var(--green-text);box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--green) 22%, transparent)}
   .exp .mid{flex:1;min-width:0}
   .exp .desc{font-size:.92rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .exp .meta{font-size:.68rem;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .exp .amt{font-weight:800;font-size:.98rem;white-space:nowrap;letter-spacing:-.2px}
-  .exp .amt.ret{color:var(--green)}
+  .exp .amt.ret{color:var(--green-text)}
   .exp .del{
     border:none;background:transparent;color:var(--muted);
     width:32px;height:32px;border-radius:10px;cursor:pointer;font-size:.95rem;flex-shrink:0;
     transition:background .15s,color .15s;
   }
-  .exp .del:hover{background:var(--red-soft);color:var(--red)}
+  .exp .del:hover{background:var(--red-soft);color:var(--red-text)}
 
   /* ---------- صفوف التصنيفات بالميزانية ---------- */
   /* grid بدل flex: يضمن إن كل الصفوف بنفس أعرض الأعمدة ومحاذاة وحدة،
@@ -385,7 +425,7 @@
   #catRows .cat-row{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr) var(--control-h) var(--control-h)}
   .cat-row input{min-height:var(--control-h)}
   .cat-row .rm{
-    border:none;background:var(--red-soft);color:var(--red);
+    border:none;background:var(--red-soft);color:var(--red-text);
     inline-size:var(--control-h);block-size:var(--control-h);
     border-radius:12px;cursor:pointer;font-size:1rem;
     display:flex;align-items:center;justify-content:center;
@@ -398,7 +438,7 @@
     display:flex;align-items:center;justify-content:center;
     transition:border-color .18s,color .18s;
   }
-  .cat-xfer:hover{border-color:var(--primary);color:var(--primary)}
+  .cat-xfer:hover{border-color:var(--primary);color:var(--primary-text)}
   /* موبايل: نضيّق الأزرار والفواصل حتى خانة الاسم تبقى مقروءة
      بعد ما دخل زر النقل داخل الصف */
   @media (max-width:560px){
@@ -406,17 +446,17 @@
     #catRows .cat-row{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) 40px 40px}
     #catRows .cat-xfer,#catRows .rm{inline-size:40px}
   }
-  .cat-carry{font-size:.68rem;color:var(--primary);font-weight:600;margin:-3px 2px 10px}
+  .cat-carry{font-size:.68rem;color:var(--primary-text);font-weight:600;margin:-3px 2px 10px}
   .alloc-line{
     display:flex;justify-content:space-between;font-size:.75rem;
     padding:8px 2px 0;color:var(--muted);font-weight:500;
   }
   .alloc-line b{color:var(--ink)}
-  .alloc-line b.neg{color:var(--red)}
+  .alloc-line b.neg{color:var(--red-text)}
 
   /* ---------- بانر القفل ---------- */
   .lock-banner{
-    display:none;background:#EDEBE6;border:1px solid var(--line);color:#5A5A52;
+    display:none;background:var(--surface-sunken);border:1px solid var(--line);color:var(--ink);
     border-radius:var(--radius-sm);padding:12px 14px;font-size:.8rem;font-weight:600;
     text-align:center;margin-bottom:14px;
   }
@@ -451,7 +491,7 @@
   }
   .pal:active{transform:scale(.97)}
   .pal.sel{border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent)}
-  .pal.sel::after{content:'✓';position:absolute;top:7px;left:9px;color:var(--primary);font-weight:800;font-size:.8rem}
+  .pal.sel::after{content:'✓';position:absolute;top:7px;left:9px;color:var(--primary-text);font-weight:800;font-size:.8rem}
   .pal-sky{width:38px;height:38px;border-radius:12px;flex-shrink:0;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
   .pal-info{display:flex;flex-direction:column;gap:5px;min-width:0}
   .pal-name{font-weight:700;font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -463,7 +503,7 @@
   /* ---------- سلايدر التغويش ---------- */
   .blur-row{display:flex;align-items:center;gap:12px;margin-top:2px}
   .blur-row input[type=range]{flex:1;accent-color:var(--primary);height:26px}
-  .blur-val{font-variant-numeric:tabular-nums;font-weight:800;color:var(--primary);min-width:34px;text-align:center;font-size:.9rem}
+  .blur-val{font-variant-numeric:tabular-nums;font-weight:800;color:var(--primary-text);min-width:34px;text-align:center;font-size:.9rem}
 
   /* ---------- منتقي الألوان ---------- */
   .swatches{display:flex;flex-wrap:wrap;gap:11px}
@@ -504,17 +544,18 @@
   }
   @keyframes rot{to{transform:rotate(360deg)}}
   #setupWarn{
-    background:#FDF3E3;border:1px solid #EFD9AC;color:#7A5A14;
+    background:var(--amber-soft);border:1px solid color-mix(in oklab, var(--amber) 34%, transparent);
+    color:var(--amber-text);
     border-radius:var(--radius-sm);padding:14px;font-size:.78rem;line-height:1.9;margin-bottom:14px;
     display:none;
   }
 
   /* ---------- روابط التبديل بشاشة الدخول ---------- */
   .lg-switch{text-align:center;font-size:.76rem;color:var(--muted);margin-top:16px}
-  .lg-switch a{color:var(--primary);font-weight:700;cursor:pointer;text-decoration:none}
+  .lg-switch a{color:var(--primary-text);font-weight:700;cursor:pointer;text-decoration:none}
 
   /* ---------- أزرار الصندوق (سحب / إيداع / سجل) ---------- */
-  .fa-del2{flex:0 0 auto;width:42px;border:1px solid var(--red-soft,#f3d0d0);background:transparent;color:var(--red,#c0392b);border-radius:12px;cursor:pointer;font-size:.9rem}
+  .fa-del2{flex:0 0 auto;width:42px;border:1px solid var(--red-text);background:transparent;color:var(--red-text);border-radius:12px;cursor:pointer;font-size:.9rem}
   .fund-actions{display:flex;gap:8px;margin-top:11px}
   .fund-actions button{
     flex:1;border-radius:12px;padding:10px 6px;font-family:inherit;font-weight:600;font-size:.78rem;cursor:pointer;
@@ -522,52 +563,52 @@
   }
   .fund-actions button:active{transform:scale(.97)}
   .fund-actions button:disabled{opacity:.5}
-  .fa-wd{border:1.5px solid var(--primary);background:var(--primary-soft);color:var(--primary)}
+  .fa-wd{border:1.5px solid var(--primary);background:var(--primary-soft);color:var(--primary-text)}
   .fa-dep{border:none;background:var(--primary);color:#fff}
   .fa-log{flex:0 0 auto;width:44px;border:1px solid var(--line);background:var(--card);color:var(--muted)}
-  .fa-loan{border:1.5px solid var(--amber);background:transparent;color:var(--amber)}
+  .fa-loan{border:1.5px solid var(--amber-text);background:transparent;color:var(--amber-text)}
   .fl-edit,.fl-del{border:1px solid var(--line);background:var(--card);border-radius:9px;width:30px;height:30px;cursor:pointer;font-size:.78rem;color:var(--muted);flex-shrink:0;transition:all .15s}
-  .fl-edit:hover{border-color:var(--primary);color:var(--primary)}
-  .fl-del:hover{border-color:var(--red);color:var(--red);background:var(--red-soft)}
+  .fl-edit:hover{border-color:var(--primary);color:var(--primary-text)}
+  .fl-del:hover{border-color:var(--red-text);color:var(--red-text);background:var(--red-soft)}
 
   /* ---------- القرض (شارة الموعد) ---------- */
-  .debt.loan{border-right-color:var(--primary)}
-  .debt.loan .debt-amt{color:var(--primary)}
-  .debt-kind{font-size:.62rem;font-weight:800;border-radius:8px;padding:2px 8px;margin-left:6px;background:var(--primary-soft);color:var(--primary);vertical-align:2px}
+  .debt.loan{border-right-color:var(--primary-text)}
+  .debt.loan .debt-amt{color:var(--primary-text)}
+  .debt-kind{font-size:.62rem;font-weight:800;border-radius:8px;padding:2px 8px;margin-left:6px;background:var(--primary-soft);color:var(--primary-text);vertical-align:2px}
   .debt-due{font-size:.66rem;font-weight:700;color:var(--muted);margin-top:4px}
-  .debt-due.soon{color:var(--amber)}
-  .debt-due.overdue{color:var(--red,#c0392b)}
+  .debt-due.soon{color:var(--amber-text)}
+  .debt-due.overdue{color:var(--red-text)}
 
   /* ---------- المطابقة ---------- */
-  .rc-diff{margin-top:10px;border-radius:var(--radius-sm);padding:12px 14px;font-size:.84rem;font-weight:700;text-align:center;background:var(--primary-soft);color:var(--primary)}
-  .rc-diff.bad{background:var(--red-soft,#f9e6e6);color:var(--red,#c0392b)}
-  .rc-diff.warn{background:#FBF3E2;color:#B07A16}
+  .rc-diff{margin-top:10px;border-radius:var(--radius-sm);padding:12px 14px;font-size:.84rem;font-weight:700;text-align:center;background:var(--primary-soft);color:var(--primary-text)}
+  .rc-diff.bad{background:var(--red-soft);color:var(--red-text)}
+  .rc-diff.warn{background:var(--amber-soft);color:var(--amber-text)}
   .rc-item{padding:11px 2px;border-bottom:1px solid var(--line)}
   .rc-item:last-child{border-bottom:none}
   .rc-line{display:flex;justify-content:space-between;align-items:center;gap:8px}
   .rc-date{font-weight:700;font-size:.84rem}
   .rc-badge{font-size:.7rem;font-weight:800;border-radius:8px;padding:3px 9px;white-space:nowrap}
-  .rc-badge.ok{background:var(--primary-soft);color:var(--primary)}
-  .rc-badge.miss{background:var(--red-soft,#f9e6e6);color:var(--red,#c0392b)}
-  .rc-badge.extra{background:#FBF3E2;color:#B07A16}
+  .rc-badge.ok{background:var(--primary-soft);color:var(--primary-text)}
+  .rc-badge.miss{background:var(--red-soft);color:var(--red-text)}
+  .rc-badge.extra{background:var(--amber-soft);color:var(--amber-text)}
   .rc-sub{font-size:.66rem;color:var(--muted);margin-top:4px;line-height:1.7}
   .rc-del{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:.82rem;padding:4px 6px;border-radius:8px}
-  .rc-del:hover{background:var(--red-soft,#f9e6e6);color:var(--red,#c0392b)}
+  .rc-del:hover{background:var(--red-soft);color:var(--red-text)}
 
   /* ---------- سجل حركات الصندوق ---------- */
   .flog{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 2px;border-bottom:1px solid var(--line);font-size:.8rem}
   .flog:last-child{border-bottom:none}
   .flog .fl-meta{color:var(--muted);font-size:.66rem;margin-top:2px}
   .flog .fl-amt{font-weight:700;white-space:nowrap}
-  .flog .fl-amt.plus{color:var(--green)}
-  .flog .fl-amt.minus{color:var(--red)}
+  .flog .fl-amt.plus{color:var(--green-text)}
+  .flog .fl-amt.minus{color:var(--red-text)}
 
   /* ---------- كود العائلة ---------- */
   .famcode{
     display:flex;align-items:center;justify-content:space-between;gap:10px;
     background:var(--primary-soft);border-radius:var(--radius-sm);padding:12px 14px;margin-top:6px;
   }
-  .famcode b{font-size:1.05rem;letter-spacing:2px;color:var(--primary)}
+  .famcode b{font-size:1.05rem;letter-spacing:2px;color:var(--primary-text)}
   .famcode button{
     border:none;background:var(--primary);color:#fff;border-radius:10px;padding:8px 14px;
     font-family:inherit;font-weight:700;font-size:.72rem;cursor:pointer;
@@ -575,14 +616,14 @@
 
   /* ---------- بطاقة عضو العائلة (إدارة الأعضاء للأدمن) ---------- */
   .mem{
-    background:color-mix(in srgb, var(--ink) 4%, transparent);
+    background:var(--surface-sunken);
     border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:9px;
   }
   .mem-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
   .mem-name{font-size:.88rem;font-weight:700;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
   .mem-tag{
     font-size:.62rem;font-weight:600;padding:2px 8px;border-radius:999px;
-    background:var(--primary-soft);color:var(--primary);
+    background:var(--primary-soft);color:var(--primary-text);
   }
   .mem-tag.you{background:color-mix(in srgb, var(--ink) 9%, transparent);color:var(--muted)}
   .mem-mail{font-size:.68rem;color:var(--muted);margin-top:3px;word-break:break-all}
@@ -593,12 +634,12 @@
     transition:transform .18s var(--ease);
   }
   .mem-actions button:active{transform:scale(.95)}
-  .mem-pw{background:var(--primary-soft);color:var(--primary)}
-  .mem-rm{background:color-mix(in srgb, var(--red) 12%, transparent);color:var(--red)}
+  .mem-pw{background:var(--primary-soft);color:var(--primary-text)}
+  .mem-rm{background:var(--red-soft);color:var(--red-text)}
 
   /* ---------- ربط الأسماء القديمة بأصحابها ---------- */
   .orph-wrap{
-    background:color-mix(in srgb, var(--amber) 10%, transparent);
+    background:var(--amber-soft);
     border-radius:var(--radius-sm);padding:12px 14px;margin-top:12px;
   }
   .orph-head{font-size:.8rem;font-weight:700;margin-bottom:4px}
@@ -616,14 +657,16 @@
   /* زر أعضاء العائلة بلوحة المشرف */
   .af-btns{display:flex;flex-direction:column;gap:6px}
   .af-mem{
-    border:none;background:var(--primary-soft);color:var(--primary);border-radius:10px;
+    border:none;background:var(--primary-soft);color:var(--primary-text);border-radius:10px;
     padding:7px 12px;font-family:inherit;font-weight:700;font-size:.68rem;cursor:pointer;white-space:nowrap;
   }
   .af-mem:active{transform:scale(.95)}
 
   /* ---------- التقرير (مشترك بين الطباعة والـ PDF) ---------- */
   #pdfStage{position:absolute;top:0;right:-11000px;width:794px;background:#fff;padding:28px;color:#000;z-index:-1}
-  .report-doc h1{font-size:1.4rem;margin-bottom:4px;color:var(--primary)}
+  /* التقرير ينطبع على ورق أبيض دائماً، حتى والتطبيق بالوضع الداكن —
+     فياخذ نسخة اللون الفاتحة صراحةً مو المتغيّر اللي يتبع الوضع */
+  .report-doc h1{font-size:1.4rem;margin-bottom:4px;color:var(--primary-text-l)}
   .report-doc .p-sub{color:#555;font-size:.85rem;margin-bottom:16px}
   .report-doc table{width:100%;border-collapse:collapse;margin:10px 0 22px}
   .report-doc th,.report-doc td{border:1px solid #ccc;padding:7px 9px;font-size:.82rem;text-align:right}
@@ -645,7 +688,7 @@
     .logout-btn:hover{background:rgba(255,255,255,.3)}
     .exp:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
     .env:hover,.fund:hover,.debt:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(20,20,30,.09)}
-    nav button:hover{color:var(--primary);background:var(--primary-soft)}
+    nav button:hover{color:var(--primary-text);background:var(--primary-soft)}
     .exp .del:hover{filter:brightness(.95)}
     .sw:hover{transform:scale(1.1)}
   }
@@ -781,7 +824,7 @@
 
   /* ---------- سلايدر تبويب المصروف (مصاريف / صناديق) ---------- */
   .seg-bar{
-    display:flex;gap:4px;background:color-mix(in srgb, var(--ink) 7%, transparent);
+    display:flex;gap:4px;background:var(--surface-sunken);
     border-radius:16px;padding:4px;margin:0 0 14px;position:sticky;top:8px;z-index:5;
     backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
   }
@@ -790,7 +833,7 @@
     font-weight:700;font-size:.86rem;padding:11px 0;border-radius:13px;cursor:pointer;
     transition:background .25s var(--ease),color .25s,box-shadow .25s;
   }
-  .seg-btn.active{background:var(--card);color:var(--primary);box-shadow:var(--shadow)}
+  .seg-btn.active{background:var(--card);color:var(--primary-text);box-shadow:var(--shadow)}
   .seg-view{animation:fade .3s var(--ease)}
 
   /* ---------- ساعة الهيدر (دائرة بس — كمبيوتر فقط) ---------- */
@@ -813,7 +856,7 @@
 
   /* ---------- الأزرار السريعة ---------- */
   .qh{display:flex;align-items:center;justify-content:space-between}
-  .qh-add{border:none;background:var(--primary-soft);color:var(--primary);border-radius:10px;padding:8px 13px;font-family:inherit;font-weight:700;font-size:.74rem;cursor:pointer;transition:transform .18s var(--ease)}
+  .qh-add{border:none;background:var(--primary-soft);color:var(--primary-text);border-radius:10px;padding:8px 13px;font-family:inherit;font-weight:700;font-size:.74rem;cursor:pointer;transition:transform .18s var(--ease)}
   .qh-add:active{transform:scale(.94)}
   .quick-grid{display:flex;flex-wrap:wrap;gap:9px}
   .qbtn{
@@ -835,9 +878,9 @@
   .goal-row .cgoal{flex:1;padding:8px 11px;font-size:.85rem;border-radius:10px}
   .goal-wrap{margin-top:11px}
   .goal-line{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-bottom:5px}
-  .goal-pct{font-weight:700;color:var(--primary)}
-  .goal-pct.done{color:var(--primary)}
-  .bar i.goalbar{background:linear-gradient(90deg,var(--primary),color-mix(in srgb,var(--primary) 55%,#7DD3C0))}
+  .goal-pct{font-weight:700;color:var(--primary-text)}
+  .goal-pct.done{color:var(--primary-text)}
+  .bar i.goalbar{background:linear-gradient(90deg in oklab,var(--primary-text),var(--green-text))}
   .goal-rem{font-size:.66rem;color:var(--muted);margin-top:5px}
 
   /* ---------- وجه إيموجي يطلع مع الصوت ---------- */
@@ -853,9 +896,9 @@
   .set-toggle .st-lbl{font-size:.86rem}
   .switch{position:relative;width:46px;height:26px;flex-shrink:0;cursor:pointer;display:inline-block}
   .switch input{display:none}
-  .switch .track{position:absolute;inset:0;background:var(--line);border-radius:20px;transition:background .2s}
+  .switch .track{position:absolute;inset:0;background:var(--line-strong);border-radius:20px;transition:background .2s}
   .switch .knob{position:absolute;top:3px;right:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
-  .switch input:checked + .track{background:var(--primary)}
+  .switch input:checked + .track{background:var(--primary-text)}
   .switch input:checked + .track + .knob{transform:translateX(-20px)}
 
   /* ---------- فواتيري ---------- */
@@ -869,25 +912,25 @@
   .bill .bl-meta{font-size:.66rem;color:var(--muted);margin-top:2px}
   .bill .bl-amt{font-weight:800;white-space:nowrap;font-size:.9rem}
   .bill .bl-del{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:.85rem;padding:4px 6px;border-radius:8px}
-  .bill .bl-del:hover{background:var(--red-soft,#f9e6e6);color:var(--red,#c0392b)}
-  .bill.due-soon .bl-meta{color:#D99A2B;font-weight:700}
-  .bill.overdue .bl-meta{color:var(--red,#c0392b);font-weight:700}
+  .bill .bl-del:hover{background:var(--red-soft);color:var(--red-text)}
+  .bill.due-soon .bl-meta{color:var(--amber-text);font-weight:700}
+  .bill.overdue .bl-meta{color:var(--red-text);font-weight:700}
   .bl-stat{display:flex;justify-content:space-between;font-size:.82rem;padding:5px 0}
   .bl-stat b{font-weight:800}
   .bl-verdict{margin-top:10px;border-radius:var(--radius-sm);padding:12px 14px;font-size:.84rem;font-weight:700;text-align:center}
-  .bl-verdict.good{background:var(--primary-soft);color:var(--primary)}
-  .bl-verdict.bad{background:var(--red-soft,#f9e6e6);color:var(--red,#c0392b)}
+  .bl-verdict.good{background:var(--primary-soft);color:var(--primary-text)}
+  .bl-verdict.bad{background:var(--red-soft);color:var(--red-text)}
 
   /* ---------- لوحة المشرف ---------- */
   .admin-stats{display:flex;gap:10px;margin:6px 0 4px}
   .astat{flex:1;background:var(--primary-soft);border-radius:var(--radius-sm);padding:12px;text-align:center}
-  .astat .av{font-size:1.4rem;font-weight:800;color:var(--primary)}
+  .astat .av{font-size:1.4rem;font-weight:800;color:var(--primary-text)}
   .astat .al{font-size:.68rem;color:var(--muted);margin-top:2px}
   .admin-fam{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:11px 13px;margin-bottom:8px}
   .admin-fam .af-main{flex:1;min-width:0}
   .af-name{font-weight:700;font-size:.88rem}
   .af-meta{font-size:.66rem;color:var(--muted);margin-top:3px}
-  .af-del{border:none;background:var(--red-soft);color:var(--red);border-radius:10px;padding:9px 14px;font-family:inherit;font-weight:700;font-size:.74rem;cursor:pointer;flex-shrink:0}
+  .af-del{border:none;background:var(--red-soft);color:var(--red-text);border-radius:10px;padding:9px 14px;font-family:inherit;font-weight:700;font-size:.74rem;cursor:pointer;flex-shrink:0}
 
   /* ---------- تقرير الطباعة ---------- */
   #printArea{display:none}
@@ -931,6 +974,13 @@
     border-color:rgba(255,255,255,.10);
     box-shadow:0 12px 34px rgba(0,0,0,.44), inset 0 1px 0 rgba(255,255,255,.07);
   }
+  /* الشريط الجانبي هو اللي يفرّق «دين» عن «قرض» — واختصار border فوق
+     كان يمسحه، فيضيع المعنى كله بوضع السماء (وهو الافتراضي). نعيده،
+     وبنفس قوة قاعدة الوضع الداكن حتى ما تسحبه مرة ثانية. */
+  body.sky-on .debt,
+  body.dark.sky-on .debt{border-right:3px solid var(--amber-text)}
+  body.sky-on .debt.loan,
+  body.dark.sky-on .debt.loan{border-right-color:var(--primary-text)}
   /* بطاقة الملخص = بطلة زجاجية بارزة */
   body.sky-on .sum-card{
     background:color-mix(in srgb, var(--card) 72%, transparent);
@@ -999,8 +1049,8 @@
   }
 
   /* ---------- مصروف معلّق (انسجل بلا نت — بانتظار الرفع) ---------- */
-  .exp.pending{opacity:.8;border:1.5px dashed var(--amber);background:color-mix(in srgb, var(--amber) 8%, var(--card))}
-  .exp.pending .cat-dot{background:var(--amber);color:#fff}
+  .exp.pending{opacity:.8;border:1.5px dashed var(--amber-text);background:var(--amber-soft)}
+  .exp.pending .cat-dot{background:var(--amber-soft);color:var(--amber-text);box-shadow:inset 0 0 0 1px color-mix(in oklab, var(--amber) 30%, transparent)}
 
   /* ---------- صندوق مغلق (ما يترحّل للشهر الجاي) ---------- */
   .fund.closed{opacity:.75;border:1.5px dashed var(--line)}
@@ -1064,7 +1114,7 @@
   }
   details.set-acc[open] .sa-chev{transform:rotate(270deg)}
   details.set-acc .sa-body{padding:2px 18px 18px;animation:fade .3s var(--ease)}
-  @media (hover:hover){ details.set-acc summary:hover{color:var(--primary)} }
+  @media (hover:hover){ details.set-acc summary:hover{color:var(--primary-text)} }
 
   /* ---------- شيرلوك هولمز 🕵️ (شخصية اللوحة) ---------- */
   #holmesStrip{
@@ -1128,7 +1178,7 @@
   .cf-actions{display:flex;gap:10px}
   .cf-actions .btn{flex:1;margin:0}
   .cf-actions .cf-danger{
-    background:transparent;color:var(--red);border:1.5px solid var(--red);
+    background:transparent;color:var(--red-text);border:1.5px solid var(--red-text);
     box-shadow:none;
   }
   .cf-actions .cf-danger:active{transform:scale(.97)}

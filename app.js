@@ -12,13 +12,15 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
    (هذا كله ألوان/بيانات عرض — ما يمسّ أي حساب أو استدعاء بيانات)
    ============================================================ */
 const DEFAULT_PAL = 'ocean';
-// ألوان الرسم البياني (الدونات) — تُضبط حسب الباليت الفعّال
-let PALETTE = ['#2C8FB0','#E0A24E','#2FA98A','#5E8AC0','#4EA5C0','#8A6AB0','#5EB0A0','#C08A5E','#5B9AB8','#3F9E9E'];
+// ألوان الرسم البياني (الدونات) — تُضبط حسب الباليت الفعّال.
+// قِطَع الدونات لازم تتميّز عن بعضها قبل ما تتناسق ويّا الثيم: القوس اللوني
+// واسع (٣٠٠°) والإضاءة تتناوب، فأي قطعتين متجاورتين تفرقان بمحورين مو بواحد.
+let PALETTE = ['#2C8FB0','#748CF7','#6053BC','#CD7FC2','#A1367B','#E66A53','#A0491A','#BE9A07','#706900','#4EAC6C'];
 
 const PALETTES = {
   sand: {
-    name:'دفء رملي 🏜️', primary:'#C0603F', amber:'#DE9A3A', green:'#3F9E7A',
-    chart:['#C0603F','#DE9A3A','#6E8B5B','#3F9E7A','#C99A5B','#A56A55','#7D9A88','#D98C6A','#8E7B63','#B5793A'],
+    name:'دفء رملي 🏜️', primary:'#C0603F', amber:'#DE9A3A', green:'#3F9E7A', red:'#BF4257',
+    chart:['#C0603F','#BA8E06','#756600','#64B46C','#027A4D','#06A8B8','#02728A','#7199FF','#5656BE','#BE77BF'],
     mtnDay:['#C79A72','#A9784F','#835A3B','#5E3E28'], mtnNight:['#4A3550','#3A283F','#2A1B2E','#1C1220'],
     phases:[
       'linear-gradient(160deg,#FCE7C8 0%,#F6C9A8 45%,#E9A6A0 100%)',
@@ -39,8 +41,8 @@ const PALETTES = {
     }
   },
   indigo: {
-    name:'هدوء بنفسجي 🌌', primary:'#5B6CE0', amber:'#E0A54E', green:'#35A79A',
-    chart:['#5B6CE0','#8A79F0','#35A79A','#E0A54E','#7C8AE8','#A56AC0','#5FA8D0','#9A8CF0','#6E7BC8','#C08AD0'],
+    name:'هدوء بنفسجي 🌌', primary:'#5B6CE0', amber:'#E0A54E', green:'#35A79A', red:'#C0453E',
+    chart:['#5B6CE0','#C071D1','#993A8C','#E47B7C','#AF371E','#C18A03','#7A6401','#62B651','#017B40','#00AAB1'],
     mtnDay:['#8A93C8','#6A73A8','#4E5684','#363C60'], mtnNight:['#2E3560','#232848','#191E38','#12152A'],
     phases:[
       'linear-gradient(160deg,#D9D2F0 0%,#E9CAD6 45%,#F0C2C0 100%)',
@@ -61,8 +63,8 @@ const PALETTES = {
     }
   },
   forest: {
-    name:'غابة هادئة 🌿', primary:'#4F8A6B', amber:'#CE9A4E', green:'#6FB047',
-    chart:['#4F8A6B','#CE9A4E','#6FB047','#3F9E9E','#8AAE6A','#A5894E','#5E9E7A','#B0A24E','#7B9A5B','#4E8A8A'],
+    name:'غابة هادئة 🌿', primary:'#4F8A6B', amber:'#CE9A4E', green:'#6FB047', red:'#C0453E',
+    chart:['#4F8A6B','#06A8B8','#03728A','#799BEF','#5756BE','#C76EC8','#95447E','#F27167','#AD3A02','#B88F1B'],
     mtnDay:['#8FAE7A','#6C8E5A','#4E6E40','#36502E'], mtnNight:['#2E4A3E','#233A30','#193028','#12201A'],
     phases:[
       'linear-gradient(160deg,#E7E3C4 0%,#DCD0A8 45%,#CDBE92 100%)',
@@ -83,8 +85,8 @@ const PALETTES = {
     }
   },
   ocean: {
-    name:'بحر هادئ 🌊', primary:'#2C8FB0', amber:'#E0A24E', green:'#2FA98A',
-    chart:['#2C8FB0','#E0A24E','#2FA98A','#5E8AC0','#4EA5C0','#8A6AB0','#5EB0A0','#C08A5E','#5B9AB8','#3F9E9E'],
+    name:'بحر هادئ 🌊', primary:'#2C8FB0', amber:'#E0A24E', green:'#2FA98A', red:'#C0453E',
+    chart:['#2C8FB0','#748CF7','#6053BC','#CD7FC2','#A1367B','#E66A53','#A0491A','#BE9A07','#706900','#4EAC6C'],
     mtnDay:['#6EA3B8','#4E8098','#365F76','#254656'], mtnNight:['#25455E','#1B3548','#132838','#0C1C28'],
     phases:[
       'linear-gradient(160deg,#CFE6EC 0%,#E6D6D0 45%,#EEC6B8 100%)',
@@ -105,8 +107,8 @@ const PALETTES = {
     }
   },
   charcoal: {
-    name:'رصاصي مودرن ⬛', primary:'#3E4247', amber:'#B8946A', green:'#5F8A6E',
-    chart:['#3E4247','#B8946A','#6E7378','#5F8A6E','#8A8F96','#A98F6E','#767B82','#9AA0A6','#5E6369','#C0A57E'],
+    name:'رصاصي مودرن ⬛', primary:'#3E4247', amber:'#B8946A', green:'#5F8A6E', red:'#C0453E',
+    chart:['#5F6469','#A77AE7','#8643A5','#DF7A9A','#AE324A','#D87A00','#8A5B00','#90AC1C','#407701','#06AD99'],
     mtnDay:['#9A9EA4','#7E838A','#62676E','#484D54'], mtnNight:['#2E3238','#24282E','#1A1E24','#12151A'],
     phases:[
       'linear-gradient(160deg,#D2D0CC 0%,#C8BFB6 45%,#B8ACA0 100%)',
@@ -127,8 +129,8 @@ const PALETTES = {
     }
   },
   requiem: {
-    name:'ريكويم 🧟', primary:'#9E1B1B', amber:'#A8822E', green:'#5C7A32',
-    chart:['#9E1B1B','#A8822E','#5C7A32','#7A2E2A','#C0453E','#6E3A38','#8A6A2E','#B0562E','#5E4A46','#8E2E2A'],
+    name:'ريكويم 🧟', primary:'#9E1B1B', amber:'#A8822E', green:'#5C7A32', red:'#BB426D',
+    chart:['#AE2D29','#C88600','#806101','#7CB059','#007C2A','#04ABAA','#007480','#50A0FF','#3D5DC0','#B27CCD'],
     mtnDay:['#5A4340','#43302E','#2E1F1E','#1C1212'], mtnNight:['#2A1416','#1C0E10','#120809','#0A0506'],
     phases:[
       'linear-gradient(160deg,#3A2422 0%,#5E2E28 45%,#7E4438 100%)',
@@ -179,17 +181,105 @@ let activePal = PALETTES[DEFAULT_PAL];
 let state = { month:'', budget:null, expenses:[], debts:[], locked:false };
 let session = null;
 
-/* ---------- الثيم / الألوان ---------- */
-// يطلّع نسخة فاتحة من اللون الأساسي للخلفيات الناعمة
-function softTint(hex){
+/* ============================================================
+   اشتقاق ألوان الثيم — OKLCH
+   ------------------------------------------------------------
+   اللون الواحد ما ينفع لكل الأدوار: نفس الأزرق اللي يصير خلفية زر
+   يصير غير مقروء لمن يصير نصّاً على بطاقة بيضاء، وينطفي تماماً على
+   بطاقة داكنة. فبدل ما نلوّن بالتخمين، نشتق كل دور من نفس اللون:
+   نثبّت الصبغة (hue) ونحرّك الإضاءة (lightness) — لأن الإضاءة هي
+   المحور اللي يستجيب له التباين، والصبغة هي اللي تحفظ هوية الثيم.
+   والتشبّع ينقص بس بقدر ما يحتاج حتى يبقى اللون قابل للعرض (gamut).
+   ============================================================ */
+const _sl = (v)=>{ v/=255; return v<=0.04045 ? v/12.92 : Math.pow((v+0.055)/1.055, 2.4); };
+const _ls = (v)=>{ v = v<=0.0031308 ? 12.92*v : 1.055*Math.pow(v,1/2.4)-0.055;
+                   return Math.max(0, Math.min(255, Math.round(v*255))); };
+function _toOklab(hex){
   const c = hex.replace('#','');
-  const r = parseInt(c.slice(0,2),16), g = parseInt(c.slice(2,4),16), b = parseInt(c.slice(4,6),16);
-  const mix = (x)=> Math.round(x + (255 - x) * 0.86);
-  return 'rgb(' + mix(r) + ',' + mix(g) + ',' + mix(b) + ')';
+  const r = _sl(parseInt(c.slice(0,2),16)), g = _sl(parseInt(c.slice(2,4),16)), b = _sl(parseInt(c.slice(4,6),16));
+  const l = Math.cbrt(0.4122214708*r + 0.5363325363*g + 0.0514459929*b);
+  const m = Math.cbrt(0.2119034982*r + 0.6806995451*g + 0.1073969566*b);
+  const s = Math.cbrt(0.0883024619*r + 0.2817188376*g + 0.6299787005*b);
+  return [0.2104542553*l + 0.7936177850*m - 0.0040720468*s,
+          1.9779984951*l - 2.4285922050*m + 0.4505937099*s,
+          0.0259040371*l + 0.7827717662*m - 0.8086757660*s];
+}
+function _fromOklab(L,a,b,raw){
+  const l = Math.pow(L + 0.3963377774*a + 0.2158037573*b, 3);
+  const m = Math.pow(L - 0.1055613458*a - 0.0638541728*b, 3);
+  const s = Math.pow(L - 0.0894841775*a - 1.2914855480*b, 3);
+  const rgb = [ 4.0767416621*l - 3.3077115913*m + 0.2309699292*s,
+               -1.2684380046*l + 2.6097574011*m - 0.3413193965*s,
+               -0.0041960863*l - 0.7034186147*m + 1.7076147010*s];
+  if(raw) return rgb;
+  return '#' + rgb.map(v => _ls(v).toString(16).padStart(2,'0')).join('').toUpperCase();
+}
+function _oklch(hex){
+  const [L,a,b] = _toOklab(hex);
+  return [L, Math.hypot(a,b), Math.atan2(b,a)];
+}
+// يبني لوناً بإضاءة مطلوبة، وينقص التشبّع بس إذا طلع برّا المدى القابل للعرض
+function _lch(L, C, h){
+  while(C > 0){
+    const rgb = _fromOklab(L, C*Math.cos(h), C*Math.sin(h), true);
+    if(rgb.every(v => v >= -0.001 && v <= 1.001)) break;
+    C -= 0.002;
+  }
+  return _fromOklab(L, C*Math.cos(h), C*Math.sin(h));
+}
+// يحصر الإضاءة بسقف أو أرضية مع تثبيت الصبغة — أساس كل الاشتقاقات تحت
+function shiftL(hex, { max, min }){
+  let [L, C, h] = _oklch(hex);
+  if(max != null) L = Math.min(L, max);
+  if(min != null) L = Math.max(L, min);
+  return _lch(L, C, h);
+}
+
+/* أدوار كل لون — الأرقام مقاسة مو مقدّرة (راجع الملاحظات بأعلى styles.css):
+   ٠٫٥٦ سقف التعبئة  → النص الأبيض فوقها يمرّ APCA Lc 75 بكل الباليتات
+   ٠٫٥٣ سقف نص فاتح  → يمرّ Lc 60 على الأبيض وعلى الخلفية الناعمة
+   ٠٫٨٤ أرضية نص داكن → يمرّ Lc 60 على البطاقة الداكنة وعلى ناعمها      */
+const ROLE_FILL_MAX = 0.56, ROLE_TEXT_LIGHT_MAX = 0.53, ROLE_TEXT_DARK_MIN = 0.84;
+// الأصفر والأخضر ما يحملون نصّاً أبيض بأي مكان — يستعملون كحافة أو صبغة
+// بس. فسقف ٠٫٥٦ يغمّقهم بلا فايدة (الكهرماني يصير بنّي زيتوني). يكفيهم
+// ٠٫٧٠: يبقون كهرماني وأخضر، والحافة تعدّي Lc 30 المطلوبة لعنصر واجهة.
+const FILL_MAX = { primary: 0.56, red: 0.56, amber: 0.70, green: 0.70 };
+// خلفية ناعمة: نمزج نحو أبيض/أسود بالفضاء الإدراكي حتى كل الصبغات تاخذ
+// نفس *النسبة من طاقتها*، مو نفس الرقم الخام (اللي يطلع أفتح بالأصفر وأغمق بالأزرق)
+function _tint(hex, amount, toward){
+  const A = _toOklab(hex), B = _toOklab(toward);
+  return _fromOklab(A[0]+(B[0]-A[0])*amount, A[1]+(B[1]-A[1])*amount, A[2]+(B[2]-A[2])*amount);
+}
+function setRole(name, base){
+  const R = document.documentElement.style;
+  // الأحمر ياخذ صبغة أقوى من الباقي: شارة «احذف» وشارة «ارجع» تنحط
+  // جنب بعض، ولو الاثنتان بنفس درجة الشحوب ما تنفرقان بالنظرة السريعة.
+  // ولأن سطحه أغمق، نصّه لازم ينزل معه حتى يبقى فوقه Lc 60
+  const soft = name === 'red' ? [0.74, 0.66] : [0.88, 0.80];
+  const txtMax = name === 'red' ? 0.48 : ROLE_TEXT_LIGHT_MAX;
+  const txtMin = name === 'red' ? 0.90 : ROLE_TEXT_DARK_MIN;
+  R.setProperty('--' + name,            shiftL(base, { max: FILL_MAX[name] || ROLE_FILL_MAX }));
+  R.setProperty('--' + name + '-text-l', shiftL(base, { max: txtMax }));
+  R.setProperty('--' + name + '-text-d', shiftL(base, { min: txtMin }));
+  R.setProperty('--' + name + '-soft-l', _tint(base, soft[0], '#FFFFFF'));
+  R.setProperty('--' + name + '-soft-d', _tint(base, soft[1], '#221A13'));
+}
+/* لون الخطر لازم ينفرق عن لون الموقع بالنظرة السريعة. بعض الثيمات لونها
+   الأساسي أحمر أصلاً (ريكويم) أو برتقالي قريب منه (رملي)، فزر «احذف» وزر
+   «احفظ» يطلعون بنفس اللون. هنا ندوّر صبغة الأحمر بعيداً لحد ما تنفصل
+   ٢٥° على الأقل — يبقى أحمر، بس أحمر ما ينلخبط ويّا الأساسي. */
+const RED_MIN_SEP = 32 * Math.PI / 180;
+function harmonizeRed(redBase, primary){
+  const [L, C, hr] = _oklch(redBase), hp = _oklch(primary)[2];
+  const gap = (a,b)=>{ const d = Math.abs(a-b) % (2*Math.PI); return Math.min(d, 2*Math.PI-d); };
+  if(gap(hr, hp) >= RED_MIN_SEP) return redBase;
+  let h = hr;
+  for(let i = 0; i < 90 && gap(h, hp) < RED_MIN_SEP; i++) h -= Math.PI/180;  // نحو القرمزي
+  return _lch(L, C, h);
 }
 function applyTheme(primary){
-  document.documentElement.style.setProperty('--primary', primary);
-  document.documentElement.style.setProperty('--primary-soft', softTint(primary));
+  setRole('primary', primary);
+  setRole('red', harmonizeRed((activePal && activePal.red) || '#C0453E', primary));
 }
 function loadTheme(){
   let p = '';
@@ -205,11 +295,10 @@ function saveTheme(primary){
 function applyPalette(id, save){
   const p = PALETTES[id] || PALETTES[DEFAULT_PAL];
   activePal = p;
-  const R = document.documentElement.style;
-  R.setProperty('--primary', p.primary);
-  R.setProperty('--primary-soft', softTint(p.primary));
-  R.setProperty('--amber', p.amber);
-  R.setProperty('--green', p.green);
+  setRole('primary', p.primary);
+  setRole('amber',   p.amber);
+  setRole('green',   p.green);
+  setRole('red',     harmonizeRed(p.red || '#C0453E', p.primary));
   PALETTE = p.chart;
   if(save !== false){ try{ localStorage.setItem('mas_palette', id); }catch(_){} }
   try{ updateSky(); }catch(_){}
