@@ -1132,3 +1132,188 @@
     box-shadow:none;
   }
   .cf-actions .cf-danger:active{transform:scale(.97)}
+
+  /* ████████████████████████████████████████████████████████████
+     طبقة الحركة السائلة — التنسيقات اللي تشتغل ويّا fluid.js
+     ------------------------------------------------------------
+     كلها معلّقة على body.fluid، واللي يضيف الكلاس هو fluid.js.
+     يعني لو ما تحمّل هالملف، كل شي تحت ينطفي والتطبيق يرجع
+     لأنميشن CSS القديم بلا خرابة.
+     ████████████████████████████████████████████████████████████ */
+
+  /* ============================================================
+     ١. منحنيات النوابض — نابض حقيقي مو تقريب بيزييه
+     linear() يخلّينا نكتب المنحنى المحسوب من معادلة النابض نفسها،
+     بمعاملات آبل (نسبة تخميد + زمن استجابة):
+       firm   = تخميد ١٫٠ / استجابة ٠٫٣٤ → بلا تجاوز، الافتراضي
+       soft   = تخميد ٠٫٨٥ / استجابة ٠٫٣٠ → تجاوز بسيط جداً
+       bounce = تخميد ٠٫٧٢ / استجابة ٠٫٣٦ → نبزة، بس بعد حركة فيها زخم
+     والمتصفحات القديمة تاخذ بيزييه قريب (fallback).
+     ============================================================ */
+  :root{
+    --spring-firm:cubic-bezier(.32,.72,0,1);
+    --spring-soft:cubic-bezier(.32,.72,0,1);
+    --spring-bounce:cubic-bezier(.2,.88,.3,1.12);
+    --ease-press:cubic-bezier(.3,0,.7,1);
+  }
+  @supports (transition-timing-function:linear(0,1)){
+    :root{
+      --spring-firm:linear(0, 0.0977, 0.2822, 0.4663, 0.6197, 0.7368, 0.8217, 0.8811, 0.9217, 0.949, 0.967, 0.9788, 0.9865, 0.9914, 0.9946, 0.9966, 0.9979);
+      --spring-soft:linear(0, 0.0638, 0.2033, 0.3653, 0.5201, 0.6535, 0.7608, 0.8425, 0.902, 0.9433, 0.9708, 0.988, 0.9981, 1.0035, 1.0058, 1.0063, 1.0058, 1.0049, 1.0039, 1.0029, 1.0021);
+      --spring-bounce:linear(0, 0.0427, 0.1458, 0.2791, 0.421, 0.557, 0.6785, 0.7811, 0.8637, 0.9269, 0.9728, 1.0041, 1.0237, 1.0342, 1.0382, 1.0377, 1.0343, 1.0295, 1.0241, 1.0188, 1.0139, 1.0097, 1.0062, 1.0036, 1.0016);
+    }
+  }
+
+  /* ============================================================
+     ٢. الاستجابة — الضغطة تبيّن فوراً، والرجوع يطلع بنابض
+     قبل چان نفس الـ.18s للضغط والرجوع، فالضغطة نفسها تتأخّر ١٨٠ms
+     وتحسّها ميّتة. هسه: نزول ٧٠ms بمنحنى سريع، ورجوع بنبرة نابض.
+     ============================================================ */
+  body.fluid :is(.btn,.qh-add,.icon-btn,.logout-btn,.period-bar,.fund-wd,
+    .fund-actions button,.debt-actions button,.pal,.sw,.seg-btn,.qbtn,
+    .cat-row .rm,.cat-xfer,.lg-clear,.exp,nav button){
+    transition:transform var(--press-dur,.42s) var(--press-ease,var(--spring-bounce)),
+               background .22s var(--spring-firm),box-shadow .26s var(--spring-firm),
+               border-color .2s,filter .2s,color .2s;
+  }
+  body.fluid :is(.btn,.qh-add,.icon-btn,.logout-btn,.period-bar,.fund-wd,
+    .fund-actions button,.debt-actions button,.pal,.sw,.seg-btn,.qbtn,
+    .cat-row .rm,.cat-xfer,.lg-clear,.exp,nav button):active{
+    --press-dur:.07s; --press-ease:var(--ease-press);
+  }
+  /* صف المصروف أثناء السحب: بلا أي تنعيم — التتبّع لازم يكون ١:١
+     ويّا الإصبع. وعند الإفلات النابض يمسك التحويل والخلفية تخبي بهدوء. */
+  body.fluid .exp.fx-drag{transition:none}
+  body.fluid .exp.fx-anim{transition:background .3s ease}
+  /* أشرطة التقدّم: نفس نابض الواجهة بدل easing عام */
+  body.fluid .bar i{transition:width .55s var(--spring-firm)}
+  /* التوست وصول، مو انتقال — يستاهل نبزة خفيفة */
+  body.fluid .toast{transition:opacity .22s ease,transform .42s var(--spring-bounce)}
+
+  /* ============================================================
+     ٣. الشيت السفلي — نابض واحد يسوق كل شي
+     الإزاحة وعتمة الخلفية والتغويش كلهم مربوطين بـ--sheet-p، فالسحب
+     يحرّكهم مع الإصبع ١:١، والإفلات يكمّلهم بنفس السرعة.
+     ============================================================ */
+  body.fluid .modal{
+    background:rgba(20,20,30,calc(.42 * var(--sheet-p,1)));
+    backdrop-filter:blur(calc(7px * var(--sheet-p,1)));
+    -webkit-backdrop-filter:blur(calc(7px * var(--sheet-p,1)));
+  }
+  body.fluid .modal.show{animation:none}
+  body.fluid .modal-card{
+    animation:none;
+    overscroll-behavior:contain;      /* الشدّ بأعلى الشيت ما يمرّر الصفحة ورا */
+    touch-action:pan-y;
+  }
+  body.fluid .modal.show .modal-card{will-change:transform}
+  /* شيت ما بيه تمرير داخلي → يتسحب من أي مكان */
+  body.fluid .modal-card.sheet-free{touch-action:none}
+  /* المقبض: شكله ٥px بس منطقة لمسه أوسع بكثير */
+  body.fluid .grabber{position:relative;touch-action:none}
+  body.fluid .grabber::before{content:'';position:absolute;inset:-15px -70px}
+  /* أندرويد (وضع الأداء): بلا تغويش على مساحة كاملة */
+  .perf body.fluid .modal{backdrop-filter:none;-webkit-backdrop-filter:none}
+
+  /* ============================================================
+     ٤. الحبّة المنزلقة — تنزلق ورا التبويب النشط بدل ما تنطفي وتشتعل
+     نابض مستقل لكل محور، وfluid.js يحرّكها. بلا transition هنا
+     أبداً — النابض هو اللي يرسم كل إطار.
+     ============================================================ */
+  body.fluid :is(.seg-thumb,.nav-thumb){
+    position:absolute;top:0;left:0;z-index:0;pointer-events:none;
+    transform:translate3d(0,0,0);will-change:transform,width;
+  }
+  body.fluid .seg-thumb{background:var(--card);border-radius:13px;box-shadow:var(--shadow)}
+  body.fluid .nav-thumb{background:var(--primary-soft);border-radius:13px}
+  body.fluid :is(.seg-btn,nav button){position:relative;z-index:1;background:transparent}
+  body.fluid .seg-btn.active{background:transparent;box-shadow:none}
+  body.fluid nav button.active{background:transparent}
+  @media (hover:hover){
+    body.fluid nav button:hover{background:color-mix(in srgb,var(--primary) 10%,transparent)}
+  }
+
+  /* ============================================================
+     ٥. انتقال التبويبات — يمشي على محور شريط التبويبات
+     التبويب اللي بعده بالشريط يقع على اليسار (rtl)، فيدخل من اليسار.
+     الحركة تشير لوين رايح بدل ما تطلع من فراغ.
+     ============================================================ */
+  body.fluid .tab.active{animation:tabIn .42s var(--spring-firm)}
+  @keyframes tabIn{
+    from{opacity:0;transform:translate3d(calc(var(--tab-dir,1) * 20px),0,0)}
+    to{opacity:1;transform:none}
+  }
+  body.fluid .seg-view{animation:tabIn .38s var(--spring-firm)}
+
+  /* ============================================================
+     ٦. المواد والعمق — حافة تمرير بدل خط فاصل، وحواف تلقّط ضوء
+     ============================================================ */
+  body.fluid nav{border-top:none}
+  body.fluid nav::before{
+    content:'';position:absolute;left:0;right:0;bottom:100%;height:22px;pointer-events:none;
+    background:linear-gradient(to top,color-mix(in srgb,var(--bg) 60%,transparent),transparent);
+  }
+  @media (min-width:1000px){
+    body.fluid nav{border-top:none;border-left:1px solid var(--line)}
+    body.fluid nav::before{display:none}
+  }
+  /* ظل الهيدر يثقل لمن يصير فوق محتوى — أخف لمن الصفحة بأولها */
+  body.fluid header{transition:box-shadow .35s var(--spring-firm)}
+  body.fluid.scrolled header{box-shadow:0 12px 34px color-mix(in srgb,var(--primary) 34%,transparent)}
+  /* الحافة العليا المضيّة = ضوء يتلقّطه السطح الشفاف */
+  body.fluid .hstat{box-shadow:inset 0 1px 0 rgba(255,255,255,.32)}
+  body.fluid .period-bar{border-top-color:rgba(255,255,255,.42)}
+
+  /* ============================================================
+     ٧. الطباعة — التتبّع والتقدّم حسب الحجم
+     • التتبّع (letter-spacing) مو رقم واحد لكل الأحجام: الكبير
+       يتضايق، والصغير يبقى عند الصفر.
+     • العربي ما يتتبّع أبداً — يفكّ ترابط الحروف ويقلّ وضوحه،
+       فالتتبّع محصور بالأرقام والكلمات اللاتينية.
+     • الأرقام tabular-nums حتى ما ترجّج العرض لمن تتغيّر القيمة.
+     ============================================================ */
+  body.fluid{letter-spacing:normal}
+  body.fluid :is(.brand,.lg-brand,.splash-name){letter-spacing:-.022em}
+  body.fluid .splash-name{line-height:1.04}
+  body.fluid :is(.hstat .val,.exp .amt,.fund-bal,.debt-amt,.env-left,
+    .alloc-line b,.ss b,.blur-val,.rc-date,.flog b){
+    font-variant-numeric:tabular-nums;letter-spacing:-.012em;
+  }
+  body.fluid h2{line-height:1.35}
+  body.fluid .hstat .val{line-height:1.18}
+
+  /* ============================================================
+     ٨. تفضيلات الوصول — الحركة الأقل مو «بلا ردّ فعل»
+     ============================================================ */
+  @media (prefers-reduced-motion:reduce){
+    body.fluid .tab.active,body.fluid .seg-view{animation:tabFade .2s ease}
+    @keyframes tabFade{from{opacity:0}to{opacity:1}}
+    body.fluid .login-card{animation:none}
+    body.fluid .bar i{transition:width .01ms}
+    body.fluid .toast{transition:opacity .2s ease}
+    /* تذبذب بطيء ومساحات كبيرة متحركة — نوقّفها */
+    .splash-logo{animation:none}
+    #sky .star{animation:none;opacity:.7}
+    #sky .cloud{animation:none}
+    #sky,#sky .sky-body,#sky .stars,#sky .sky-scene,#sky .mtn{transition:none}
+    html{scroll-behavior:auto}
+  }
+  @media (prefers-reduced-transparency:reduce){
+    body.fluid :is(nav,.seg-bar,.hstat,.period-bar,#loader,.modal){
+      backdrop-filter:none;-webkit-backdrop-filter:none;
+    }
+    body.fluid nav{background:var(--card)}
+    body.fluid .seg-bar{background:color-mix(in srgb,var(--ink) 10%,var(--bg))}
+    body.fluid :is(.hstat,.period-bar){background:color-mix(in srgb,#fff 20%,var(--primary))}
+    body.fluid .modal{background:rgba(16,16,24,calc(.62 * var(--sheet-p,1)))}
+    body.fluid #loader{background:var(--bg)}
+  }
+  @media (prefers-contrast:more){
+    body.fluid :is(.card,.env,.fund,.debt,.exp,.modal-card,.login-card){
+      border:1px solid color-mix(in srgb,var(--ink) 42%,transparent);
+    }
+    body.fluid :is(.hint,label,.exp .meta,.env-sub,.fund-sub){
+      color:color-mix(in srgb,var(--ink) 78%,transparent);
+    }
+    body.fluid :is(.seg-thumb,.nav-thumb){outline:1.5px solid var(--primary)}
+  }

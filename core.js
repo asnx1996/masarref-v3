@@ -116,6 +116,13 @@ function toast(msg, isErr){
 }
 function loading(on){ $('loader').className = on ? 'show' : ''; }
 
+/* ---------- إظهار/إخفاء الشيتات (المودالات) ----------
+   هنا النسخة الأساسية: تبديل كلاس بسيط، والأنميشن من CSS.
+   fluid.js يلبس الدالتين ويحوّلهن لنوابض قابلة للسحب والمقاطعة.
+   إذا ما تحمّل fluid.js، التطبيق يبقى يشتغل بهالنسخة. */
+function sheetShow(el){ if(el) el.classList.add('show'); }
+function sheetHide(el, then){ if(el) el.classList.remove('show'); if(then) then(); }
+
 function liveFormat(input){
   input.addEventListener('input', () => {
     const n = num(input.value);

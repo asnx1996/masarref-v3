@@ -311,8 +311,8 @@ function setSkyBlur(v){
 }
 
 /* ---------- المودال ---------- */
-function modalOpen(html){ $('modalCard').innerHTML = '<div class="grabber"></div>' + html; $('modal').classList.add('show'); }
-window.modalClose = () => $('modal').classList.remove('show');
+function modalOpen(html){ $('modalCard').innerHTML = '<div class="grabber"></div>' + html; sheetShow($('modal')); }
+window.modalClose = () => sheetHide($('modal'));
 $('modal').addEventListener('click', e => { if(e.target === $('modal')) modalClose(); });
 
 /* ---------- تأكيد الحذف الموحّد — بدل confirm() المتصفح ----------
@@ -331,8 +331,16 @@ function confirmDel(title, sub, okLabel){
         <button class="btn" id="cfNo" type="button">لا، رجعني</button>
         <button class="btn cf-danger" id="cfYes" type="button">${esc(okLabel || 'احذف')}</button>
       </div>`;
-    m.classList.add('show');
-    const done = v => { m.classList.remove('show'); m.onclick = null; res(v); };
+    sheetShow(m);
+    /* السحب لتحت = إلغاء، نفس ضغطة «لا، رجعني» — نفس المخرج بنفس الطريق */
+    const onDrag = () => done(false);
+    m.addEventListener('sheet-dismiss', onDrag);
+    const done = v => {
+      m.removeEventListener('sheet-dismiss', onDrag);
+      m.onclick = null;
+      sheetHide(m);
+      res(v);                 /* الجواب فوراً — الحركة تكمل بالخلفية */
+    };
     $('cfNo').onclick  = () => done(false);
     $('cfYes').onclick = () => done(true);
     m.onclick = e => { if(e.target === m) done(false); };
@@ -2949,7 +2957,9 @@ function gotoTab(id){
   if(id === 'tab-settings') renderSettings();
   if(id === 'tab-bills') loadBills();
   if(id === 'tab-recon') loadRecons();
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  /* رجعة فورية لفوق — مو smooth. المحتوى كله تغيّر، فتمرير ناعم
+     يتصارع ويّا حركة دخول التبويب وتحسّه تأخير. */
+  window.scrollTo(0, 0);
 }
 document.querySelectorAll('nav button').forEach(btn => {
   btn.onclick = () => gotoTab(btn.dataset.tab);
