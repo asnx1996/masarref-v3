@@ -1,10 +1,46 @@
 /* ---------- تشغيل ---------- */
 if(/Android/i.test(navigator.userAgent)) document.documentElement.classList.add('perf');
+
+/* ============================================================
+   جدولة ما بعد الافتتاح
+   ------------------------------------------------------------
+   السبب الحقيقي للتقطيع بحركة اللوجو: كل الزينة (٤٠ نجمة + ٢٦
+   شجرة + ٢٦ ذرة، وكلهن بأنميشن لانهائي) چانت تنبني بنفس اللحظة
+   اللي اللوجو يتحرك بيها — ورا الشاشة، يعني محد يشوفها! فالخيط
+   الرئيسي مشغول ببناء DOM بدل ما يرسم إطارات الحركة.
+   هسه: الحركة تاخذ الخيط لحالها، والزينة تنبني بعد ما تخلص، وكل
+   مهمة بإطار لحالها حتى ولا وحدة تسوّي وقفة طويلة.
+   ============================================================ */
+const AFTER_SPLASH = [];
+let splashGone = false;
+function afterSplash(fn){
+  if(splashGone) idle(fn); else AFTER_SPLASH.push(fn);
+}
+/* ينفّذ المهمة بوقت فراغ الخيط.
+   مع ضمانة setTimeout: requestIdleCallback ما يشتغل أبداً لو الصفحة
+   بالخلفية (يعني المستخدم فتح التطبيق وطلع منه) — وبلا الضمانة
+   السماء ما تنبني نهائياً وتبقى الخلفية سادة. */
+function idle(fn){
+  let done = false;
+  const run = () => { if(done) return; done = true; try{ fn(); }catch(e){} };
+  if(window.requestIdleCallback) requestIdleCallback(run, { timeout: 300 });
+  setTimeout(run, 400);
+}
+function drainAfterSplash(){
+  if(splashGone) return;
+  splashGone = true;
+  /* واحدة واحدة، مو كلهن بنفس الإطار */
+  (function next(){
+    const fn = AFTER_SPLASH.shift();
+    if(!fn) return;
+    idle(() => { try{ fn(); }catch(e){} next(); });
+  })();
+}
 // شيل شاشة الافتتاح بعد ما تخلص حركتها (حتى ما تعيق الضغط)
 (function(){
   const sp = document.getElementById('splash');
-  if(!sp) return;
-  const kill = () => sp.classList.add('done');
+  if(!sp){ drainAfterSplash(); return; }
+  const kill = () => { sp.classList.add('done'); drainAfterSplash(); };
   const t = document.documentElement.classList.contains('perf') ? 2300 : 2900;
   setTimeout(kill, t);
   setTimeout(kill, 4000);
@@ -26,11 +62,12 @@ window.addEventListener('beforeprint', () => {
     if(pa && session){ pa.innerHTML = buildReportHTML(); translateNode(pa); }
   }catch(_){}
 });
-try{ startDeco(); }catch(e){}
-try{ updateSky(); setInterval(updateSky, 5 * 60 * 1000); }catch(e){}
-try{ initDepth(); }catch(e){}
-try{ initAmbient(); }catch(e){}
-try{ initSwipe(); }catch(e){}
+try{ initSwipe(); }catch(e){}   /* رخيصة — أربع مستمعات بس */
+/* الزينة كلها تتأجّل لما تخلص حركة الافتتاح — هي مخفية وراها أصلاً */
+afterSplash(() => startDeco());
+afterSplash(() => { updateSky(); setInterval(updateSky, 5 * 60 * 1000); });
+afterSplash(() => initDepth());
+afterSplash(() => initAmbient());
 (async () => {
   try{
     const { data:{ session: s } } = await sb.auth.getSession();

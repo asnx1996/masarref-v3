@@ -38,6 +38,11 @@
 <body>
 <div id="splash">
   <div class="splash-inner">
+    <!-- الظل صار طبقة ثابتة ورا اللوجو بدل filter:drop-shadow عليه —
+         الفلتر چان ينرسم من جديد بكل إطار من إطارات الطيران والتكبير.
+         وبنفس الوقت أصح فيزيائياً: الظل يبقى بمحله واللوجو يطير فوقه. -->
+    <div class="splash-logo-wrap">
+    <i class="splash-logo-shadow" aria-hidden="true"></i>
     <svg class="splash-logo" viewBox="0 0 120 120" width="120" height="120" aria-hidden="true">
       <rect width="120" height="120" rx="27" fill="#C86B4A"/>
       <g fill="#FBF3E8">
@@ -46,6 +51,7 @@
       <circle cx="60" cy="66" r="15" fill="#C86B4A" stroke="#FBF3E8" stroke-width="4"/>
       <text x="60" y="73" font-size="20" font-weight="800" fill="#F5F0E1" text-anchor="middle" font-family="Georgia,serif">$</text>
     </svg>
+    </div>
     <div class="splash-name">Pocky</div>
     <div class="splash-tag">مصاريفنا</div>
   </div>

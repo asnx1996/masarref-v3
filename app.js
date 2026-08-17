@@ -301,7 +301,11 @@ function applyPalette(id, save){
   setRole('red',     harmonizeRed(p.red || '#C0453E', p.primary));
   PALETTE = p.chart;
   if(save !== false){ try{ localStorage.setItem('mas_palette', id); }catch(_){} }
-  try{ updateSky(); }catch(_){}
+  /* بناء السماء (٤٠ نجمة + ٢٦ شجرة + ذرات، كلهن بأنميشن لانهائي) ثقيل.
+     أول نداء يجي من loadPalette() بلحظة الافتتاح — بالضبط لمن اللوجو
+     يتحرك — فچان يقطّع الحركة. هسه يتأجّل لما تخلص. وبعد الافتتاح
+     afterSplash تنفّذه بوقت فراغ الخيط، فضغطة تغيير الثيم تبقى فورية. */
+  try{ (window.afterSplash || (f => f()))(() => { try{ updateSky(); }catch(_){} }); }catch(_){}
   try{ applyDark(); }catch(_){}          // يزامن لون شريط المتصفح (theme-color)
   try{ if(session) render(); }catch(_){} // يعيد تلوين الدونات/المفتاح بألوان الباليت
 }

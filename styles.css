@@ -102,22 +102,51 @@
   body.sky-on{background:transparent}
 
   /* ---------- شاشة الافتتاح (Splash) ---------- */
+  /* شاشة الافتتاح — كل الحركة هنا محصورة بـtransform وopacity، يعني
+     الكرت الرسومي يتكفّل بيها والخيط الرئيسي يبقى فاضي. الملاحظات
+     مكتوبة عند كل سطر لأن التقطيع چان يجي من التفاصيل هذي بالضبط. */
   #splash{
     position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;
     background:linear-gradient(160deg,#D67A54 0%,#C86B4A 55%,#A9522F 100%);
-    animation:splashOut .7s cubic-bezier(.5,0,.75,0) 1.9s forwards;
+    /* خروج بالشفافية بس. قبل چان يزحف ١٠٠vh لفوق — سطح بحجم الشاشة
+       كاملة يتنقّل، وهذا أثقل شي تكدر تطلبه من المتصفح. */
+    animation:splashOut .55s ease-in 1.95s forwards;
   }
   #splash.done{display:none!important}
-  .splash-inner{display:flex;flex-direction:column;align-items:center;gap:14px;animation:splashIn .8s cubic-bezier(.18,.9,.32,1.2) both}
-  .splash-logo{filter:drop-shadow(0 12px 30px rgba(0,0,0,.3));animation:splashFloat 2s ease-in-out infinite}
-  .splash-name{font-size:2.4rem;font-weight:800;color:#fff;letter-spacing:1px;animation:splashText .7s ease .35s both}
-  .splash-tag{font-size:1rem;color:rgba(255,255,255,.8);animation:splashText .7s ease .5s both}
-  @keyframes splashIn{0%{opacity:0;transform:scale(.4)}60%{opacity:1}100%{opacity:1;transform:scale(1)}}
+  .splash-inner{
+    display:flex;flex-direction:column;align-items:center;gap:14px;
+    /* forwards مو both للثاني: لو چان both، حالته الأولى تنطبّق من
+       الثانية صفر وتلغي تكبير الدخول (آخر أنميشن بالقائمة يفوز) */
+    animation:splashIn .5s var(--spring-enter,cubic-bezier(.18,.9,.32,1.06)) both,
+              splashZoom .55s ease-in 1.95s forwards;  /* يتكبّر شوي وهو يخبي — نفس طريق الدخول بالعكس */
+    will-change:transform,opacity;
+  }
+  /* اللوجو يطير، والظل طبقة ثابتة تحته (بلا فلتر على المتحرّك) */
+  .splash-logo-wrap{position:relative;display:flex;align-items:center;justify-content:center}
+  /* box-shadow مو filter:blur — الفلتر يحتاج مرور رسم لحاله بكل مرة
+     يتغيّر مقياس الأب، والـbox-shadow ينرسم ويّا الطبقة نفسها */
+  .splash-logo-shadow{
+    position:absolute;left:50%;top:50%;width:104px;height:104px;margin:-52px 0 0 -52px;
+    border-radius:26px;box-shadow:0 14px 32px 3px rgba(0,0,0,.30);
+  }
+  .splash-logo{
+    position:relative;animation:splashFloat 2.6s ease-in-out infinite;
+    will-change:transform;transform:translateZ(0);
+  }
+  .splash-name{font-size:2.4rem;font-weight:800;color:#fff;animation:splashText .6s ease .3s both}
+  .splash-tag{font-size:1rem;color:rgba(255,255,255,.8);animation:splashText .6s ease .44s both}
+  /* التكبير من ٠٫٧٢ مو ٠٫٤ — قفزة ٢٫٥× تجبر إعادة رسم أكبر بكل إطار،
+     وبنفس الوقت الدخول الأهدى يحسّه أوثق */
+  @keyframes splashIn{from{opacity:0;transform:scale(.72)}to{opacity:1;transform:none}}
+  @keyframes splashZoom{from{transform:none}to{transform:scale(1.09);opacity:0}}
   @keyframes splashText{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-  @keyframes splashFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-  @keyframes splashOut{to{opacity:0;transform:translateY(-100vh);visibility:hidden;pointer-events:none}}
+  @keyframes splashFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+  @keyframes splashOut{to{opacity:0;visibility:hidden;pointer-events:none}}
   .perf .splash-logo{animation:none}
-  .perf #splash{animation-delay:1.4s}
+  .perf .splash-logo-shadow{box-shadow:0 8px 16px rgba(0,0,0,.22)}
+  .perf #splash{animation-delay:1.45s}
+  /* الأب عنده أنميشنين — التأخير الثاني بس (الخروج)، الدخول يبقى فوري */
+  .perf .splash-inner{animation-delay:0s,1.45s}
   @media (prefers-reduced-motion:reduce){#splash{animation:splashFade .4s ease 1.2s forwards}.splash-inner{animation:none}}
   @keyframes splashFade{to{opacity:0;visibility:hidden}}
 
@@ -1198,16 +1227,26 @@
        firm   = تخميد ١٫٠ / استجابة ٠٫٣٤ → بلا تجاوز، الافتراضي
        soft   = تخميد ٠٫٨٥ / استجابة ٠٫٣٠ → تجاوز بسيط جداً
        bounce = تخميد ٠٫٧٢ / استجابة ٠٫٣٦ → نبزة، بس بعد حركة فيها زخم
+       slow   = تخميد ١٫٠٠ / استجابة ٠٫٥٠ → للأسطح الكبيرة (صفحة كاملة)
+       enter  = تخميد ٠٫٩٠ / استجابة ٠٫٥٥ → دخول أول مرة (الافتتاح)
+     السطح الأكبر يستاهل استجابة أطول — الزر يردّ بسرعة، والصفحة
+     الكاملة تتحرّك بهدوء يناسب حجمها.
      والمتصفحات القديمة تاخذ بيزييه قريب (fallback).
      ============================================================ */
   :root{
     --spring-firm:cubic-bezier(.32,.72,0,1);
     --spring-soft:cubic-bezier(.32,.72,0,1);
     --spring-bounce:cubic-bezier(.2,.88,.3,1.12);
+    --spring-slow:cubic-bezier(.25,.66,0,1);
+    --spring-enter:cubic-bezier(.18,.9,.32,1.06);
     --ease-press:cubic-bezier(.3,0,.7,1);
+    /* مدّة انتقال الصفحات — مقبض واحد تعدّله إذا حسّيتها سريعة/بطيئة */
+    --tab-motion:.62s;
   }
   @supports (transition-timing-function:linear(0,1)){
     :root{
+      --spring-slow:linear(0, 0.079, 0.2364, 0.4035, 0.5515, 0.6716, 0.7643, 0.8333, 0.8836, 0.9194, 0.9447, 0.9623, 0.9744, 0.9828, 0.9884, 0.9923, 0.9948, 0.9966, 0.9977);
+      --spring-enter:linear(0, 0.0356, 0.12, 0.2276, 0.342, 0.4528, 0.5543, 0.6436, 0.7199, 0.7834, 0.8352, 0.8766, 0.9093, 0.9345, 0.9538, 0.9682, 0.9788, 0.9865, 0.9919, 0.9957, 0.9982);
       --spring-firm:linear(0, 0.0977, 0.2822, 0.4663, 0.6197, 0.7368, 0.8217, 0.8811, 0.9217, 0.949, 0.967, 0.9788, 0.9865, 0.9914, 0.9946, 0.9966, 0.9979);
       --spring-soft:linear(0, 0.0638, 0.2033, 0.3653, 0.5201, 0.6535, 0.7608, 0.8425, 0.902, 0.9433, 0.9708, 0.988, 0.9981, 1.0035, 1.0058, 1.0063, 1.0058, 1.0049, 1.0039, 1.0029, 1.0021);
       --spring-bounce:linear(0, 0.0427, 0.1458, 0.2791, 0.421, 0.557, 0.6785, 0.7811, 0.8637, 0.9269, 0.9728, 1.0041, 1.0237, 1.0342, 1.0382, 1.0377, 1.0343, 1.0295, 1.0241, 1.0188, 1.0139, 1.0097, 1.0062, 1.0036, 1.0016);
@@ -1288,12 +1327,22 @@
      التبويب اللي بعده بالشريط يقع على اليسار (rtl)، فيدخل من اليسار.
      الحركة تشير لوين رايح بدل ما تطلع من فراغ.
      ============================================================ */
-  body.fluid .tab.active{animation:tabIn .42s var(--spring-firm)}
-  @keyframes tabIn{
-    from{opacity:0;transform:translate3d(calc(var(--tab-dir,1) * 20px),0,0)}
-    to{opacity:1;transform:none}
+  /* الصفحة سطح كبير — تاخذ نابض أهدى ومسافة أطول من زر صغير.
+     والشفافية تخلص قبل الحركة، فالعين تستقر على المحتوى وهو بعده
+     يهدّي بمكانه بدل ما تنتظره يخلص. */
+  body.fluid .tab.active{
+    animation:tabIn var(--tab-motion,.62s) var(--spring-slow) both,
+              tabFadeIn calc(var(--tab-motion,.62s) * .55) ease-out both;
   }
-  body.fluid .seg-view{animation:tabIn .38s var(--spring-firm)}
+  @keyframes tabIn{
+    from{transform:translate3d(calc(var(--tab-dir,1) * 30px),0,0)}
+    to{transform:none}
+  }
+  @keyframes tabFadeIn{from{opacity:0}to{opacity:1}}
+  body.fluid .seg-view{
+    animation:tabIn calc(var(--tab-motion,.62s) * .82) var(--spring-slow) both,
+              tabFadeIn calc(var(--tab-motion,.62s) * .45) ease-out both;
+  }
 
   /* ============================================================
      ٦. المواد والعمق — حافة تمرير بدل خط فاصل، وحواف تلقّط ضوء
@@ -1336,8 +1385,7 @@
      ٨. تفضيلات الوصول — الحركة الأقل مو «بلا ردّ فعل»
      ============================================================ */
   @media (prefers-reduced-motion:reduce){
-    body.fluid .tab.active,body.fluid .seg-view{animation:tabFade .2s ease}
-    @keyframes tabFade{from{opacity:0}to{opacity:1}}
+    body.fluid .tab.active,body.fluid .seg-view{animation:tabFadeIn .2s ease}
     body.fluid .login-card{animation:none}
     body.fluid .bar i{transition:width .01ms}
     body.fluid .toast{transition:opacity .2s ease}
