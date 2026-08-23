@@ -5,13 +5,31 @@
 
 /* ---------- أدوات ---------- */
 const $ = id => document.getElementById(id);
+
+/* ============================================================
+   التخزين المحلي — بغلاف آمن
+   ------------------------------------------------------------
+   localStorage يرمي استثناء بحالات مو نادرة: سفاري الوضع الخاص،
+   حجب التخزين من إعدادات المتصفح، أو امتلاء الحصة. ولأن أغلب
+   استعمالاتنا بمستوى الملف (خارج أي دالة)، الاستثناء ما يفشّل
+   سطر واحد — يوگّع **الملف كله** وقت التحميل، فتطلع شاشة بيضة.
+   هنا نغلّفه مرة وحدة ونستعمله بكل مكان.
+   ============================================================ */
+const LS = {
+  get(k, d){
+    const dv = (d === undefined) ? null : d;
+    try{ const v = localStorage.getItem(k); return v === null ? dv : v; }
+    catch(_){ return dv; }
+  },
+  set(k, v){ try{ localStorage.setItem(k, String(v)); }catch(_){} }
+};
 /* العملة — نص العرض فقط (ما يمسّ أي حساب) */
 const CURRENCIES = {
   iqd: { sym:'د.ع', pos:'after',  name:'دينار عراقي (د.ع)' },
   usd: { sym:'$',   pos:'before', name:'دولار ($)' }
 };
 let CURRENCY = 'iqd';
-try{ CURRENCY = CURRENCIES[localStorage.getItem('mas_cur')] ? localStorage.getItem('mas_cur') : 'iqd'; }catch(_){}
+try{ CURRENCY = CURRENCIES[LS.get('mas_cur')] ? LS.get('mas_cur') : 'iqd'; }catch(_){}
 const fmt = n => {
   const v = (Number(n)||0).toLocaleString('en-US');
   const c = CURRENCIES[CURRENCY] || CURRENCIES.iqd;
@@ -107,6 +125,58 @@ function periodDefaultDate(period, m){
   return dateInMonth(m);
 }
 
+/* تاريخ استحقاق فاتورة متكررة داخل شهر معيّن.
+   يوم ٣١ بشهر ٣٠ يوم (أو شباط) ينقصّ على آخر يوم بالشهر — بدونه
+   يطلع '2026-02-31' وهذا تاريخ غير صالح فتنكسر كل حسابات التأخير. */
+function billDueISO(month, dueDay){
+  const d = Math.min(Math.max(1, Number(dueDay) || 1), daysInMonth(month));
+  return month + '-' + ('0' + d).slice(-2);
+}
+
+/* ============================================================
+   نوع الحركة — بدل تحليل نص الوصف بالعربي
+   ------------------------------------------------------------
+   السيرفر صار يرجّع e.kind بعمود صريح (sql/loan-charge-model.sql).
+   لو الترحيل بعده مو مرفوع (أو حركة قديمة بالكاش)، نشتقه من الوصف
+   والإشارة — نفس منطق derive_expense_kind بالسيرفر بالضبط، فالنتيجة
+   وحدة قبل الترحيل وبعده.
+
+   الأنواع اللي تكسر قاعدة «الإشارة تسوّي كلشي» — وهي بيت القصيد:
+     cat_loan  قرض محمّل على تصنيف (+) → ينقص التصنيف بس.
+               ما يمسّ «الباقي للصرف» لأن الفلوس طلعت من الصندوق
+               مو من الدخل، والصندوق أصلاً نقص برصيده. لو خصمناها
+               من «الباقي» بعد، نكون خصمناها مرتين.
+     cat_pay   تسديد قرض (+) → ينقص «الباقي» بس.
+               التصنيف محمّل أصلاً من يوم القرض، فما ينخصم مرتين.
+     cat_fix   إعدام/تصحيح قرض (−) → يزيد التصنيف بس.
+   ============================================================ */
+function kindOf(e, saveNames){
+  if(e && e.kind) return e.kind;
+  const d = String((e && e.desc) || '');
+  const a = Number((e && e.amount) || 0);
+  if(saveNames && saveNames.has(e && e.category)){
+    if(a < 0){
+      if(d.indexOf('إيداع: ') === 0)   return 'fund_dep';
+      if(d.indexOf('إيداع من «') === 0) return 'fund_dep_cat';
+      return 'fund_ret';
+    }
+    return d.indexOf('قرض') === 0 ? 'fund_loan' : 'fund_wd';
+  }
+  if(a < 0 && d.indexOf('تمويل من صندوق «') === 0)  return 'cat_fund';
+  if(a < 0 && d.indexOf('قرض من صندوق «') === 0)    return 'cat_loan_v1';
+  if(a > 0 && d.indexOf('سداد قرض لصندوق «') === 0) return 'cat_pay_v1';
+  if(a > 0 && d.indexOf('إيداع لصندوق «') === 0)    return 'cat_dep';
+  return 'spend';
+}
+/* حركة على صندوق ادخار (تحرّك رصيده) */
+const isFundKind = k => String(k).indexOf('fund_') === 0;
+/* تنخصم من متاح التصنيف؟ */
+const hitsCat    = k => !isFundKind(k) && k !== 'cat_pay';
+/* تنخصم من «الباقي للصرف»؟ (حركات الصناديق إلها حسابها لحالها) */
+const hitsRemain = k => !isFundKind(k) && k !== 'cat_loan' && k !== 'cat_fix';
+/* حركة صندوق بالمعنى الواسع — تروح لقسم «حركات الصناديق» مو لسجل المصاريف */
+const isFundMoveKind = k => k !== 'spend';
+
 function toast(msg, isErr){
   const t = $('toast');
   t.textContent = msg;
@@ -140,10 +210,10 @@ function esc(s){
    ============================================================ */
 const OFFLINE_KEY = 'mas_offline_exp';
 function offlineList(){
-  try{ const l = JSON.parse(localStorage.getItem(OFFLINE_KEY)); return Array.isArray(l) ? l : []; }
+  try{ const l = JSON.parse(LS.get(OFFLINE_KEY)); return Array.isArray(l) ? l : []; }
   catch(_){ return []; }
 }
-function offlineSave(list){ try{ localStorage.setItem(OFFLINE_KEY, JSON.stringify(list)); }catch(_){} }
+function offlineSave(list){ try{ LS.set(OFFLINE_KEY, JSON.stringify(list)); }catch(_){} }
 function offlineAdd(item){
   const l = offlineList();
   item.qid = 'q' + Date.now().toString(36) + Math.random().toString(36).slice(2,7);

@@ -164,6 +164,125 @@ test('طابور الأوفلاين: بيانات خربانة بالتخزين 
   }
 });
 
+/* ---------- استحقاق الفواتير المتكررة ---------- */
+test('billDueISO: يوم عادي يمر مثل ما هو', () => eq(billDueISO('2026-08', 10), '2026-08-10'));
+test('billDueISO: يوم واحد خانة ينزاد له صفر', () => eq(billDueISO('2026-08', 5), '2026-08-05'));
+test('billDueISO: ٣١ بشباط ينقصّ لآخر يوم', () => eq(billDueISO('2026-02', 31), '2026-02-28'));
+test('billDueISO: ٣١ بشهر ٣٠ يوم ينقصّ', () => eq(billDueISO('2026-04', 31), '2026-04-30'));
+test('billDueISO: شباط الكبيسة ٢٩ يوم', () => eq(billDueISO('2028-02', 31), '2028-02-29'));
+test('billDueISO: يوم صفر أو فاضي يصير ١', () => { eq(billDueISO('2026-08', 0), '2026-08-01'); eq(billDueISO('2026-08', null), '2026-08-01'); });
+test('billDueISO: النتيجة دايماً تاريخ صالح', () => {
+  for(const m of ['2026-01','2026-02','2026-04','2026-12']){
+    for(const d of [1, 15, 28, 29, 30, 31]){
+      const iso = billDueISO(m, d);
+      if(isNaN(new Date(iso).getTime())) throw new Error('تاريخ غير صالح: ' + iso);
+    }
+  }
+});
+
+/* ---------- أنواع الحركات (القرض المحمّل) ---------- */
+const FUNDS = new Set(['قاصة','ادخار البطاقة']);
+const ex = (o) => Object.assign({ amount:0, desc:'', category:'أكل' }, o);
+
+test('kindOf: العمود الصريح من السيرفر يفوز', () =>
+  eq(kindOf(ex({ kind:'cat_loan', amount:100, desc:'أي شي' }), FUNDS), 'cat_loan'));
+test('kindOf: مصروف عادي', () => eq(kindOf(ex({ amount:5000, desc:'خبز' }), FUNDS), 'spend'));
+test('kindOf: سحب من صندوق', () =>
+  eq(kindOf(ex({ amount:5000, desc:'سحب: تصليح', category:'قاصة' }), FUNDS), 'fund_wd'));
+test('kindOf: قرض من صندوق', () =>
+  eq(kindOf(ex({ amount:5000, desc:'قرض لتصنيف «أكل»', category:'قاصة' }), FUNDS), 'fund_loan'));
+test('kindOf: إيداع من الفائض', () =>
+  eq(kindOf(ex({ amount:-5000, desc:'إيداع: إضافة للرصيد', category:'قاصة' }), FUNDS), 'fund_dep'));
+test('kindOf: إيداع من تصنيف (مو من الفائض)', () =>
+  eq(kindOf(ex({ amount:-5000, desc:'إيداع من «أكل»', category:'قاصة' }), FUNDS), 'fund_dep_cat'));
+test('kindOf: إرجاع دين للصندوق', () =>
+  eq(kindOf(ex({ amount:-5000, desc:'إرجاع دين: أخوي', category:'قاصة' }), FUNDS), 'fund_ret'));
+test('kindOf: تمويل تصنيف من سحب', () =>
+  eq(kindOf(ex({ amount:-5000, desc:'تمويل من صندوق «قاصة»' }), FUNDS), 'cat_fund'));
+test('kindOf: تمويل تصنيف من قرض قديم (v1)', () =>
+  eq(kindOf(ex({ amount:-5000, desc:'قرض من صندوق «قاصة»' }), FUNDS), 'cat_loan_v1'));
+test('kindOf: سداد قرض قديم (v1)', () =>
+  eq(kindOf(ex({ amount:5000, desc:'سداد قرض لصندوق «قاصة»' }), FUNDS), 'cat_pay_v1'));
+test('kindOf: وصف يبدي بنفس كلمات القرض ما يخرّب المصروف', () => {
+  /* المستخدم يكتب «قرض من صندوق الخير» كتفاصيل مصروف عادي (موجب) —
+     لازم يظل مصروف، مو حركة صندوق */
+  eq(kindOf(ex({ amount:5000, desc:'قرض من صندوق «قاصة»' }), FUNDS), 'spend');
+});
+
+test('hitsRemain: القرض المحمّل ما يمسّ الباقي للصرف', () => eq(hitsRemain('cat_loan'), false));
+test('hitsRemain: تصحيح/إعدام القرض ما يمسّ الباقي', () => eq(hitsRemain('cat_fix'), false));
+test('hitsRemain: تسديد القرض ينقص الباقي', () => eq(hitsRemain('cat_pay'), true));
+test('hitsRemain: المصروف العادي ينقص الباقي', () => eq(hitsRemain('spend'), true));
+test('hitsRemain: حركات الصناديق مطلوعة (إلها حسابها)', () => eq(hitsRemain('fund_wd'), false));
+test('hitsCat: التسديد ما ينخصم من التصنيف مرة ثانية', () => eq(hitsCat('cat_pay'), false));
+test('hitsCat: القرض المحمّل ينخصم من التصنيف', () => eq(hitsCat('cat_loan'), true));
+test('hitsCat: التصحيح يرجّع للتصنيف', () => eq(hitsCat('cat_fix'), true));
+test('كل نوع يمسّ الباقي أو التصنيف — مو الاثنين بالقروض الجديدة', () => {
+  for(const k of ['cat_loan','cat_pay','cat_fix']){
+    if(hitsRemain(k) && hitsCat(k)) throw new Error(k + ' يمسّ الاثنين — ازدواج خصم');
+  }
+});
+test('السلوك القديم (v1) ما انتغيّر: يمسّ الاثنين', () => {
+  for(const k of ['spend','cat_fund','cat_loan_v1','cat_pay_v1','cat_dep']){
+    if(!(hitsRemain(k) && hitsCat(k))) throw new Error(k + ' انتغيّر سلوكه');
+  }
+});
+test('isFundMoveKind: المصروف العادي بس يبقى بسجل المصاريف', () => {
+  eq(isFundMoveKind('spend'), false);
+  for(const k of ['fund_wd','fund_dep','cat_fund','cat_loan','cat_pay','cat_fix']) eq(isFundMoveKind(k), true, k);
+});
+
+/* سيناريو كامل: قرض ١٠٠ من صندوق على تصنيف، ثم كل طريقة إغلاق */
+function scenario(rows){
+  let remain = 0, cat = 0, fund = 0;
+  rows.forEach(r => {
+    const k = r.kind;
+    if(isFundKind(k)){ fund -= r.amount; return; }   // موجب على الصندوق = ينقص رصيده
+    if(hitsCat(k))    cat    -= r.amount;            // موجب = ينقص المتاح
+    if(hitsRemain(k)) remain -= r.amount;
+  });
+  return { remain, cat, fund };
+}
+test('سيناريو: قرض ١٠٠ ينقص الصندوق والتصنيف ولا يمسّ الباقي', () =>
+  eq(scenario([
+    { kind:'fund_loan', amount:100 },
+    { kind:'cat_loan',  amount:100 }
+  ]), { remain:0, cat:-100, fund:-100 }));
+test('سيناريو: إرجاع — الصندوق يسترجع والتصنيف يبقى سالب', () =>
+  eq(scenario([
+    { kind:'fund_loan', amount:100 }, { kind:'cat_loan', amount:100 },
+    { kind:'fund_ret',  amount:-100 }, { kind:'cat_pay', amount:100 }
+  ]), { remain:-100, cat:-100, fund:0 }));
+test('سيناريو: إرجاع كامل — كلشي يرجع لحالته والكلفة على الباقي', () =>
+  eq(scenario([
+    { kind:'fund_loan', amount:100 }, { kind:'cat_loan', amount:100 },
+    { kind:'fund_ret',  amount:-100 }, { kind:'cat_pay', amount:100 },
+    { kind:'cat_fix',   amount:-100 }
+  ]), { remain:-100, cat:0, fund:0 }));
+test('سيناريو: إعدام — الصندوق يخسر والتصنيف يرجع موجب', () =>
+  eq(scenario([
+    { kind:'fund_loan', amount:100 }, { kind:'cat_loan', amount:100 },
+    { kind:'cat_fix',   amount:-100 }
+  ]), { remain:0, cat:0, fund:-100 }));
+test('سيناريو: بكل الطرق مجموع (الباقي + الصناديق) ينزل بالمصروف الفعلي بس', () => {
+  const loan = [{ kind:'fund_loan', amount:100 }, { kind:'cat_loan', amount:100 }];
+  const all = {
+    'إرجاع': loan.concat([{ kind:'fund_ret', amount:-100 }, { kind:'cat_pay', amount:100 }]),
+    'كامل':  loan.concat([{ kind:'fund_ret', amount:-100 }, { kind:'cat_pay', amount:100 }, { kind:'cat_fix', amount:-100 }]),
+    'إعدام': loan.concat([{ kind:'cat_fix', amount:-100 }])
+  };
+  for(const nm in all){
+    const s = scenario(all[nm]);
+    if(s.remain + s.fund !== -100) throw new Error(nm + ': المجموع ' + (s.remain + s.fund) + ' والمفروض −100');
+  }
+});
+
+/* ---------- التخزين المحلي المغلّف ---------- */
+test('LS: قراءة مفتاح ماكو ترجّع null', () => eq(LS.get('mas_key_ma_mawjood_abadan'), null));
+test('LS: قراءة مفتاح ماكو ترجّع القيمة الافتراضية', () => eq(LS.get('mas_key_ma_mawjood_abadan', 'x'), 'x'));
+test('LS: كتابة وقراءة', () => { LS.set('mas_test_k', 'v1'); eq(LS.get('mas_test_k'), 'v1'); localStorage.removeItem('mas_test_k'); });
+test('LS: الرقم ينخزن كنص', () => { LS.set('mas_test_k', 7); eq(LS.get('mas_test_k'), '7'); localStorage.removeItem('mas_test_k'); });
+
 /* ---------- تمييز خطأ النت عن رفض السيرفر ---------- */
 if(navigator.onLine){
   test('isNetErr: فشل الاتصال يعتبر خطأ نت', () => eq(isNetErr('TypeError: Failed to fetch'), true));

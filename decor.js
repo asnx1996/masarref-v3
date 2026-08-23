@@ -34,7 +34,7 @@ const CLOCK_SKINS = [
   { id:'pearl',    name:'لؤلؤي ناعم', face:'#ECECF2', ring:'#DDDDE6', tick:'#A9A9B8', num:'#5A5A66', hour:'#3A3A44', min:'#3A3A44', sec:'#2C8FB0', center:'#3A3A44', numerals:'minimal', markers:'four', soft:true },
   { id:'midnight', name:'منتصف الليل', face:'#141A33', ring:'#5A6488', tick:'#9AA4C8', num:'#C6CEEC', hour:'#EEF1FB', min:'#EEF1FB', sec:'#7CC4F0', center:'#C6CEEC', numerals:'minimal', markers:'dots' }
 ];
-let clockIdx = parseInt(localStorage.getItem('mas_clock') || '0', 10) || 0;
+let clockIdx = parseInt(LS.get('mas_clock') || '0', 10) || 0;
 function romanFor(n){ return ['','I','II','III','IIII','V','VI','VII','VIII','IX','X','XI','XII'][n]; }
 // معرّف SVG للتوهّج (نيون) والوجه الناعم (نيومورفيزم) — نضيفه مرة حسب الشكل
 function clockDefs(sk){
@@ -109,7 +109,7 @@ function startDeco(){
      ضغطة على الساعة نفسها هم تبدّل شكلها */
   $('clockSkin').addEventListener('click', () => {
     clockIdx = (clockIdx + 1) % CLOCK_SKINS.length;
-    localStorage.setItem('mas_clock', clockIdx);
+    LS.set('mas_clock', clockIdx);
     renderClock(); tickClock();
     toast('شكل الساعة: ' + CLOCK_SKINS[clockIdx].name + ' 🕰');
   });
@@ -179,7 +179,7 @@ function curSeasonTheme(key){
   };
 }
 
-let skySeason = localStorage.getItem('mas_season') || 'auto';
+let skySeason = LS.get('mas_season') || 'auto';
 let particlesKind = null;
 function buildParticles(kind){
   const box = $('skyParticles');
@@ -200,7 +200,7 @@ function buildParticles(kind){
 }
 function setSeason(s){
   skySeason = s;
-  localStorage.setItem('mas_season', s);
+  LS.set('mas_season', s);
   updateSky();
 }
 function updateSky(){
@@ -343,7 +343,7 @@ function initSwipe(){
    الأصوات — نغمات قصيرة تتولّد بالكود (Web Audio) بلا أي ملفات
    فرح للإضافات المالية، وحزينة خفيفة للصرف
    ============================================================ */
-const SND = { on: localStorage.getItem('mas_snd') !== 'off', ctx: null };
+const SND = { on: LS.get('mas_snd') !== 'off', ctx: null };
 function sndCtx(){
   if(!SND.ctx){ try{ SND.ctx = new (window.AudioContext || window.webkitAudioContext)(); }catch(_){ SND.ctx = null; } }
   if(SND.ctx && SND.ctx.state === 'suspended') SND.ctx.resume();
@@ -387,7 +387,7 @@ function sndTick(){ playTones([{f:180,t:0,d:0.12,type:'square',v:0.09}]); }
 /* ============================================================
    موسيقى الخلفية — موزارت (بتحكم صوت، تبدي بأول ضغطة من المستخدم)
    ============================================================ */
-const MUSIC = { audio: null, on: false, vol: parseFloat(localStorage.getItem('mas_musicvol') || '0.18'), want: localStorage.getItem('mas_music') === 'on' };
+const MUSIC = { audio: null, on: false, vol: parseFloat(LS.get('mas_musicvol') || '0.18'), want: LS.get('mas_music') === 'on' };
 function ensureAudio(){
   if(MUSIC.audio) return MUSIC.audio;
   const a = new Audio('./mozart-bg.mp3');
@@ -413,13 +413,13 @@ function openMusic(){
     MUSIC.vol = e.target.value / 100;
     $('mzVal').textContent = e.target.value + '%';
     if(MUSIC.audio) MUSIC.audio.volume = MUSIC.vol;
-    localStorage.setItem('mas_musicvol', MUSIC.vol);
+    LS.set('mas_musicvol', MUSIC.vol);
   };
 }
 function toggleMusic(){
   const a = ensureAudio();
-  if(MUSIC.on){ a.pause(); MUSIC.on = false; MUSIC.want = false; localStorage.setItem('mas_music','off'); }
-  else{ a.play().then(()=>{ MUSIC.on = true; MUSIC.want = true; localStorage.setItem('mas_music','on'); }).catch(()=> toast('اضغط مرة ثانية لتشغيل الموسيقى', true)); }
+  if(MUSIC.on){ a.pause(); MUSIC.on = false; MUSIC.want = false; LS.set('mas_music','off'); }
+  else{ a.play().then(()=>{ MUSIC.on = true; MUSIC.want = true; LS.set('mas_music','on'); }).catch(()=> toast('اضغط مرة ثانية لتشغيل الموسيقى', true)); }
 }
 // تشغيل تلقائي بأول لمسة إذا المستخدم مفعّلها من قبل (سياسة المتصفح تمنع بلا لمسة)
 function musicFirstTouch(){

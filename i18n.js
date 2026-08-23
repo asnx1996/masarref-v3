@@ -2,7 +2,7 @@
    اللغة (عربي / English)
    العربي هو الأساس — الإنكليزي ترجمة فوقه، وأي نص ما مترجم يظل عربي
    ============================================================ */
-const LANG = { cur: localStorage.getItem('mas_lang') || 'ar' };
+const LANG = { cur: LS.get('mas_lang') || 'ar' };
 const I18N = {
   'مصاريفنا':'Masareef','ميزانية البيت الشهرية':'Monthly home budget','مصاريفنا · ميزانية البيت':'Masareef · Home budget',
   'الباقي للصرف':'Left to spend','الدخل':'Income','المصروف':'Spent','خروج':'Logout',
@@ -165,7 +165,7 @@ function applyLangBoot(){
   if(bl) bl.textContent = LANG.cur === 'en' ? 'ع' : 'EN';
 }
 function toggleLang(){
-  localStorage.setItem('mas_lang', LANG.cur === 'en' ? 'ar' : 'en');
+  LS.set('mas_lang', LANG.cur === 'en' ? 'ar' : 'en');
   location.reload();
 }
 
@@ -173,7 +173,7 @@ function toggleLang(){
    الخروج التلقائي بعد فترة خمول — يتحكم بيه المستخدم من الإعدادات
    القيمة بالدقائق، و0 معناها ما يطلّع أبداً
    ============================================================ */
-let autoLogoutMin = parseInt(localStorage.getItem('mas_idle') ?? '10', 10);
+let autoLogoutMin = parseInt(LS.get('mas_idle') ?? '10', 10);
 if(isNaN(autoLogoutMin)) autoLogoutMin = 10;
 let idleTimer = null;
 function resetIdle(){
@@ -188,7 +188,7 @@ function resetIdle(){
 }
 function setAutoLogout(min){
   autoLogoutMin = min;
-  localStorage.setItem('mas_idle', String(min));
+  LS.set('mas_idle', String(min));
   resetIdle();
 }
 function trString2(s){ return LANG.cur === 'en' ? trString(s) : s; }

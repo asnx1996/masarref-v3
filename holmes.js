@@ -6,7 +6,7 @@
    ينطفي من الإعدادات، ويحترم «تقليل الحركة» بالجهاز.
    ============================================================ */
 
-let HOLMES_ON = localStorage.getItem('mas_holmes') !== 'off';
+let HOLMES_ON = LS.get('mas_holmes') !== 'off';
 const HOLMES_REDUCED = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /* ---------- الرسم ---------- */
@@ -125,7 +125,7 @@ function holmesLoop(){
 /* ---------- الشخصيات: فكاهية / اعتيادية / جدية ----------
    تنغيّر من الإعدادات ← المظهر ← «شخصية شيرلوك» */
 let HOLMES_MOOD = 'funny';
-try{ HOLMES_MOOD = ['funny','normal','serious','mean'].includes(localStorage.getItem('mas_holmes_mood')) ? localStorage.getItem('mas_holmes_mood') : 'funny'; }catch(_){}
+try{ HOLMES_MOOD = ['funny','normal','serious','mean'].includes(LS.get('mas_holmes_mood')) ? LS.get('mas_holmes_mood') : 'funny'; }catch(_){}
 
 const HOLMES_MOODS = {
   funny: {   /* عراقي يحشش 😂 */
@@ -243,7 +243,7 @@ window.holmesReact = (kind) => {
 /* ---------- تغيير الشخصية من الإعدادات ---------- */
 window.setHolmesMood = (m) => {
   HOLMES_MOOD = HOLMES_MOODS[m] ? m : 'normal';
-  try{ localStorage.setItem('mas_holmes_mood', HOLMES_MOOD); }catch(_){}
+  try{ LS.set('mas_holmes_mood', HOLMES_MOOD); }catch(_){}
   const hello = { funny:'هلاو! شيرلوك المحشش بالخدمة 😂🔍', normal:'شيرلوك بالخدمة — التحقيق مستمر 🕵️', serious:'تم تفعيل الوضع الجدي. الأرقام لا تكذب.', mean:'زين، فعّلت الوضع المتنمّر. لا تندم بعدين 😈' };
   holmesBubble(hello[HOLMES_MOOD]);
   toast('انتغيّرت شخصية شيرلوك ✓ 🎭');
@@ -252,7 +252,7 @@ window.setHolmesMood = (m) => {
 /* ---------- التشغيل/الإيقاف من الإعدادات ---------- */
 window.setHolmes = (on) => {
   HOLMES_ON = !!on;
-  try{ localStorage.setItem('mas_holmes', on ? 'on' : 'off'); }catch(_){}
+  try{ LS.set('mas_holmes', on ? 'on' : 'off'); }catch(_){}
   holmesRefresh();
   toast(on ? 'شيرلوك باشر التحقيق 🕵️' : 'شيرلوك راح يرتاح 😴');
 };
