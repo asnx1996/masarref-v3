@@ -185,6 +185,48 @@
     10%{opacity:.95}
     100%{transform:translateY(112vh) translateX(var(--drift,30px)) rotate(540deg);opacity:.15}
   }
+  /* مطر: خطوط رفيعة مايلة تنزل أسرع من الثلج ولا تدور حول نفسها */
+  #skyParticles i.rain{
+    width:2px;height:16px;border-radius:2px;opacity:.55;
+    background:linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,.85));
+    animation-name:rainFall;
+  }
+  @keyframes rainFall{
+    0%{transform:translateY(0) translateX(0);opacity:0}
+    8%{opacity:.6}
+    100%{transform:translateY(114vh) translateX(calc(var(--drift,30px) * .35));opacity:.2}
+  }
+
+  /* ---------- الشفق القطبي ----------
+     ثلاث شرائط مضبّبة تتنفس ببطء وتزحف أفقياً. الحركة على transform
+     وopacity بس — بلا أي خاصية تعيد التخطيط، فتبقى على طبقة الرسم. */
+  #sky .aurora{position:absolute;inset:0;opacity:0;transition:opacity 2.4s ease;pointer-events:none}
+  #sky.has-aurora .aurora{opacity:1}
+  #sky .aurora i{
+    position:absolute;left:-25%;width:150%;height:34%;
+    border-radius:50%;filter:blur(38px);mix-blend-mode:screen;
+    animation:auroraDrift 22s ease-in-out infinite alternate;
+    will-change:transform,opacity;
+  }
+  #sky .aurora i:nth-child(1){
+    top:4%;background:linear-gradient(100deg,transparent,rgba(86,240,180,.42),transparent 82%);
+    animation-duration:19s;
+  }
+  #sky .aurora i:nth-child(2){
+    top:16%;height:28%;background:linear-gradient(80deg,transparent 12%,rgba(120,200,255,.36),transparent 88%);
+    animation-duration:27s;animation-delay:-7s;
+  }
+  #sky .aurora i:nth-child(3){
+    top:29%;height:22%;background:linear-gradient(115deg,transparent 20%,rgba(190,140,255,.30),transparent 84%);
+    animation-duration:33s;animation-delay:-14s;
+  }
+  @keyframes auroraDrift{
+    from{transform:translateX(-7%) skewY(-2.5deg) scaleY(.88);opacity:.55}
+    to  {transform:translateX(7%)  skewY(2.5deg)  scaleY(1.12);opacity:1}
+  }
+  .perf #sky .aurora i{animation:none;filter:blur(26px)}
+  @media (prefers-reduced-motion:reduce){#sky .aurora i{animation:none}}
+
   .perf #skyParticles{display:none}
   @media (prefers-reduced-motion:reduce){#skyParticles{display:none}}
   #sky .sky-scene .mtn,#sky .sky-scene .trees{will-change:transform}
@@ -285,9 +327,15 @@
     border-top:1px solid var(--line);
     display:flex;
     padding:7px 8px calc(7px + env(safe-area-inset-bottom));
+    /* التبويبات الاختيارية (فواتير/مطابقة/دفتر/تدقيق) ممكن توصل الشريط
+       لثمان أزرار. بدل ما نضغطهن لحد ما تنقص الأسماء، الشريط ياخذ
+       تمريره الأفقي لحاله — الصفحة تبقى بلا تمرير أفقي أبداً. */
+    overflow-x:auto;overscroll-behavior-x:contain;
+    scrollbar-width:none;-ms-overflow-style:none;
   }
+  nav::-webkit-scrollbar{display:none}
   nav button{
-    flex:1;background:none;border:none;font-family:inherit;cursor:pointer;
+    flex:1 0 auto;min-width:58px;background:none;border:none;font-family:inherit;cursor:pointer;
     color:var(--muted);font-size:.68rem;font-weight:600;
     padding:7px 4px;border-radius:13px;
     display:flex;flex-direction:column;align-items:center;gap:3px;
@@ -409,6 +457,55 @@
   .debt-actions button:active{transform:scale(.97)}
   .db-return{background:var(--primary-soft);color:var(--primary-text)}
   .db-cancel{background:var(--red-soft);color:var(--red-text)}
+
+  /* ---------- مجموعة ديون صندوق (طي/فتح) ----------
+     الترويسة زر كامل: تنطي الجواب (المجموع + العدد + أخطر موعد)
+     بلا ما تنفتح، والتفاصيل تنزل بحركة ارتفاع نظيفة (0fr→1fr)
+     بدل max-height المقدّرة اللي تخلي الحركة تتقطع أو تتأخر. */
+  .dgrp{
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);
+    box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden;
+    border-right:3px solid var(--primary-text);
+  }
+  .dgrp.soon{border-right-color:var(--amber-text)}
+  .dgrp.overdue{border-right-color:var(--red-text)}
+  .dgrp-head{
+    width:100%;display:flex;align-items:center;gap:10px;
+    background:none;border:none;font-family:inherit;color:inherit;text-align:start;
+    padding:12px 13px;cursor:pointer;min-height:56px;
+    transition:background .2s;
+  }
+  .dgrp-head:active{background:var(--surface-sunken)}
+  .dgrp-head:focus-visible{outline:2px solid var(--primary);outline-offset:-3px}
+  .dgrp-ico{font-size:1.15rem;line-height:1;flex:none}
+  .dgrp-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+  .dgrp-name{font-weight:700;font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dgrp-meta{font-size:.66rem;color:var(--muted)}
+  .dgrp-bar{display:block;height:4px;border-radius:99px;background:var(--surface-sunken);overflow:hidden;margin-top:3px}
+  .dgrp-bar i{display:block;height:100%;border-radius:99px;background:var(--primary-text);transition:width .5s var(--ease)}
+  .dgrp.soon .dgrp-bar i{background:var(--amber-text)}
+  .dgrp.overdue .dgrp-bar i{background:var(--red-text)}
+  .dgrp-side{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+  .dgrp-amt{font-weight:800;font-size:.98rem;color:var(--primary-text);white-space:nowrap}
+  .dgrp.soon .dgrp-amt{color:var(--amber-text)}
+  .dgrp.overdue .dgrp-amt{color:var(--red-text)}
+  .dgrp-flag{font-size:.6rem;font-weight:800;border-radius:8px;padding:2px 7px;white-space:nowrap}
+  .dgrp-flag.soon{background:var(--amber-soft);color:var(--amber-text)}
+  .dgrp-flag.overdue{background:var(--red-soft);color:var(--red-text)}
+  .dgrp-chev{flex:none;color:var(--muted);font-size:1.2rem;line-height:1;transform:rotate(90deg);transition:transform .3s var(--ease)}
+  .dgrp.open .dgrp-chev{transform:rotate(-90deg)}
+  .dgrp-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .34s var(--ease)}
+  .dgrp.open .dgrp-body{grid-template-rows:1fr}
+  .dgrp-inner{overflow:hidden;min-height:0}
+  /* البطاقات جوّا المجموعة: بلا ظل ولا حافة خارجية — المجموعة هي البطاقة */
+  .dgrp-inner .debt{
+    box-shadow:none;border:none;border-top:1px solid var(--line);border-radius:0;
+    margin:0;background:var(--bg-2);animation:none;
+  }
+  .dgrp-inner .debt:hover{transform:none;box-shadow:none}
+  @media (prefers-reduced-motion:reduce){
+    .dgrp-body,.dgrp-chev,.dgrp-bar i{transition:none}
+  }
 
   /* ---------- قائمة المصاريف + فلتر ---------- */
   .filter-bar{display:flex;gap:8px;margin-bottom:10px}
@@ -603,7 +700,9 @@
   /* ---------- القرض (شارة الموعد) ---------- */
   .debt.loan{border-right-color:var(--primary-text)}
   .debt.loan .debt-amt{color:var(--primary-text)}
-  .debt-kind{font-size:.62rem;font-weight:800;border-radius:8px;padding:2px 8px;margin-left:6px;background:var(--primary-soft);color:var(--primary-text);vertical-align:2px}
+  /* margin-left بواجهة RTL يحط المسافة بالجهة البعيدة عن الاسم، فالشارة
+     تلزق بالاسم. الخاصية المنطقية تحط المسافة بجهة البداية دائماً. */
+  .debt-kind{font-size:.62rem;font-weight:800;border-radius:8px;padding:2px 8px;margin-inline-start:6px;background:var(--primary-soft);color:var(--primary-text);vertical-align:2px}
   .debt-due{font-size:.66rem;font-weight:700;color:var(--muted);margin-top:4px}
   .debt-due.soon{color:var(--amber-text)}
   .debt-due.overdue{color:var(--red-text)}
@@ -706,8 +805,8 @@
 
   /* ---------- حركة دخول العناصر ---------- */
   @keyframes itemIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-  .exp,.env,.fund,.debt{animation:itemIn .3s var(--ease) both}
-  .env,.fund,.debt{transition:transform .18s var(--ease),box-shadow .2s}
+  .exp,.env,.fund,.debt,.dgrp{animation:itemIn .3s var(--ease) both}
+  .env,.fund,.debt,.dgrp{transition:transform .18s var(--ease),box-shadow .2s}
 
   /* ---------- تفاعلية الماوس (كمبيوتر) ---------- */
   @media (hover:hover){
@@ -716,7 +815,7 @@
     .icon-btn:hover{background:rgba(255,255,255,.3)}
     .logout-btn:hover{background:rgba(255,255,255,.3)}
     .exp:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
-    .env:hover,.fund:hover,.debt:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(20,20,30,.09)}
+    .env:hover,.fund:hover,.debt:hover,.dgrp:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(20,20,30,.09)}
     nav button:hover{color:var(--primary-text);background:var(--primary-soft)}
     .exp .del:hover{filter:brightness(.95)}
     .sw:hover{transform:scale(1.1)}
@@ -728,8 +827,8 @@
   .perf .modal{backdrop-filter:none}
   .perf #loader{backdrop-filter:none}
   .perf header{box-shadow:none}
-  .perf .card,.perf .env,.perf .fund,.perf .debt,.perf .exp,.perf .login-card{box-shadow:0 1px 3px rgba(20,20,30,.06)}
-  .perf .exp,.perf .env,.perf .fund,.perf .debt{animation-duration:.18s}
+  .perf .card,.perf .env,.perf .fund,.perf .debt,.perf .dgrp,.perf .exp,.perf .login-card{box-shadow:0 1px 3px rgba(20,20,30,.06)}
+  .perf .exp,.perf .env,.perf .fund,.perf .debt,.perf .dgrp{animation-duration:.18s}
 
   /* ---------- واجهة الكمبيوتر ---------- */
   .dash-col{display:contents}
@@ -756,7 +855,9 @@
       padding:26px 12px;border-top:none;border-left:1px solid var(--line);
       background:var(--card);
     }
-    nav button{flex:0 0 auto;padding:13px 4px}
+    /* بالكمبيوتر الشريط عمودي — نلغي التمرير الأفقي ونرجّعه رأسي */
+    nav{overflow-x:visible;overflow-y:auto}
+    nav button{flex:0 0 auto;min-width:0;padding:13px 4px}
     header{
       position:static;max-width:1080px;margin:20px auto 0;
       border-radius:26px;padding:22px 24px;
@@ -764,6 +865,12 @@
     main{max-width:1080px;padding:20px 24px}
     #tab-bills,#tab-recon{max-width:1080px;margin:0 auto}
     #tab-settings{max-width:1080px;margin:0 auto}
+    #tab-ledger,#tab-audit{max-width:1080px;margin:0 auto}
+    /* دفتر الأستاذ: بطاقة الاختيار عمود قصير جنب الجدول الطويل */
+    #tab-ledger.active{
+      display:grid;grid-template-columns:.62fr 1.38fr;
+      gap:0 var(--gap-col);align-items:start;
+    }
     /* الفواتير + المطابقة
        قبل: بطاقة الملخص تمتد بعرض كامل فوق، فيبقى عمود النموذج القصير
        (263px) جنب قائمة طويلة (698px) = فراغ 435px.
@@ -1010,6 +1117,30 @@
   body.dark.sky-on .debt{border-right:3px solid var(--amber-text)}
   body.sky-on .debt.loan,
   body.dark.sky-on .debt.loan{border-right-color:var(--primary-text)}
+  /* مجموعة الديون هي البطاقة الزجاجية — والبطاقات جوّاها تبقى سطحاً
+     داخلياً بلا زجاج ثاني (زجاج فوق زجاج يضبّب النص ويكسر العمق). */
+  body.sky-on .dgrp{
+    background:color-mix(in srgb, var(--card) 64%, transparent);
+    -webkit-backdrop-filter:saturate(160%) blur(16px);
+    backdrop-filter:saturate(160%) blur(16px);
+    border:1px solid rgba(255,255,255,.5);
+    border-right:3px solid var(--primary-text);
+    box-shadow:0 10px 30px rgba(90,50,20,.15), inset 0 1px 0 rgba(255,255,255,.55);
+  }
+  body.dark.sky-on .dgrp{
+    background:color-mix(in srgb, var(--card) 56%, transparent);
+    border-color:rgba(255,255,255,.10);
+    border-right:3px solid var(--primary-text);
+    box-shadow:0 12px 34px rgba(0,0,0,.44), inset 0 1px 0 rgba(255,255,255,.07);
+  }
+  body.sky-on .dgrp.soon,body.dark.sky-on .dgrp.soon{border-right-color:var(--amber-text)}
+  body.sky-on .dgrp.overdue,body.dark.sky-on .dgrp.overdue{border-right-color:var(--red-text)}
+  body.sky-on .dgrp-inner .debt,
+  body.dark.sky-on .dgrp-inner .debt{
+    background:color-mix(in srgb, var(--card) 30%, transparent);
+    -webkit-backdrop-filter:none;backdrop-filter:none;
+    border:none;border-top:1px solid var(--line);border-radius:0;box-shadow:none;
+  }
   /* بطاقة الملخص = بطلة زجاجية بارزة */
   body.sky-on .sum-card{
     background:color-mix(in srgb, var(--card) 72%, transparent);
@@ -1414,4 +1545,98 @@
       color:color-mix(in srgb,var(--ink) 78%,transparent);
     }
     body.fluid :is(.seg-thumb,.nav-thumb){outline:1.5px solid var(--primary)}
+  }
+
+  /* ============================================================
+     دفتر الأستاذ — جدول مدين/دائن
+     ------------------------------------------------------------
+     الجدول هو الشكل الصحيح لدفتر أستاذ: العين تمشي عمود بعمود
+     وتقارن. على شاشة صغيرة ما نكسره لبطاقات (ينكسر معه المعنى) —
+     نخليه يتمرر أفقياً جوّا حاضنته بس، والصفحة تبقى ثابتة.
+     ============================================================ */
+  .led-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .lstat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:10px 12px;box-shadow:var(--shadow)}
+  .lstat .ll{font-size:.66rem;color:var(--muted);font-weight:600}
+  .lstat .lv{font-size:1rem;font-weight:800;margin-top:3px;font-variant-numeric:tabular-nums}
+  .lstat.cr .lv{color:var(--green-text)}
+  .lstat.dr .lv{color:var(--red-text)}
+  .lstat.main{border-color:var(--primary);background:var(--primary-soft)}
+  .lstat.main .lv{color:var(--primary-text)}
+  .lstat .lv.neg{color:var(--red-text)}
+
+  .led-scroll{
+    overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);
+    box-shadow:var(--shadow);
+  }
+  .led-tbl{width:100%;min-width:540px;border-collapse:collapse;font-size:.76rem}
+  .led-tbl th{
+    text-align:start;font-weight:700;font-size:.66rem;color:var(--muted);
+    padding:9px 10px;border-bottom:1px solid var(--line);
+    background:var(--surface-sunken);position:sticky;top:0;z-index:1;
+  }
+  .led-tbl td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  .led-tbl tbody tr:last-child td{border-bottom:none}
+  .led-tbl tr.led-open td{background:var(--surface-sunken)}
+  .led-tbl tr.led-head td{background:color-mix(in srgb, var(--surface-sunken) 55%, transparent)}
+  .led-d{width:88px;white-space:nowrap;color:var(--muted);font-size:.68rem;font-variant-numeric:tabular-nums}
+  .led-t b{font-weight:700;display:block}
+  .led-t small{display:block;color:var(--muted);font-size:.64rem;margin-top:2px}
+  .led-tag{
+    display:inline-block;margin-top:4px;font-size:.58rem;font-weight:800;
+    border-radius:7px;padding:1px 7px;background:var(--primary-soft);color:var(--primary-text);
+  }
+  .led-n{text-align:end;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:700;width:96px}
+  .led-n.cr{color:var(--green-text)}
+  .led-n.dr{color:var(--red-text)}
+  .led-n.bl{color:var(--ink);font-weight:800}
+  .led-n.bl.neg{color:var(--red-text)}
+  .led-tbl tfoot td{
+    border-top:2px solid var(--line);border-bottom:none;
+    background:var(--surface-sunken);font-weight:800;
+  }
+
+  /* ---------- مدقق الأرصدة ---------- */
+  .aud-verdict{
+    border-radius:var(--radius-sm);padding:13px 15px;font-weight:800;font-size:.86rem;
+    margin-bottom:var(--gap-card);border:1px solid var(--line);
+  }
+  .aud-verdict.ok{background:var(--green-soft);color:var(--green-text);border-color:var(--green)}
+  .aud-verdict.warn{background:var(--amber-soft);color:var(--amber-text);border-color:var(--amber)}
+  .aud-verdict.bad{background:var(--red-soft);color:var(--red-text);border-color:var(--red)}
+
+  .aud-tbl{min-width:600px}
+  .aud-a{width:auto;min-width:150px}
+  .aud-a b{font-weight:700;display:block;font-size:.78rem}
+  .aud-a small{display:block;color:var(--muted);font-size:.62rem;margin-top:2px}
+  .aud-s{width:78px;text-align:center}
+  .aud-tbl tr.bad td{background:color-mix(in srgb, var(--red-soft) 45%, transparent)}
+  .aud-tbl tr.warn td{background:color-mix(in srgb, var(--amber-soft) 45%, transparent)}
+  .ab{font-size:.62rem;font-weight:800;border-radius:8px;padding:2px 7px;white-space:nowrap}
+  .ab.ok{background:var(--green-soft);color:var(--green-text)}
+  .ab.warn{background:var(--amber-soft);color:var(--amber-text)}
+  .ab.bad{background:var(--red-soft);color:var(--red-text)}
+
+  .aud-find{
+    border-radius:var(--radius-sm);padding:12px 13px;margin-bottom:10px;
+    background:var(--bg-2);border:1px solid var(--line);border-right:3px solid var(--muted);
+  }
+  .aud-find.err{border-right-color:var(--red-text);background:color-mix(in srgb, var(--red-soft) 34%, var(--bg-2))}
+  .aud-find.warn{border-right-color:var(--amber-text);background:color-mix(in srgb, var(--amber-soft) 34%, var(--bg-2))}
+  .aud-find.info{border-right-color:var(--primary-text);background:color-mix(in srgb, var(--primary-soft) 34%, var(--bg-2))}
+  .af-h{display:flex;align-items:baseline;gap:7px;font-size:.85rem;line-height:1.45}
+  .af-i{flex:none}
+  .af-b{font-size:.74rem;color:var(--ink);margin-top:6px;line-height:1.7}
+  .af-f{font-size:.72rem;color:var(--muted);margin-top:8px;line-height:1.7;border-top:1px dashed var(--line);padding-top:7px}
+  .af-f b{color:var(--ink)}
+  .af-go{
+    margin-top:9px;border:1px solid var(--primary);background:var(--primary-soft);color:var(--primary-text);
+    border-radius:10px;padding:7px 13px;font-family:inherit;font-weight:700;font-size:.72rem;cursor:pointer;
+    transition:transform .18s var(--ease);
+  }
+  .af-go:active{transform:scale(.97)}
+
+  @media (min-width:640px){
+    .led-stats{grid-template-columns:repeat(4,1fr)}
+    .led-tbl{min-width:0}
   }

@@ -55,6 +55,8 @@ apiReady();
 try{ applyLangBoot(); }catch(e){}
 try{ applyBillsVisible(); }catch(e){}
 try{ applyReconVisible(); }catch(e){}
+try{ applyLedgerVisible(); }catch(e){}
+try{ applyAuditVisible(); }catch(e){}
 try{ applyDark(); }catch(e){}
 window.addEventListener('beforeprint', () => {
   try{

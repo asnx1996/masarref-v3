@@ -277,6 +277,137 @@ function harmonizeRed(redBase, primary){
   for(let i = 0; i < 90 && gap(h, hp) < RED_MIN_SEP; i++) h -= Math.PI/180;  // نحو القرمزي
   return _lch(L, C, h);
 }
+/* ============================================================
+   توليد الباليتات والسماء من لون واحد
+   ------------------------------------------------------------
+   الباليتات الست الأولى مكتوبة بالإيد: ٦ أوقات + ٧ فصول = ١٣
+   تدرّجاً لكل وحدة. هذا يشتغل ما دام عددهن قليل، بس أي باليت
+   جديد صار يكلّف ١٣ سطراً مكتوبة يدوي — وأي خلفية جديدة تكلّف
+   سطراً بكل باليت موجود. فالكلفة تضرب بعضها.
+
+   الحل نفس فلسفة ألوان الواجهة فوق: ما نلوّن بالتخمين — نشتق.
+   كل تدرّج ينوصف مرة وحدة بمحطات مستقلة عن أي لون (شوف الوصف
+   التحت)، وبعدين ينتطبّق على صبغة أي باليت. النتيجة: باليت جديد
+   = سطر واحد، وخلفية جديدة = وصف واحد يشتغل بكل الباليتات.
+
+   الإضاءة والتشبّع منّهن اعتباطيين: التدرّج ينمشي من غامق فوق
+   لفاتح تحت (نفس اتجاه الضوء الحقيقي)، والتشبّع ينزل مع الارتفاع
+   بالإضاءة حتى يبقى داخل المدى القابل للعرض (_lch يضبطه).
+   ============================================================ */
+const D2R = Math.PI / 180;
+/* ------------------------------------------------------------
+   محطة تدرّج = [إضاءة، تشبّع، صبغة السماء بالدرجات، نسبة السحب للباليت]
+
+   الصبغة **مطلقة** مو إزاحة عن لون الباليت — وهذا الفرق جوهري.
+   السماء إلها صبغات حقيقية ثابتة: قمّة النهار زرقاء (٢٥٠°)، الأفق
+   وقت الغروب برتقالي (٤٠°)، والشفق أخضر (١٥٠°). لو خليناها إزاحات
+   نسبية، «فجر» بثيم أزرق يطلع أخضر و«شفق» يطلع أحمر — لأن نفس
+   الإزاحة تنزل بمكان مختلف حسب صبغة الباليت.
+
+   فالسماء تحتفظ بصبغتها، والباليت **يسحبها** نحوه بنسبة (mix): صفر
+   = سماء صافية بلا تأثر، واحد = صبغة الباليت كاملة. النسب هنا بين
+   ٠٫٢ و٠٫٤٥: تكفي حتى تحسّها من نفس عائلة الثيم، وما تكفي حتى
+   تخلّي السماء تنكر شنو هي.
+   ------------------------------------------------------------ */
+function hueMix(absDeg, palH, mix){
+  const a = absDeg * D2R;
+  let d = palH - a;                       /* أقصر قوس بين الصبغتين */
+  while(d >  Math.PI) d -= 2 * Math.PI;
+  while(d < -Math.PI) d += 2 * Math.PI;
+  return a + d * mix;
+}
+function skyFrom(primary, spec){
+  const palH = _oklch(primary)[2];
+  const n = spec.stops.length - 1;
+  return 'linear-gradient(' + spec.angle + 'deg,' + spec.stops.map((st, i) =>
+    _lch(st[0], st[1], hueMix(st[2], palH, st[3])) + ' ' + Math.round(i / n * 100) + '%'
+  ).join(',') + ')';
+}
+/* أوقات اليوم الستة — بنفس ترتيب PHASE_GEOM */
+const SKY_PHASES = [
+  { angle:160, stops:[[0.72,0.075,285,.35],[0.82,0.070, 20,.30],[0.88,0.062, 55,.25]] },  /* فجر */
+  { angle:160, stops:[[0.83,0.055,250,.45],[0.92,0.032,235,.40],[0.97,0.014,220,.40]] },  /* صباح */
+  { angle:160, stops:[[0.76,0.075,250,.45],[0.88,0.045,240,.40],[0.96,0.020,225,.40]] },  /* ظهر */
+  { angle:160, stops:[[0.78,0.060,248,.42],[0.88,0.042,210,.35],[0.94,0.030, 70,.30]] },  /* عصر */
+  { angle:160, stops:[[0.46,0.080,290,.35],[0.66,0.090, 30,.30],[0.80,0.092, 62,.25]] },  /* غروب */
+  { angle:170, stops:[[0.18,0.045,265,.45],[0.27,0.055,262,.42],[0.35,0.058,258,.40]] }   /* ليل */
+];
+/* الفصول/الخلفيات — الثلاثة الأخيرة جديدة وتنضاف لكل الباليتات */
+const SKY_SEASONS = {
+  spring: { angle:160, stops:[[0.86,0.050,245,.42],[0.93,0.030,350,.35],[0.97,0.018, 40,.30]] },
+  summer: { angle:160, stops:[[0.78,0.085,245,.45],[0.89,0.052,235,.40],[0.97,0.022,220,.40]] },
+  autumn: { angle:160, stops:[[0.80,0.070, 75,.35],[0.72,0.088, 55,.32],[0.63,0.090, 40,.30]] },
+  winter: { angle:160, stops:[[0.85,0.028,250,.45],[0.92,0.016,240,.42],[0.98,0.008,230,.40]] },
+  night:  { angle:170, stops:[[0.16,0.045,265,.45],[0.26,0.055,262,.42],[0.34,0.058,258,.40]] },
+  sunset: { angle:160, stops:[[0.48,0.080,290,.35],[0.68,0.090, 30,.30],[0.81,0.092, 62,.25]] },
+  sea:    { angle:160, stops:[[0.68,0.085,210,.42],[0.82,0.058,195,.38],[0.93,0.030, 85,.28]] },
+  /* --- خلفيات جديدة --- */
+  /* فجر: بنفسجي عالي، وردي بالوسط، وكريم دافي عند الأفق */
+  dawn:   { angle:165, stops:[[0.50,0.085,292,.35],[0.76,0.080, 15,.22],[0.93,0.046, 62,.25]] },
+  /* مطر: رمادي مزرق بتشبّع واطي — الجو مغيّم فالألوان تنطفي */
+  rain:   { angle:172, stops:[[0.58,0.030,250,.45],[0.71,0.026,245,.42],[0.84,0.018,240,.40]] },
+  /* شفق: كحلي شبه أسود يتحول لأخضر الشفق وبعدين تركوازي.
+     نسبة السحب هنا واطية جداً (٠٫١) — ألوان الشفق فيزيائية، ولمن
+     جرّبناها بـ٠٫٢٢ الثيمات الدافئة (رملي/وردي) سحبت الأخضر للزيتوني.
+     لو سحبناها للثيم
+     تنكسر ويصير المشهد ملوّن اعتباطاً بدل ما يبقى شفقاً. */
+  aurora: { angle:172, stops:[[0.12,0.040,268,.30],[0.26,0.080,152,.10],[0.38,0.085,185,.10]] }
+};
+/* جبال بأربع طبقات — الإضاءة تنزل مع القرب حتى يبين العمق */
+function mtnFrom(primary, ls, C){
+  const h = _oklch(primary)[2];
+  return ls.map(L => _lch(L, C, h));
+}
+/* ألوان الدونات: قوس ٣٠٠° بإضاءة متناوبة — أي قطعتين متجاورتين
+   تفرقان بمحورين (صبغة وإضاءة) مو بمحور واحد */
+function chartFrom(primary){
+  const [, C, h] = _oklch(primary);
+  const out = [];
+  for(let i = 0; i < 10; i++){
+    out.push(_lch(i % 2 === 0 ? 0.60 : 0.46, Math.max(0.11, Math.min(0.14, C)), h + (i / 9) * 300 * D2R));
+  }
+  return out;
+}
+/* باليت كامل من لون واحد + ألوان الأدوار */
+function makePal(name, primary, amber, green, red){
+  const seasons = {};
+  Object.keys(SKY_SEASONS).forEach(k => { seasons[k] = skyFrom(primary, SKY_SEASONS[k]); });
+  return {
+    name, primary, amber, green, red,
+    chart: chartFrom(primary),
+    mtnDay:   mtnFrom(primary, [0.70, 0.60, 0.50, 0.40], 0.035),
+    mtnNight: mtnFrom(primary, [0.33, 0.27, 0.21, 0.15], 0.045),
+    phases: SKY_PHASES.map(sp => skyFrom(primary, sp)),
+    seasons
+  };
+}
+
+/* الباليتات الجديدة — صبغات ما چانت موجودة: أرجواني، نعناعي،
+   وردي، وزيتوني. كل وحدة سطر واحد لأن الباقي ينشتق. */
+PALETTES.berry = makePal('عنب بري 🍇',   '#933E86', '#C08A2E', '#3E9E7A', '#C0453E');
+PALETTES.mint  = makePal('نعناع بارد 🧊', '#0E9280', '#C8942E', '#4EA84E', '#C0453E');
+PALETTES.rose  = makePal('ورد شتوي 🌹',   '#C2456B', '#C8912E', '#3E9E7A', '#B8383C');
+PALETTES.olive = makePal('زيتون ذهبي 🫒', '#7E8A1E', '#C87A2E', '#3E9E7A', '#C0453E');
+PALETTE_ORDER.push('berry', 'mint', 'rose', 'olive');
+
+/* والخلفيات الثلاث الجديدة تنضاف للباليتات المكتوبة بالإيد هم —
+   ما ننسخهن يدوي، نشتقهن من لون كل باليت بنفس الوصف */
+['dawn', 'rain', 'aurora'].forEach(k => {
+  Object.keys(PALETTES).forEach(id => {
+    const p = PALETTES[id];
+    if(!p.seasons[k]) p.seasons[k] = skyFrom(p.primary, SKY_SEASONS[k]);
+  });
+});
+/* هندسة الخلفيات الجديدة + أسماؤها */
+SEASON_META.dawn   = { body:'sun',  x:16, y:70, particles:null };
+SEASON_META.rain   = { body:'sun',  x:62, y:26, particles:'rain' };
+SEASON_META.aurora = { body:'moon', x:76, y:16, particles:null, aurora:true };
+SEASON_NAMES.dawn   = 'فجر 🌅';
+SEASON_NAMES.rain   = 'مطر 🌧️';
+SEASON_NAMES.aurora = 'شفق قطبي 🌠';
+/* الخلفيات المعتمة تاخذ جبال الليل */
+const DARK_SEASONS = new Set(['night', 'aurora', 'dawn']);
+
 function applyTheme(primary){
   setRole('primary', primary);
   setRole('red', harmonizeRed((activePal && activePal.red) || '#C0453E', primary));
@@ -641,6 +772,8 @@ async function afterLogin(user){
   const prof = await fetchProfile(user.id);
   session = prof || { name: '' };
   showApp();
+  /* تبويب التدقيق يعتمد على صلاحية المشرف — وما تنعرف إلا بعد الدخول */
+  try{ applyAuditVisible(); }catch(_){}
   $('expDate').value = todayISO();
   startRealtime();
   resetIdle();
@@ -703,6 +836,10 @@ async function loadMonth(month){
     if(bt && bt.classList.contains('active')) loadBills();
     const rt = $('tab-recon');
     if(rt && rt.classList.contains('active')) loadRecons();
+    const lt = $('tab-ledger');
+    if(lt && lt.classList.contains('active')){ try{ renderLedger(); }catch(_){} }
+    const at = $('tab-audit');
+    if(at && at.classList.contains('active')){ try{ renderAudit(); }catch(_){} }
   }catch(err){
     toast('ما كدرت أوصل للبيانات: ' + err.message, true);
   }finally{
@@ -952,6 +1089,35 @@ function renderInsightCard(){
 }
 
 /* ---------- العرض ---------- */
+/* ============================================================
+   حالة فتح/طي مجموعات ديون الصناديق
+   ------------------------------------------------------------
+   ثلاث حالات مو اثنتين: «فتحها المستخدم»، «طواها المستخدم»، و«ما
+   لمسها» — والأخيرة تاخذ الافتراضي الذكي (مجموعة وحدة أو بيها قرض
+   متأخر = مفتوحة). بدون التمييز هذا، أي إعادة رسم (وهي تصير بكل
+   تحديث لحظي من العائلة) چانت تلغي فتح المستخدم أو تعيد فتح اللي طواه.
+   ============================================================ */
+const debtOpened = new Set(), debtShut = new Set();
+function debtGroupOpen(fund, auto){
+  if(debtOpened.has(fund)) return true;
+  if(debtShut.has(fund))   return false;
+  return !!auto;
+}
+/* الطي/الفتح ما يعيد الرسم — يبدّل كلاس بس، حتى الحركة تبقى ناعمة
+   وما تنقطع بإعادة بناء الـDOM (والارتفاع ينحرك بـgrid-template-rows) */
+window.toggleDebtGroup = (gi) => {
+  const g = (state._debtGroups || [])[gi];
+  if(!g) return;
+  const el = document.querySelector('#debtList .dgrp[data-fund="' + gi + '"]');
+  if(!el) return;
+  const nowOpen = !el.classList.contains('open');
+  el.classList.toggle('open', nowOpen);
+  const btn = el.querySelector('.dgrp-head');
+  if(btn) btn.setAttribute('aria-expanded', nowOpen ? 'true' : 'false');
+  if(nowOpen){ debtOpened.add(g.fund); debtShut.delete(g.fund); }
+  else       { debtShut.add(g.fund);   debtOpened.delete(g.fund); }
+};
+
 function render(){
   const b = state.budget || { salary1:0, salary2:0, categories:[], locked:false };
   state.locked = !!b.locked;
@@ -1179,41 +1345,109 @@ function render(){
   $('saveList').innerHTML = saveHtml;
   state._dashFunds = fundView;
 
-  /* ===== ديون الصناديق ===== */
+  /* ============================================================
+     ديون الصناديق — مجمّعة على مستوى الصندوق
+     ------------------------------------------------------------
+     قبل: كل قرض بطاقة مستقلة، فصندوق بيه ٥ قروض يعطي ٥ بطاقات
+     متشابهة تملأ الشاشة وما تنطي أي جواب سريع («شكد مطلوب لهذا
+     الصندوق؟»). هسه: مجموعة وحدة لكل صندوق تحمل الجواب — المجموع
+     وعدد القروض وأخطرها — والتفاصيل تنفتح بضغطة (إفصاح متدرّج).
+     ============================================================ */
+  let debtHtml = '';
   // نعرض بس القروض هنا — السحب والإيداع ما يظهرون كبطاقة دين (حسب طلب المستخدم).
   // القرض بس هو اللي يبقى «مطلوب» يترجّع أو ينشطب.
-  let debtHtml = '';
   const open = (state.debts || []).filter(d => d.kind === 'قرض');
+  state._debtGroups = [];
   if(open.length){
     const totalDebt = open.reduce((s,d)=> s + (d.amount||0), 0);
-    let rows = '';
+    /* رصيد كل صندوق — حتى نعرض الدين مقابل الرصيد بشريط واحد */
+    const balOf = {};
+    fundView.forEach(f => { balOf[f.name] = f.bal; });
+
+    /* تجميع حسب الصندوق، والمجموعات تترتب بالأثقل ديناً */
+    const byFund = new Map();
     open.forEach(d => {
-      const isLoan = d.kind === 'قرض';
-      const isCatLoan = isLoan && !!d.toCategory;
-      let dueHtml = '';
-      if(isLoan && d.dueDate){
-        const days = Math.floor((new Date(d.dueDate) - new Date(todayISO())) / 86400000);
-        const cls = days < 0 ? 'overdue' : (days <= 3 ? 'soon' : '');
-        const txt = days < 0 ? ('⏰ فات موعد الإرجاع (' + esc(d.dueDate) + ')')
-                  : days === 0 ? '⏰ موعد الإرجاع اليوم!'
-                  : ('⏰ موعد الإرجاع: ' + esc(d.dueDate) + ' (باقي ' + days + ' يوم)');
-        dueHtml = `<div class="debt-due ${cls}">${txt}</div>`;
-      }
-      rows += `
-        <div class="debt ${isLoan?'loan':''}">
-          <div class="debt-top">
-            <span class="debt-acc">${isCatLoan?'🗂️ ':''}${esc(d.account)}${isLoan?`<span class="debt-kind">${isCatLoan?'🤝 قرض تصنيف':'🤝 قرض'}</span>`:''}</span>
-            <span class="debt-amt">${fmt(d.amount)}</span>
-          </div>
-          <div class="debt-sub">مطلوب لصندوق «${esc(d.fund)}» · ${isCatLoan?'قرض على تصنيف':(isLoan?'انعطى':'سُحب')} ${esc(d.date)}</div>
-          ${dueHtml}
-          <div class="debt-actions">
-            <button class="db-return" onclick="returnDebt('${d.id}')">↩ رجّعه للصندوق</button>
-            <button class="db-cancel" onclick="cancelDebt('${d.id}')">شطب (احذفه)</button>
-          </div>
+      const f = d.fund || '—';
+      if(!byFund.has(f)) byFund.set(f, []);
+      byFund.get(f).push(d);
+    });
+    const groups = Array.from(byFund.entries()).map(([fund, items]) => ({
+      fund, items, total: items.reduce((s,d)=> s + (d.amount||0), 0)
+    })).sort((a,b) => b.total - a.total);
+    state._debtGroups = groups;
+
+    const today = todayISO();
+    const daysTo = iso => Math.floor((new Date(iso) - new Date(today)) / 86400000);
+
+    let html = '';
+    groups.forEach((g, gi) => {
+      /* أخطر قرض بالمجموعة يحدد نبرة العنوان: متأخر > قريب > عادي */
+      let overdue = 0, soon = 0;
+      g.items.forEach(d => {
+        if(!d.dueDate) return;
+        const dd = daysTo(d.dueDate);
+        if(dd < 0) overdue++; else if(dd <= 3) soon++;
+      });
+      const tone = overdue ? 'overdue' : (soon ? 'soon' : '');
+      const bal = Number(balOf[g.fund] || 0);
+      /* نسبة الدين من (الرصيد + الدين) = شكد من فلوس الصندوق برّا إيده */
+      const pool = bal + g.total;
+      const pct = pool > 0 ? Math.max(4, Math.min(100, Math.round(g.total / pool * 100))) : 100;
+      const cnt = g.items.length;
+      const cntTxt = arCount(cnt, 'قرض واحد', 'قرضين', 'قروض', 'قرض');
+      const flag = overdue ? `<span class="dgrp-flag overdue">⏰ ${arCount(overdue, 'متأخر', 'متأخرين', 'متأخرة', 'متأخر')}</span>`
+                 : soon    ? `<span class="dgrp-flag soon">⏰ ${arCount(soon, 'قرب موعده', 'قربوا موعدهم', 'قربوا', 'قرب موعده')}</span>`
+                 : '';
+      /* الافتراضي: مفتوحة لو مجموعة وحدة أو بيها متأخر — وإلا مطوية */
+      const auto = (groups.length === 1) || !!overdue;
+      const isOpen = debtGroupOpen(g.fund, auto);
+
+      let rows = '';
+      g.items.forEach(d => {
+        const isCatLoan = !!d.toCategory;
+        let dueHtml = '';
+        if(d.dueDate){
+          const days = daysTo(d.dueDate);
+          const cls = days < 0 ? 'overdue' : (days <= 3 ? 'soon' : '');
+          const txt = days < 0 ? ('⏰ فات موعد الإرجاع (' + esc(d.dueDate) + ')')
+                    : days === 0 ? '⏰ موعد الإرجاع اليوم!'
+                    : ('⏰ موعد الإرجاع: ' + esc(d.dueDate) + ' (باقي ' + days + ' يوم)');
+          dueHtml = `<div class="debt-due ${cls}">${txt}</div>`;
+        }
+        rows += `
+          <div class="debt loan">
+            <div class="debt-top">
+              <span class="debt-acc">${isCatLoan?'🗂️ ':''}${esc(d.account)}<span class="debt-kind">${isCatLoan?'🤝 قرض تصنيف':'🤝 قرض'}</span></span>
+              <span class="debt-amt">${fmt(d.amount)}</span>
+            </div>
+            <div class="debt-sub">${isCatLoan?'قرض على تصنيف':'انعطى'} ${esc(d.date)}</div>
+            ${dueHtml}
+            <div class="debt-actions">
+              <button class="db-return" onclick="returnDebt('${d.id}')">↩ رجّعه للصندوق</button>
+              <button class="db-cancel" onclick="cancelDebt('${d.id}')">شطب (احذفه)</button>
+            </div>
+          </div>`;
+      });
+
+      html += `
+        <div class="dgrp ${tone}${isOpen?' open':''}" data-fund="${gi}">
+          <button type="button" class="dgrp-head" onclick="toggleDebtGroup(${gi})" aria-expanded="${isOpen?'true':'false'}">
+            <span class="dgrp-ico">🏦</span>
+            <span class="dgrp-main">
+              <span class="dgrp-name">${esc(g.fund)}</span>
+              <span class="dgrp-meta">${cntTxt}${bal ? ' · رصيد الصندوق ' + fmt(bal) : ''}</span>
+              <span class="dgrp-bar"><i style="width:${pct}%"></i></span>
+            </span>
+            <span class="dgrp-side">
+              <span class="dgrp-amt">${fmt(g.total)}</span>
+              ${flag}
+            </span>
+            <span class="dgrp-chev" aria-hidden="true">›</span>
+          </button>
+          <div class="dgrp-body"><div class="dgrp-inner">${rows}</div></div>
         </div>`;
     });
-    debtHtml = `<div class="save-head">ديون الصناديق ⏳ <span>الإجمالي: ${fmt(totalDebt)}</span></div>` + rows;
+    debtHtml = `<div class="save-head">ديون الصناديق ⏳ <span>الإجمالي: ${fmt(totalDebt)}</span></div>` + html;
   }
   $('debtList').innerHTML = debtHtml;
   state._dashDebts = open;
@@ -2559,6 +2793,10 @@ function renderSettings(){
         <label class="switch"><input type="checkbox" id="reconToggle" ${RECON_ON?'checked':''}><span class="track"></span><span class="knob"></span></label>
       </div>
       <div class="set-toggle">
+        <span class="st-lbl">📖 أظهر تبويب «دفتر الأستاذ»</span>
+        <label class="switch"><input type="checkbox" id="ledgerToggle" ${(typeof LEDGER_ON!=='undefined'&&LEDGER_ON)?'checked':''}><span class="track"></span><span class="knob"></span></label>
+      </div>
+      <div class="set-toggle">
         <span class="st-lbl">🌐 اللغة — ${LANG.cur==='en'?'English':'العربية'}</span>
         <button class="btn ghost" id="btnLangS" style="margin:0;width:auto;padding:8px 16px">${LANG.cur==='en'?'حوّل للعربية':'Switch to English'}</button>
       </div>
@@ -2595,6 +2833,11 @@ function renderSettings(){
       <summary><span class="sa-ico">🛡</span>المشرف<span class="sa-chev">›</span></summary>
       <div class="sa-body">
       <button class="btn ghost" id="btnAdmin" style="margin-top:0">🛡 لوحة المشرف</button>
+      <div class="set-toggle">
+        <span class="st-lbl">🔎 شغّل تبويب «مدقق الأرصدة»</span>
+        <label class="switch"><input type="checkbox" id="auditToggle" ${(typeof AUDIT_ON!=='undefined'&&AUDIT_ON)?'checked':''}><span class="track"></span><span class="knob"></span></label>
+      </div>
+      <div class="hint" style="margin-top:6px">أداة أعطال: تفكّ كل رصيد لحركاته وتگلك وين الخلل. تظهر للمشرف بس، ومطفية افتراضياً — شغّلها وكت المشكلة بس، لأنها تبويب زايد بالشريط.</div>
       </div>
     </details>` : ''}
   `;
@@ -2683,6 +2926,18 @@ function renderSettings(){
     LS.set('mas_recon', RECON_ON ? 'on' : 'off');
     applyReconVisible();
     toast(RECON_ON ? 'ظهر تبويب المطابقة ✓' : 'انخفى تبويب المطابقة');
+  };
+  if($('ledgerToggle')) $('ledgerToggle').onchange = (e) => {
+    LEDGER_ON = e.target.checked;
+    LS.set('mas_ledger', LEDGER_ON ? 'on' : 'off');
+    applyLedgerVisible();
+    toast(LEDGER_ON ? 'ظهر تبويب دفتر الأستاذ ✓ 📖' : 'انخفى تبويب دفتر الأستاذ');
+  };
+  if($('auditToggle')) $('auditToggle').onchange = (e) => {
+    AUDIT_ON = e.target.checked;
+    LS.set('mas_audit', AUDIT_ON ? 'on' : 'off');
+    applyAuditVisible();
+    toast(AUDIT_ON ? 'ظهر تبويب مدقق الأرصدة ✓ 🔎' : 'انخفى تبويب المدقق');
   };
   if($('holmesToggle')) $('holmesToggle').onchange = (e) => {
     try{ setHolmes(e.target.checked); }catch(_){}
@@ -3131,6 +3386,10 @@ function gotoTab(id){
   if(id === 'tab-settings') renderSettings();
   if(id === 'tab-bills') loadBills();
   if(id === 'tab-recon') loadRecons();
+  /* الدفاتر (books.js) — تنرسم عند الفتح بس، لأنها تقرا نفس بيانات
+     الفترة المحمّلة وما تحتاج أي استدعاء إضافي */
+  if(id === 'tab-ledger'){ try{ renderLedger(); }catch(_){} }
+  if(id === 'tab-audit'){ try{ renderAudit(); }catch(_){} }
   /* رجعة فورية لفوق — مو smooth. المحتوى كله تغيّر، فتمرير ناعم
      يتصارع ويّا حركة دخول التبويب وتحسّه تأخير. */
   window.scrollTo(0, 0);

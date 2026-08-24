@@ -60,6 +60,7 @@
   <div class="stars" id="skyStars"></div>
   <div class="sky-body" id="skyBody"></div>
   <div id="skyParticles"></div>
+  <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
   <svg class="sky-scene" id="skyScene" viewBox="0 0 1440 500" preserveAspectRatio="xMidYMax slice">
     <!-- تلال ناعمة منحنية (بدل الجبال المدبّبة) — ٣ طبقات للعمق -->
     <path class="mtn mtn-far" data-depth="6"  d="M0,352 C240,300 470,300 720,336 C980,372 1200,312 1440,344 L1440,500 L0,500 Z"/>
@@ -335,6 +336,27 @@
     </div>
   </section>
 
+  <!-- تبويب: دفتر الأستاذ -->
+  <section class="tab" id="tab-ledger">
+    <div class="card stick-col">
+      <h2 style="margin-top:0">📖 دفتر الأستاذ</h2>
+      <div class="hint" style="margin:2px 0 12px">اختر حساباً — تصنيف مصروف، صندوق ادخار، أو فلوسك الفعلية — وشوف كل دائن ومدين عليه خلال الفترة، مرتّب بتاريخ العملية ووياه الرصيد بعد كل حركة.</div>
+      <label>الحساب</label>
+      <select id="ledAcc"></select>
+      <button class="btn ghost" id="btnLedXls">📊 تصدير الدفتر إكسل</button>
+    </div>
+    <div id="ledBody"></div>
+  </section>
+
+  <!-- تبويب: مدقق الأرصدة (للمشرف) -->
+  <section class="tab" id="tab-audit">
+    <div class="card">
+      <h2 style="margin-top:0">🔎 مدقق الأرصدة</h2>
+      <div class="hint" style="margin:2px 0 0">يعيد بناء كل رصيد من حركاته الأصلية ويقارنه بالمعروض. أي فرق يطلع بسطر يگول شنو وشكد ووين — وشلون تصلّحه.</div>
+    </div>
+    <div id="auditBody"></div>
+  </section>
+
   <section class="tab" id="tab-settings">
     <div id="settingsBody"></div>
   </section>
@@ -346,6 +368,8 @@
   <button data-tab="tab-budget"><span class="ic">⚖</span>الميزانية</button>
   <button data-tab="tab-bills" id="navBills"><span class="ic">🧾</span>فواتيري</button>
   <button data-tab="tab-recon" id="navRecon"><span class="ic">🧮</span>المطابقة</button>
+  <button data-tab="tab-ledger" id="navLedger"><span class="ic">📖</span>الدفتر</button>
+  <button data-tab="tab-audit" id="navAudit"><span class="ic">🔎</span>التدقيق</button>
   <button data-tab="tab-settings"><span class="ic">⚙</span>الإعدادات</button>
 </nav>
 
@@ -362,6 +386,7 @@
 <script src="i18n.js"></script>
 <script src="decor.js"></script>
 <script src="holmes.js"></script>
+<script src="books.js"></script>
 <!-- طبقة الحركة السائلة — تجي بعد app/decor لأنها تلبس بعض دوالهن،
      وقبل boot لأن boot هو اللي يشغّل initSwipe -->
 <script src="fluid.js"></script>

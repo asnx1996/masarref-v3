@@ -174,8 +174,12 @@ function curSeasonTheme(key){
   return {
     grad: activePal.seasons[key],
     body: meta.body, x: meta.x, y: meta.y,
-    mtn: (key === 'night') ? activePal.mtnNight : activePal.mtnDay,
-    particles: meta.particles
+    /* الخلفيات المعتمة (ليل/شفق/فجر) تاخذ جبال الليل — الجبال النهارية
+       فوق سماء غامقة تطلع كأنها تلمع لحالها */
+    mtn: ((typeof DARK_SEASONS !== 'undefined' && DARK_SEASONS.has(key)) || key === 'night')
+           ? activePal.mtnNight : activePal.mtnDay,
+    particles: meta.particles,
+    aurora: !!meta.aurora
   };
 }
 
@@ -211,16 +215,16 @@ function updateSky(){
   buildTrees();
 
   const th = (skySeason === 'auto') ? null : curSeasonTheme(skySeason);
-  let grad, isSun, x, y, mtn, parts;
+  let grad, isSun, x, y, mtn, parts, aur;
 
   if(!th){
     const p = skyPhaseFor(new Date().getHours());
     grad = p.grad; isSun = p.sun; x = p.x; y = p.y;
     mtn = p.sun ? activePal.mtnDay : activePal.mtnNight;
-    parts = null;
+    parts = null; aur = false;
   }else{
     grad = th.grad; isSun = th.body !== 'moon'; x = th.x; y = th.y;
-    mtn = th.mtn; parts = th.particles;
+    mtn = th.mtn; parts = th.particles; aur = th.aurora;
   }
 
   sky.style.background = grad;
@@ -234,6 +238,8 @@ function updateSky(){
   sky.style.setProperty('--mtn3', mtn[2]);
   sky.style.setProperty('--mtn4', mtn[3]);
   buildParticles(parts);
+  /* شرائط الشفق — طبقة CSS ما تنبني إلا وقت الحاجة، وتنطفي بغيرها */
+  sky.classList.toggle('has-aurora', !!aur);
 }
 
 /* ============================================================
