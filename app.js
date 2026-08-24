@@ -928,17 +928,17 @@ function renderDashView(){
     el.innerHTML = `
       <div class="card sum-card depth">
         <div class="ov-top">👁️ نظرة سريعة على شهرك — اضغط تبويب (أو سطر) للتفاصيل، وضغطة ثانية ترجعك هنا</div>
-        <div class="ov-row" onclick="setDashView('exp')" style="cursor:pointer">
+        <div class="ov-row" onclick="setDashView('exp')" style="cursor:pointer" tabindex="0" role="button" aria-label="عرض تفاصيل المصاريف">
           <div class="ov-line"><span>🧾 المصاريف</span><b>${fmt(d.realSpending)}</b></div>
           <div class="bar" style="height:12px"><i style="width:${spentPct}%;background:${PALETTE[0]}"></i></div>
           <div class="ov-sub"><span>صرفت ${spentPct}٪ من المتاح</span><span>المتاح ${fmt(d.totalAvail)}</span></div>
         </div>
-        <div class="ov-row" onclick="setDashView('save')" style="cursor:pointer">
+        <div class="ov-row" onclick="setDashView('save')" style="cursor:pointer" tabindex="0" role="button" aria-label="عرض تفاصيل أهداف الادخار">
           <div class="ov-line"><span>🎯 أهداف الادخار</span><b>${goalSum > 0 ? goalPct + '٪' : '—'}</b></div>
           <div class="bar" style="height:12px"><i style="width:${goalPct}%;background:${PALETTE[2]}"></i></div>
           <div class="ov-sub"><span>${goalSum > 0 ? 'وصلت ' + fmt(goalBal) : 'ماكو أهداف محددة بعد'}</span><span>${goalSum > 0 ? 'الهدف ' + fmt(goalSum) : 'حددها من الميزانية 🎯'}</span></div>
         </div>
-        <div class="ov-row" onclick="setDashView('bills')" style="cursor:pointer">
+        <div class="ov-row" onclick="setDashView('bills')" style="cursor:pointer" tabindex="0" role="button" aria-label="عرض تفاصيل الفواتير">
           <div class="ov-line"><span>📄 الفواتير</span><b>${bTotal > 0 ? fmt(bTotal - bPaid) + ' باقي' : '—'}</b></div>
           <div class="bar" style="height:12px"><i style="width:${bPct}%;background:${PALETTE[1]}"></i></div>
           <div class="ov-sub"><span>${bTotal > 0 ? 'دفعت ' + bPct + '٪' : 'ماكو فواتير هالشهر'}</span><span>${bTotal > 0 ? 'الإجمالي ' + fmt(bTotal) : ''}</span></div>
@@ -995,13 +995,13 @@ function renderDashView(){
         ${withGoal.map((f,i) => {
           const pct = Math.max(0, Math.min(100, Math.round(f.bal / f.goal * 100)));
           return `
-          <div class="ov-row" onclick="gotoFunds()" style="cursor:pointer" title="السحب والإيداع والقرض من مصروف ← الصناديق">
+          <div class="ov-row" onclick="gotoFunds()" style="cursor:pointer" tabindex="0" role="button" aria-label="روح لقسم الصناديق" title="السحب والإيداع والقرض من مصروف ← الصناديق">
             <div class="ov-line"><span>${f.closed?'🔒':'🏦'} ${esc(f.name)}</span><span><b>${fmt(f.bal)}</b> <small style="color:var(--muted)">من ${fmt(f.goal)}</small></span></div>
             <div class="bar"><i class="${f.bal>=f.goal?'':'goalbar'}" style="width:${pct}%;background:${PALETTE[i%PALETTE.length]}"></i></div>
             <div class="ov-sub"><span>${pct}٪</span><span>${f.bal>=f.goal?'🎉 تحقق الهدف!':'باقي ' + fmt(f.goal - f.bal)}</span></div>
           </div>`;
         }).join('')}
-        ${noGoal.length ? noGoal.map(f => `<div class="ov-line" onclick="gotoFunds()" style="padding:8px 2px;border-top:1px solid var(--line);cursor:pointer"><span>${f.closed?'🔒':'🏦'} ${esc(f.name)} <small style="color:var(--muted)">(بلا هدف)</small></span><b>${fmt(f.bal)}</b></div>`).join('') : ''}
+        ${noGoal.length ? noGoal.map(f => `<div class="ov-line" onclick="gotoFunds()" style="padding:8px 2px;border-top:1px solid var(--line);cursor:pointer" tabindex="0" role="button" aria-label="روح لصندوق ${esc(f.name)}"><span>${f.closed?'🔒':'🏦'} ${esc(f.name)} <small style="color:var(--muted)">(بلا هدف)</small></span><b>${fmt(f.bal)}</b></div>`).join('') : ''}
         <div class="hint" style="margin:8px 2px 0">اضغط أي صندوق للسحب/الإيداع/القرض (مصروف ← الصناديق).</div>
       </div>`;
     return;
@@ -1055,7 +1055,7 @@ function renderDashView(){
             else due = '⏰ باقي ' + days + ' يوم';
           }
           return `
-          <div class="ov-row" onclick="gotoFunds()" style="cursor:pointer" title="الإرجاع والشطب من مصروف ← الصناديق">
+          <div class="ov-row" onclick="gotoFunds()" style="cursor:pointer" tabindex="0" role="button" aria-label="روح لقسم الصناديق" title="الإرجاع والشطب من مصروف ← الصناديق">
             <div class="ov-line"><span>${dd.toCategory?'🗂️':'👤'} <b>${esc(dd.account)}</b> <small style="color:var(--muted)">← «${esc(dd.fund)}»</small></span><b>${fmt(dd.amount)}</b></div>
             <div class="bar"><i style="width:${Math.max(6, Math.round(dd.amount/mx*100))}%;background:${PALETTE[i%PALETTE.length]}"></i></div>
             ${due ? `<div class="ov-sub"><span style="${cls}">${due}</span><span>${esc(dd.date)}</span></div>` : `<div class="ov-sub"><span></span><span>${esc(dd.date)}</span></div>`}
@@ -1271,7 +1271,7 @@ function render(){
     /* اللوحة عرض فقط — الضغط على الظرف يفتح سجل المصاريف مفلتر عليه،
        وزر النقل انتقل لتبويب الميزانية */
     envHtml += `
-      <div class="env clickable" onclick="filterByCatIdx(${ci})" title="اضغط حتى تشوف مصاريف هذا التصنيف">
+      <div class="env clickable" onclick="filterByCatIdx(${ci})" tabindex="0" role="button" aria-label="فلتر على تصنيف ${esc(c.name)}" title="اضغط حتى تشوف مصاريف هذا التصنيف">
         <div class="env-top">
           <span class="env-name">${esc(c.name)}</span>
           <span class="env-left ${left<0?'over':''}">${left<0 ? 'تجاوز ' + fmt(-left) : 'باقي ' + fmt(left)}</span>
@@ -1331,7 +1331,7 @@ function render(){
             <button class="fa-wd" onclick="openWithdraw(${i})" ${(state.locked||isClosed)?'disabled':''}>سحب −</button>
             <button class="fa-dep" onclick="openDeposit(${i})" ${(state.locked||isClosed)?'disabled':''}>إيداع +</button>
             <button class="fa-loan" onclick="openLoan(${i})" ${(state.locked||isClosed)?'disabled':''}>قرض 🤝</button>
-            <button class="fa-log" onclick="openFundLog(${i})" title="سجل الحركات">☰</button>
+            <button class="fa-log" onclick="openFundLog(${i})" title="سجل الحركات" aria-label="سجل حركات الصندوق">☰</button>
             ${(!state.locked && bal===0 && !isClosed) ? `<button class="fa-del2" onclick="closeFund(${i})" title="ما يترحّل للشهر الجاي">إغلاق 🔒</button>` : ''}
             ${(!state.locked && isClosed) ? `<button class="fa-del2" onclick="reopenFund(${i})" title="رجّعه شغّال">فتح 🔓</button>` : ''}
           </div>
@@ -1622,7 +1622,7 @@ function expRowHtml(e, saveNames){
   const label = e.desc || (ui ? ui.tag.replace(' · ', '') : 'بدون تفاصيل');
   const tag = ui ? ui.tag : '';
   return `
-    <div class="exp" data-id="${e.id}" onclick="openEdit('${e.id}')">
+    <div class="exp" data-id="${e.id}" onclick="openEdit('${e.id}')" tabindex="0" role="button" aria-label="تعديل: ${esc(label)}">
       <div class="cat-dot ${dotCls}">${icon}</div>
       <div class="mid">
         <div class="desc">${esc(label)}</div>
@@ -2238,8 +2238,8 @@ window.openFundLog = (idx) => {
           <div class="fl-meta">${esc(e.date)} · ${kind}${e.by ? ' · ' + esc(e.by) : ''}</div>
         </div>
         <div style="display:flex;align-items:center;gap:7px">
-          ${canEdit ? `<button class="fl-edit" onclick="openEditWithdraw('${e.id}', ${idx})" title="تعديل">✎</button>
-          <button class="fl-del" onclick="deleteWithdraw('${e.id}', ${idx})" title="حذف">🗑</button>` : ''}
+          ${canEdit ? `<button class="fl-edit" onclick="openEditWithdraw('${e.id}', ${idx})" title="تعديل" aria-label="تعديل الحركة">✎</button>
+          <button class="fl-del" onclick="deleteWithdraw('${e.id}', ${idx})" title="حذف" aria-label="حذف الحركة">🗑</button>` : ''}
           <div class="fl-amt ${cls}">${sign}${fmt(Math.abs(e.amount))}</div>
         </div>
       </div>`;
@@ -2682,7 +2682,7 @@ function renderSettings(){
   const curPal = curPaletteId();
   const palCards = PALETTE_ORDER.map(id => {
     const p = PALETTES[id];
-    return `<div class="pal ${id===curPal?'sel':''}" onclick="pickPalette('${id}')" title="${p.name}">
+    return `<div class="pal ${id===curPal?'sel':''}" onclick="pickPalette('${id}')" tabindex="0" role="button" aria-pressed="${id===curPal}" aria-label="ثيم ${p.name}" title="${p.name}">
       <span class="pal-sky" style="background:${p.seasons.sunset}"></span>
       <span class="pal-info"><span class="pal-name">${p.name}</span>
       <span class="pal-dots"><i style="background:${p.primary}"></i><i style="background:${p.amber}"></i><i style="background:${p.green}"></i></span></span></div>`;
@@ -3313,7 +3313,7 @@ async function showMonthsChart(){
       const hi = Math.max(2, Math.round((m.income||0) / max * 132));
       const hs = Math.max(0, Math.round(Math.max(0, m.spent||0) / max * 132));
       const cur = m.month === state.month;
-      bars += `<g style="cursor:pointer" onclick="gotoMonth('${m.month}')">
+      bars += `<g style="cursor:pointer" onclick="gotoMonth('${m.month}')" tabindex="0" role="button" aria-label="روح لشهر ${m.month}">
         <rect x="${x}" y="${base-hi}" width="16" height="${hi}" rx="4" fill="var(--primary-soft)"/>
         <rect x="${x+18}" y="${base-Math.max(hs,2)}" width="16" height="${Math.max(hs,2)}" rx="4" fill="${(m.spent||0) > (m.income||0) ? 'var(--red)' : 'var(--primary)'}"/>
         <text x="${x+17}" y="${base+16}" text-anchor="middle" font-size="9" fill="${cur ? 'var(--primary)' : '#8A8A8E'}" font-weight="${cur ? '800' : '400'}">${m.month.slice(2).replace('-','/')}${m.locked ? ' 🔒' : ''}</text>
@@ -3519,7 +3519,7 @@ function renderBills(){
     return `
       <div class="bill ${cls}">
         <button class="bl-chk" onclick="toggleBill('${b.id}', ${!b.paid})">${b.paid ? '✓' : ''}</button>
-        <div class="bl-main" onclick="editBill('${b.id}')" style="cursor:pointer" title="اضغط للتعديل">
+        <div class="bl-main" onclick="editBill('${b.id}')" style="cursor:pointer" tabindex="0" role="button" aria-label="تعديل فاتورة ${esc(b.name)}" title="اضغط للتعديل">
           <div class="bl-name">${esc(b.name)} <span style="font-size:.62rem;color:var(--muted)">✎</span></div>
           ${meta ? `<div class="bl-meta">${esc(meta)}</div>` : ''}
         </div>
@@ -3719,12 +3719,12 @@ function renderQuick(){
     return;
   }
   box.innerHTML = '<div class="quick-grid">' + quickItems.map(q => `
-    <div class="qbtn ${quickEditing?'editing':''}" onclick="useQuick('${q.id}')">
+    <div class="qbtn ${quickEditing?'editing':''}" onclick="useQuick('${q.id}')" tabindex="0" role="button" aria-label="زر سريع: ${esc(q.label)}">
       <button class="qb-del" onclick="event.stopPropagation();removeQuick('${q.id}')" aria-label="حذف">✕</button>
       <span class="qb-label">${esc(q.label)}</span>
       <span class="qb-sub">${q.amount>0 ? fmt(q.amount) : 'بلا مبلغ'}${q.category ? ' · ' + esc(q.category) : ''}</span>
     </div>`).join('') +
-    `<div class="qbtn" style="justify-content:center;align-items:center;color:var(--muted)" onclick="toggleQuickEdit()">${quickEditing ? '✓ تم' : '✎ تعديل'}</div>` +
+    `<div class="qbtn" style="justify-content:center;align-items:center;color:var(--muted)" onclick="toggleQuickEdit()" tabindex="0" role="button">${quickEditing ? '✓ تم' : '✎ تعديل'}</div>` +
     '</div>';
 }
 window.toggleQuickEdit = () => { quickEditing = !quickEditing; renderQuick(); };

@@ -281,7 +281,7 @@
     color:#fff;font-size:1.05rem;display:flex;align-items:center;justify-content:center;
     transition:transform .18s var(--ease),background .18s;
   }
-  .icon-btn:active{transform:scale(.9)}
+  .icon-btn:active{transform:scale(.96)}
   .month-pick{
     background:rgba(255,255,255,.16);
     border:1px solid rgba(255,255,255,.28);
@@ -295,7 +295,6 @@
     background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);
     border-radius:13px;padding:9px 12px;color:#fff;
     font-family:inherit;text-align:start;cursor:pointer;
-    backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
     transition:transform .18s var(--ease),background .2s;
   }
   .period-bar:active{transform:scale(.985)}
@@ -303,7 +302,7 @@
   .period-bar .pb-range{font-size:.66rem;font-weight:300;opacity:.88;margin-inline-start:auto;white-space:nowrap}
   .period-bar .pb-edit{font-size:.78rem;opacity:.88}
   .head-stats{display:flex;gap:9px;margin-top:12px}
-  .hstat{flex:1;background:rgba(255,255,255,.13);border-radius:15px;padding:11px 12px;backdrop-filter:var(--blur)}
+  .hstat{flex:1;background:rgba(255,255,255,.13);border-radius:15px;padding:11px 12px}
   .hstat .lbl{font-size:.65rem;font-weight:300;opacity:.88}
   .hstat .val{font-size:1.02rem;font-weight:700;margin-top:3px;white-space:nowrap}
   .hstat.main{background:#fff;color:var(--green-text)}
@@ -317,7 +316,7 @@
     border-radius:10px;padding:6px 13px;font-family:inherit;font-size:.7rem;font-weight:600;cursor:pointer;
     transition:transform .18s var(--ease);
   }
-  .logout-btn:active{transform:scale(.93)}
+  .logout-btn:active{transform:scale(.96)}
 
   /* ---------- التبويبات السفلية ---------- */
   nav{
@@ -342,7 +341,7 @@
     transition:color .2s, background .2s, transform .18s var(--ease);
   }
   nav button .ic{font-size:1.3rem;line-height:1;transition:transform .2s var(--ease)}
-  nav button:active{transform:scale(.92)}
+  nav button:active{transform:scale(.96)}
   nav button.active{color:var(--primary-text);background:var(--primary-soft)}
   nav button.active .ic{transform:translateY(-1px)}
 
@@ -362,7 +361,7 @@
      على الأبيض و-1 على البطاقة الداكنة، يعني الخانة ما تبيّن أصلاً. */
   input,select{
     width:100%;border:1px solid var(--line-strong);border-radius:12px;
-    padding:12px 13px;font-family:inherit;font-size:.95rem;
+    padding:12px 13px;font-family:inherit;font-size:16px;
     background:var(--input-bg);color:var(--ink);
     transition:border-color .2s, box-shadow .2s;
   }
@@ -378,7 +377,7 @@
     transition:transform .18s var(--ease),filter .2s;
     box-shadow:0 4px 14px color-mix(in srgb, var(--primary) 30%, transparent);
   }
-  .btn:active{transform:scale(.97)}
+  .btn:active{transform:scale(.96)}
   .btn:disabled{opacity:.5;box-shadow:none}
   .btn.ghost{background:var(--primary-soft);color:var(--primary-text);margin-top:10px;font-weight:600;box-shadow:none}
   .btn.warn-btn{background:#fff;color:var(--primary-text);border:1.5px solid var(--primary);margin-top:10px;box-shadow:none}
@@ -396,12 +395,12 @@
   .lg-item{display:flex;align-items:center;gap:5px}
   .lg-item b{color:var(--ink);font-weight:700;margin-right:2px}
   .dseg{cursor:pointer;transition:opacity .18s}
-  .donut:not(.has-filter) .dseg:hover{opacity:.75}
+  @media (hover:hover){ .donut:not(.has-filter) .dseg:hover{opacity:.75} }
   .lg-item{cursor:pointer;border-radius:9px;padding:3px 7px;margin:-3px -7px;transition:background .15s}
-  .lg-item:hover{background:var(--primary-soft)}
+  @media (hover:hover){ .lg-item:hover{background:var(--primary-soft)} }
   .lg-item.on{background:var(--primary-soft);outline:1.5px solid var(--primary-text)}
   .lg-clear{margin-top:12px;border:1.5px solid var(--line);background:var(--card);color:var(--muted);border-radius:11px;padding:8px 14px;font-family:inherit;font-weight:700;font-size:.72rem;cursor:pointer}
-  .lg-clear:hover{border-color:var(--red-text);color:var(--red-text)}
+  @media (hover:hover){ .lg-clear:hover{border-color:var(--red-text);color:var(--red-text)} }
   .lg-dot{width:9px;height:9px;border-radius:3px;display:inline-block}
 
   /* ---------- ظروف الميزانية (الداشبورد) ---------- */
@@ -476,7 +475,7 @@
     transition:background .2s;
   }
   .dgrp-head:active{background:var(--surface-sunken)}
-  .dgrp-head:focus-visible{outline:2px solid var(--primary);outline-offset:-3px}
+  .dgrp-head:focus-visible{outline:2px solid var(--primary-text);outline-offset:-3px}
   .dgrp-ico{font-size:1.15rem;line-height:1;flex:none}
   .dgrp-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
   .dgrp-name{font-weight:700;font-size:.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -538,7 +537,7 @@
     width:32px;height:32px;border-radius:10px;cursor:pointer;font-size:.95rem;flex-shrink:0;
     transition:background .15s,color .15s;
   }
-  .exp .del:hover{background:var(--red-soft);color:var(--red-text)}
+  @media (hover:hover){ .exp .del:hover{background:var(--red-soft);color:var(--red-text)} }
 
   /* ---------- صفوف التصنيفات بالميزانية ---------- */
   /* grid بدل flex: يضمن إن كل الصفوف بنفس أعرض الأعمدة ومحاذاة وحدة،
@@ -564,7 +563,7 @@
     display:flex;align-items:center;justify-content:center;
     transition:border-color .18s,color .18s;
   }
-  .cat-xfer:hover{border-color:var(--primary);color:var(--primary-text)}
+  @media (hover:hover){ .cat-xfer:hover{border-color:var(--primary);color:var(--primary-text)} }
   /* موبايل: نضيّق الأزرار والفواصل حتى خانة الاسم تبقى مقروءة
      بعد ما دخل زر النقل داخل الصف */
   @media (max-width:560px){
@@ -637,7 +636,7 @@
     width:42px;height:42px;border-radius:13px;cursor:pointer;border:3px solid transparent;
     transition:transform .18s var(--ease);position:relative;
   }
-  .sw:active{transform:scale(.9)}
+  .sw:active{transform:scale(.96)}
   .sw.sel{border-color:var(--ink)}
   .sw.sel::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1rem}
   .sw-custom{display:flex;align-items:center;justify-content:center;background:var(--bg);border:2px dashed var(--line);color:var(--muted);font-size:1.2rem}
@@ -656,7 +655,14 @@
     max-width:90vw;text-align:center;box-shadow:var(--shadow-lg);
   }
   .toast.show{opacity:1;transform:translateX(50%) translateY(0)}
-  .toast.err{background:var(--red)}
+  /* رسالة الخطأ تستنّى المستخدم — فلازم تنضغط حتى تنشال.
+     رسالة النجاح تبقى pointer-events:none لأنها تروح لحالها
+     وما نريدها تعترض ضغطة رايحة لشي وراها. */
+  .toast.err{background:var(--red);pointer-events:auto;cursor:pointer;padding-inline-end:34px}
+  .toast.err::after{
+    content:'✕';position:absolute;inset-inline-end:13px;top:50%;
+    transform:translateY(-50%);font-size:.78rem;opacity:.85;
+  }
   #loader{
     position:fixed;inset:0;background:color-mix(in srgb, var(--bg) 72%, transparent);
     display:none;align-items:center;justify-content:center;z-index:180;
@@ -693,9 +699,11 @@
   .fa-dep{border:none;background:var(--primary);color:#fff}
   .fa-log{flex:0 0 auto;width:44px;border:1px solid var(--line);background:var(--card);color:var(--muted)}
   .fa-loan{border:1.5px solid var(--amber-text);background:transparent;color:var(--amber-text)}
-  .fl-edit,.fl-del{border:1px solid var(--line);background:var(--card);border-radius:9px;width:30px;height:30px;cursor:pointer;font-size:.78rem;color:var(--muted);flex-shrink:0;transition:all .15s}
-  .fl-edit:hover{border-color:var(--primary);color:var(--primary-text)}
-  .fl-del:hover{border-color:var(--red-text);color:var(--red-text);background:var(--red-soft)}
+  .fl-edit,.fl-del{border:1px solid var(--line);background:var(--card);border-radius:9px;width:30px;height:30px;cursor:pointer;font-size:.78rem;color:var(--muted);flex-shrink:0;transition:border-color .15s,color .15s,background .15s,transform .15s var(--ease)}
+  @media (hover:hover){
+    .fl-edit:hover{border-color:var(--primary);color:var(--primary-text)}
+    .fl-del:hover{border-color:var(--red-text);color:var(--red-text);background:var(--red-soft)}
+  }
 
   /* ---------- القرض (شارة الموعد) ---------- */
   .debt.loan{border-right-color:var(--primary-text)}
@@ -721,7 +729,7 @@
   .rc-badge.extra{background:var(--amber-soft);color:var(--amber-text)}
   .rc-sub{font-size:.66rem;color:var(--muted);margin-top:4px;line-height:1.7}
   .rc-del{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:.82rem;padding:4px 6px;border-radius:8px}
-  .rc-del:hover{background:var(--red-soft);color:var(--red-text)}
+  @media (hover:hover){ .rc-del:hover{background:var(--red-soft);color:var(--red-text)} }
 
   /* ---------- سجل حركات الصندوق ---------- */
   .flog{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 2px;border-bottom:1px solid var(--line);font-size:.8rem}
@@ -993,7 +1001,7 @@
   /* ---------- الأزرار السريعة ---------- */
   .qh{display:flex;align-items:center;justify-content:space-between}
   .qh-add{border:none;background:var(--primary-soft);color:var(--primary-text);border-radius:10px;padding:8px 13px;font-family:inherit;font-weight:700;font-size:.74rem;cursor:pointer;transition:transform .18s var(--ease)}
-  .qh-add:active{transform:scale(.94)}
+  .qh-add:active{transform:scale(.96)}
   .quick-grid{display:flex;flex-wrap:wrap;gap:9px}
   .qbtn{
     display:flex;flex-direction:column;gap:2px;align-items:flex-start;
@@ -1040,7 +1048,7 @@
   /* ---------- فواتيري ---------- */
   .bill{display:flex;align-items:center;gap:11px;padding:12px 2px;border-bottom:1px solid var(--line)}
   .bill:last-child{border-bottom:none}
-  .bill .bl-chk{width:26px;height:26px;flex-shrink:0;border-radius:8px;border:2px solid var(--line);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.85rem;color:#fff;transition:all .18s}
+  .bill .bl-chk{width:26px;height:26px;flex-shrink:0;border-radius:8px;border:2px solid var(--line);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.85rem;color:#fff;transition:border-color .18s,background .18s,color .18s,transform .18s var(--ease)}
   .bill.paid .bl-chk{background:var(--primary);border-color:var(--primary)}
   .bill .bl-main{flex:1;min-width:0}
   .bill .bl-name{font-weight:700;font-size:.9rem}
@@ -1048,7 +1056,7 @@
   .bill .bl-meta{font-size:.66rem;color:var(--muted);margin-top:2px}
   .bill .bl-amt{font-weight:800;white-space:nowrap;font-size:.9rem}
   .bill .bl-del{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:.85rem;padding:4px 6px;border-radius:8px}
-  .bill .bl-del:hover{background:var(--red-soft);color:var(--red-text)}
+  @media (hover:hover){ .bill .bl-del:hover{background:var(--red-soft);color:var(--red-text)} }
   .bill.due-soon .bl-meta{color:var(--amber-text);font-weight:700}
   .bill.overdue .bl-meta{color:var(--red-text);font-weight:700}
   .bl-stat{display:flex;justify-content:space-between;font-size:.82rem;padding:5px 0}
@@ -1181,7 +1189,10 @@
     background:radial-gradient(240px circle at var(--mx,50%) var(--my,50%), color-mix(in srgb, var(--primary) 20%, rgba(255,255,255,.22)), transparent 55%);
     mix-blend-mode:soft-light;
   }
-  .amb-on .card:hover::before,.amb-on .sum-card:hover::before,.amb-on .env:hover::before,.amb-on .fund:hover::before{opacity:1}
+  @media (hover:hover){
+    .amb-on .card:hover::before,.amb-on .sum-card:hover::before,
+    .amb-on .env:hover::before,.amb-on .fund:hover::before{opacity:1}
+  }
   /* توقيع اللوحة: بطاقة الملخص تميل باتجاه المؤشر */
   .amb-on .sum-card{transition:transform .16s ease-out, box-shadow .2s;transform-style:preserve-3d;will-change:transform}
 
@@ -1285,8 +1296,8 @@
   #holmesChar{
     position:absolute;bottom:0;left:24px;width:62px;
     pointer-events:auto;cursor:pointer;
-    transition-property:left;transition-timing-function:linear;transition-duration:2s;
-    will-change:left;
+    transition-property:transform;transition-timing-function:linear;transition-duration:2s;
+    will-change:transform;
   }
   #holmesChar .hl-body{transition:transform .3s var(--ease)}
   #holmesChar.flip .hl-body{transform:scaleX(-1)}
@@ -1640,3 +1651,99 @@
     .led-stats{grid-template-columns:repeat(4,1fr)}
     .led-tbl{min-width:0}
   }
+
+  /* ============================================================
+     ٩. الوصول — لوحة المفاتيح، اللمس، والقراءة الآلية
+     ------------------------------------------------------------
+     كل شي هنا چان ناقص: الأزرار ما إلها حلقة تركيز أبداً، يعني
+     المستخدم اللي يتنقّل بـTab يمشي بالواجهة أعمى — ما يعرف وين
+     واكف. والـ:hover ما چان محصور بأجهزة المؤشّر، فباللمس الحالة
+     تعلگ بعد ما ترفع إصبعك.
+     ============================================================ */
+
+  /* ---------- ٩.١ رابط التخطّي ----------
+     أول عنصر يوصله Tab: يقفز فوك ثمان أزرار تنقّل ويوديك للمحتوى. */
+  .skip-link{
+    position:fixed;top:0;inset-inline-start:0;z-index:999;
+    transform:translateY(-120%);
+    background:var(--card);color:var(--primary-text);
+    border:2px solid var(--primary);border-radius:0 0 var(--radius-sm) 0;
+    padding:12px 18px;font-family:inherit;font-weight:700;font-size:.85rem;
+    text-decoration:none;
+    transition:transform .18s var(--ease);
+  }
+  .skip-link:focus-visible{transform:translateY(0)}
+
+  /* ---------- ٩.٢ حلقة التركيز ----------
+     :focus-visible مو :focus — الماوس ما يشغّلها، لوحة المفاتيح تشغّلها.
+     لونان: --primary على الأسطح الفاتحة، وأبيض فوق الهيدر المصبوغ،
+     لأن حلقة بلون الثيم فوك خلفية بنفس اللون ما تنشاف. */
+  /* اللون --primary-text مو --primary: الأول دوره «ينشاف فوك سطح»
+     ويتبدّل ويا الوضع، والثاني تعبئة صلبة وثابت. بالوضع الداكن
+     --primary قياسه ٢٤٨:١ على البطاقة — تحت حد ٣:١ لعناصر الواجهة،
+     يعني الحلقة تختفي بالضبط بالمكان اللي تحتاجها. --primary-text
+     يعطي ٩٢٣:١ داكن و٦٠١:١ فاتح. */
+  :where(button,a,input,select,textarea,summary,[tabindex]):focus-visible{
+    outline:2px solid var(--primary-text);
+    outline-offset:2px;
+    border-radius:6px;
+  }
+  /* داخل الهيدر المصبوغ ونوافذ الشيت الملوّنة — حلقة بيضاء بظل غامق وراها */
+  header :is(button,a,input,select,[tabindex]):focus-visible,
+  #splash :is(button,a):focus-visible{
+    outline-color:#fff;
+    box-shadow:0 0 0 4px rgba(0,0,0,.28);
+  }
+  /* المُدخلات عدها حلقتها الخاصة (حافة + هالة) — نخلّيها بس نزيد وضوح
+     لمن يجي التركيز من لوحة المفاتيح */
+  input:focus-visible,select:focus-visible{outline-offset:3px}
+  /* العناصر اللي تاخذ تركيز برمجي (بطاقة المودال) ما تحتاج حلقة */
+  .modal-card:focus,.modal-card:focus-visible{outline:none}
+  /* وضع التباين القسري (ويندوز) — لا تلغي ألوان النظام */
+  @media (forced-colors:active){
+    :where(button,a,[tabindex]):focus-visible{outline:2px solid Highlight;outline-offset:2px}
+    nav button.active{border:1px solid Highlight}
+  }
+
+  /* ---------- ٩.٤ مساحة اللمس ----------
+     WCAG 2.5.8 يطلب ٢٤×٢٤ كحد أدنى؛ اللمس المريح ٤٤×٤٤.
+     الأزرار الصغيرة تبقى صغيرة بالشكل، وتكبر بالمساحة عبر ::after. */
+  :is(.fl-edit,.fl-del,.rc-del,.bl-del,.exp .del,.bl-chk){position:relative}
+  :is(.fl-edit,.fl-del,.rc-del,.bl-del,.exp .del,.bl-chk)::after{
+    content:'';position:absolute;top:50%;left:50%;
+    width:44px;height:44px;transform:translate(-50%,-50%);
+  }
+  /* الطبقات الزخرفية ما تبلع الضغطات */
+  #sky,#emojiFace,.aurora,.stars,#skyParticles,.splash-logo-shadow{pointer-events:none}
+
+  /* ---------- ٩.٥ الحركة الأقل ----------
+     تعميم فوك القواعد المتفرّقة: أي حركة باقية تنقص لكرت شفافية. */
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{
+      animation-duration:.01ms!important;animation-iteration-count:1!important;
+      transition-duration:.01ms!important;scroll-behavior:auto!important;
+    }
+    /* الحلقة والتغذية الراجعة اللونية تبقى — الحركة بس هي اللي تروح */
+    .skip-link{transition-duration:.01ms!important}
+    #holmesChar{transition:none!important}
+  }
+
+  /* ============================================================
+     ١٠. الأداء — قوائم طويلة
+     ------------------------------------------------------------
+     دفتر الأستاذ وسجل المصاريف يوصلون لمئات الصفوف. content-visibility
+     يخلّي المتصفح يتخطّى تخطيط ورسم الصفوف اللي برّا الشاشة،
+     وcontain-intrinsic-size يحجزلها ارتفاع تقريبي حتى شريط التمرير
+     ما يقفز لمن تنزل (CLS = 0).
+     ============================================================ */
+  /* بس القوائم الي تطول فعلاً: سجل المصاريف والفواتير.
+     الظروف والصناديق (.env/.fund/.debt) مقصودة برّا — عددهن بالبيت
+     عشرة ولا خمستعش، والربح صفر، بينما contain:paint اللي يجي مع
+     content-visibility يعمل سياق تكديس يتعارض وية preserve-3d
+     بتأثير الميلان (.depth / .amb-on). جدول الدفتر برّا هو اللام
+     لأن الاحتواء ما ينطبق على عناصر الجدول الداخلية أصلاً. */
+  .exp,.bill{content-visibility:auto}
+  .exp{contain-intrinsic-size:auto 64px}
+  .bill{contain-intrinsic-size:auto 50px}
+  /* الطباعة تحتاج كل شي مرسوم */
+  @media print{.exp,.bill{content-visibility:visible}}

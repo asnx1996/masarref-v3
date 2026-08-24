@@ -104,7 +104,9 @@ function holmesLoop(){
     const dur = Math.max(1.3, dist / 55);   // سرعة ~55 بكسل بالثانية
     ch.classList.toggle('flip', target > hlX);
     ch.style.transitionDuration = dur.toFixed(2) + 's';
-    ch.style.left = target + 'px';
+    /* transform بدل left — left يعيد التخطيط بكل إطار من ثواني المشي،
+       وtransform ينرسم بالكرت الرسومي. النقطة صفر هي left:24px بالـCSS. */
+    ch.style.transform = 'translateX(' + (target - 24) + 'px)';
     hlX = target;
     next = dur * 1000 + 300;
   }else if(r < .58){

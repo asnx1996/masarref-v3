@@ -2,7 +2,7 @@
    يخزّن واجهة التطبيق حتى تفتح فوراً وتشتغل بلا نت.
 
    ⚠️ مهم: كل ما تعدّل أي ملف من ملفات الواجهة (index.html / styles.css /
-   core.js / app.js / i18n.js / decor.js / holmes.js / books.js / fluid.js / boot.js)، غيّر رقم
+   core.js / app.js / i18n.js / decor.js / holmes.js / books.js / fluid.js / a11y.js / boot.js)، غيّر رقم
    النسخة بالسطر التحت (مثلاً masareef-v42 ← masareef-v43).
 
    📌 سياسة التحديث (انتغيّرت بـv41):
@@ -14,11 +14,11 @@
        يعني التحديث يوصل بنفس الفتحة. لو ماكو نت يشتغل من الكاش عادي.
      • الخطوط والصور والصوت → الكاش أول (ما تتغيّر، وثقيلة).
    ============================================================ */
-const CACHE = 'masareef-v46';
+const CACHE = 'masareef-v47';
 const SHELL = [
   './', './index.html', './manifest.json', './icon-192.png', './icon-512.png',
   './fonts.css', './styles.css',
-  './core.js', './app.js', './i18n.js', './decor.js', './holmes.js', './books.js', './fluid.js', './boot.js',
+  './core.js', './app.js', './i18n.js', './decor.js', './holmes.js', './books.js', './fluid.js', './a11y.js', './boot.js',
   './fonts/rubik-arabic.woff2', './fonts/rubik-latin.woff2',
   './fonts/alexandria-arabic.woff2', './fonts/alexandria-latin.woff2'
 ];

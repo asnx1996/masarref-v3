@@ -202,7 +202,27 @@ function toast(msg, isErr){
   t.textContent = msg;
   t.className = 'toast show' + (isErr ? ' err' : '');
   clearTimeout(t._h);
-  t._h = setTimeout(()=> t.className='toast', 2600);
+  /* رسالة الخطأ ما تروح لحالها.
+     المؤقّت الثابت (٢.٦ ثانية) چان يشيل الأخطاء بنفس سرعة رسائل
+     النجاح — والخطأ بالضبط هو الشي اللي المستخدم يحتاج وقت يقراه،
+     وأكثر واحد يتأذّى منه هو الأبطأ بالقراءة. الخطأ يبقى لحد ما
+     تضغط عليه (أو Escape)، والنجاح يبقى على مؤقّته. */
+  if(isErr){
+    t.setAttribute('tabindex', '0');
+    t.setAttribute('role', 'alert');
+  }else{
+    t.removeAttribute('tabindex');
+    t.setAttribute('role', 'status');
+    t._h = setTimeout(()=> t.className='toast', 2600);
+  }
+}
+/* إخفاء التوست — يستعملها زر الإغلاق ومفتاح Escape بـa11y.js */
+function toastHide(){
+  const t = $('toast');
+  if(!t) return;
+  clearTimeout(t._h);
+  t.className = 'toast';
+  t.removeAttribute('tabindex');
 }
 function loading(on){ $('loader').className = on ? 'show' : ''; }
 

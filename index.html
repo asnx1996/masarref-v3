@@ -22,7 +22,7 @@
   form-action 'self';
   frame-ancestors 'none';
   upgrade-insecure-requests">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Pocky — مصاريفنا</title>
 <meta name="theme-color" content="#C86B4A">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -36,6 +36,7 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<a class="skip-link" href="#appMain">تخطَّ إلى المحتوى</a>
 <div id="splash">
   <div class="splash-inner">
     <!-- الظل صار طبقة ثابتة ورا اللوجو بدل filter:drop-shadow عليه —
@@ -77,28 +78,28 @@
     <div id="liSetupWarn" class="lock-banner">⚠️ الموقع غير مربوط بقاعدة البيانات — عدّل SUPABASE_URL بالملف.</div>
 
     <div id="loginBox">
-      <label>الإيميل</label>
+      <label for="liUser">الإيميل</label>
       <input type="email" id="liUser" dir="ltr" autocomplete="email" placeholder="you@example.com">
-      <label>الباسورد</label>
+      <label for="liPass">الباسورد</label>
       <input type="password" id="liPass" autocomplete="current-password" placeholder="••••••">
-      <div class="login-err" id="liErr"></div>
+      <div class="login-err" id="liErr" role="alert" aria-live="assertive"></div>
       <button class="btn" id="btnLogin">دخول</button>
-      <div class="lg-switch">ما عندك حساب؟ <a id="lnkSignup">سجّل جديد</a></div>
+      <div class="lg-switch">ما عندك حساب؟ <a id="lnkSignup" href="#" role="button" tabindex="0">سجّل جديد</a></div>
     </div>
 
     <div id="signupBox" style="display:none">
-      <label>اسمك</label>
+      <label for="suName">اسمك</label>
       <input type="text" id="suName" autocomplete="name" placeholder="مثلاً: أحمد">
-      <label>الإيميل</label>
+      <label for="suEmail">الإيميل</label>
       <input type="email" id="suEmail" dir="ltr" autocomplete="email" placeholder="you@example.com">
-      <label>الباسورد</label>
+      <label for="suPass">الباسورد</label>
       <input type="password" id="suPass" autocomplete="new-password" placeholder="٦ خانات على الأقل">
-      <label>كود العائلة (اختياري)</label>
+      <label for="suCode">كود العائلة (اختياري)</label>
       <input type="text" id="suCode" dir="ltr" autocomplete="off" placeholder="إذا زوجك/زوجتك مسجّل قبلك">
       <div class="hint" style="margin-top:4px">تلكاه بإعداداته — بدونه تنسويلك مساحة عائلة جديدة خاصة بيك.</div>
-      <div class="login-err" id="suErr"></div>
+      <div class="login-err" id="suErr" role="alert" aria-live="assertive"></div>
       <button class="btn" id="btnSignup">إنشاء الحساب</button>
-      <div class="lg-switch">عندك حساب؟ <a id="lnkLogin">سجّل دخول</a></div>
+      <div class="lg-switch">عندك حساب؟ <a id="lnkLogin" href="#" role="button" tabindex="0">سجّل دخول</a></div>
     </div>
   </div>
 </div>
@@ -109,7 +110,7 @@
     <div class="brand">Pocky<small>مصاريفنا · ميزانية البيت</small></div>
     <div id="clockSkin" class="clock-wrap head-clock" aria-hidden="true"></div>
     <div class="head-actions">
-      <input type="month" id="monthPick" class="month-pick">
+      <input type="month" id="monthPick" class="month-pick" aria-label="اختر الشهر">
     </div>
   </div>
   <button type="button" id="periodBar" class="period-bar" title="اضغط لتعديل اسم الفترة وتواريخها">
@@ -147,8 +148,8 @@
   <!-- تبويب: المصروف — سلايدر يفصل عالم المصاريف عن عالم الصناديق -->
   <section class="tab" id="tab-add">
     <div class="seg-bar" id="opSeg">
-      <button class="seg-btn active" data-seg="seg-exp">🧾 المصاريف</button>
-      <button class="seg-btn" data-seg="seg-funds">🏦 الصناديق</button>
+      <button class="seg-btn active" data-seg="seg-exp" aria-pressed="true">🧾 المصاريف</button>
+      <button class="seg-btn" data-seg="seg-funds" aria-pressed="false">🏦 الصناديق</button>
     </div>
 
     <div class="seg-view" id="seg-exp">
@@ -227,10 +228,10 @@
     <div class="dash-full"><div id="insightCard"></div></div>
     <div class="dash-full">
       <div class="seg-bar ov-bar" id="ovSeg">
-        <button class="seg-btn active" data-ov="exp">🧾 المصاريف</button>
-        <button class="seg-btn" data-ov="save">🏦 الادخار</button>
-        <button class="seg-btn" data-ov="bills">📄 الفواتير</button>
-        <button class="seg-btn" data-ov="loans">🤝 القروض</button>
+        <button class="seg-btn active" data-ov="exp" aria-pressed="true">🧾 المصاريف</button>
+        <button class="seg-btn" data-ov="save" aria-pressed="false">🏦 الادخار</button>
+        <button class="seg-btn" data-ov="bills" aria-pressed="false">📄 الفواتير</button>
+        <button class="seg-btn" data-ov="loans" aria-pressed="false">🤝 القروض</button>
       </div>
       <div id="summaryCard"></div>
     </div>
@@ -362,23 +363,23 @@
   </section>
 </main>
 
-<nav id="appNav" style="display:none">
-  <button data-tab="tab-dash" class="active"><span class="ic">◫</span>اللوحة</button>
-  <button data-tab="tab-add"><span class="ic">＋</span>مصروف</button>
-  <button data-tab="tab-budget"><span class="ic">⚖</span>الميزانية</button>
-  <button data-tab="tab-bills" id="navBills"><span class="ic">🧾</span>فواتيري</button>
-  <button data-tab="tab-recon" id="navRecon"><span class="ic">🧮</span>المطابقة</button>
-  <button data-tab="tab-ledger" id="navLedger"><span class="ic">📖</span>الدفتر</button>
-  <button data-tab="tab-audit" id="navAudit"><span class="ic">🔎</span>التدقيق</button>
-  <button data-tab="tab-settings"><span class="ic">⚙</span>الإعدادات</button>
+<nav id="appNav" style="display:none" aria-label="التنقّل الرئيسي">
+  <button data-tab="tab-dash" class="active"><span class="ic" aria-hidden="true">◫</span>اللوحة</button>
+  <button data-tab="tab-add"><span class="ic" aria-hidden="true">＋</span>مصروف</button>
+  <button data-tab="tab-budget"><span class="ic" aria-hidden="true">⚖</span>الميزانية</button>
+  <button data-tab="tab-bills" id="navBills"><span class="ic" aria-hidden="true">🧾</span>فواتيري</button>
+  <button data-tab="tab-recon" id="navRecon"><span class="ic" aria-hidden="true">🧮</span>المطابقة</button>
+  <button data-tab="tab-ledger" id="navLedger"><span class="ic" aria-hidden="true">📖</span>الدفتر</button>
+  <button data-tab="tab-audit" id="navAudit"><span class="ic" aria-hidden="true">🔎</span>التدقيق</button>
+  <button data-tab="tab-settings"><span class="ic" aria-hidden="true">⚙</span>الإعدادات</button>
 </nav>
 
-<div class="modal" id="modal"><div class="modal-card" id="modalCard"></div></div>
-<div class="modal" id="cfModal"><div class="modal-card cf-card" id="cfCard"></div></div>
-<div class="toast" id="toast"></div>
-<div id="emojiFace"></div>
-<div id="loader"><div class="spin"></div></div>
-<div id="printArea"></div>
+<div class="modal" id="modal"><div class="modal-card" id="modalCard" role="dialog" aria-modal="true" tabindex="-1"></div></div>
+<div class="modal" id="cfModal"><div class="modal-card cf-card" id="cfCard" role="dialog" aria-modal="true" tabindex="-1"></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+<div id="emojiFace" aria-hidden="true"></div>
+<div id="loader" role="status" aria-live="polite" aria-label="جاري التحميل"><div class="spin" aria-hidden="true"></div></div>
+<div id="printArea" aria-hidden="true"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js" integrity="sha384-WmjsOVSSw3JNqIKfmDU35+uddOzBdP9PlYIWCg7xdnVOesjWVGpRcooOVheFFwH4" crossorigin="anonymous"></script>
 <script src="core.js"></script>
@@ -390,6 +391,8 @@
 <!-- طبقة الحركة السائلة — تجي بعد app/decor لأنها تلبس بعض دوالهن،
      وقبل boot لأن boot هو اللي يشغّل initSwipe -->
 <script src="fluid.js"></script>
+<!-- طبقة الوصول — تلبس sheetShow/sheetHide بعد fluid وقبل ما boot يشغّل التطبيق -->
+<script src="a11y.js"></script>
 <script src="boot.js"></script>
 </body>
 </html>
