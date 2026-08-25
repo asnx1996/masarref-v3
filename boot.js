@@ -53,10 +53,20 @@ try{ applySkyBlur(skyBlur); }catch(e){}
 try{ updateCurrencyLabels(); }catch(e){}
 apiReady();
 try{ applyLangBoot(); }catch(e){}
-try{ applyBillsVisible(); }catch(e){}
-try{ applyReconVisible(); }catch(e){}
-try{ applyLedgerVisible(); }catch(e){}
-try{ applyAuditVisible(); }catch(e){}
+/* إظهار/إخفاء التبويبات الاختيارية.
+   catch فارغ چان يخفي عطل حقيقي: applyLedgerVisible وapplyAuditVisible
+   ساكنات بـbooks.js، فلو الملف ما وصل تطيح النداءات وماكو أي أثر —
+   لا بالشاشة ولا بالكونسول. هسه الخطأ ينطبع على الأقل. */
+['applyBillsVisible', 'applyReconVisible', 'applyLedgerVisible', 'applyAuditVisible']
+  .forEach(name => {
+    /* تعريفات الدوال بأعلى مستوى السكربت تنحط على window، فما نحتاج eval */
+    const fn = window[name];
+    if(typeof fn !== 'function'){
+      console.warn('[tabs] الدالة ' + name + ' مو موجودة — تأكد إن books.js انحمّل');
+      return;
+    }
+    try{ fn(); }catch(e){ console.warn('[tabs] ' + name + ' طاحت:', e); }
+  });
 try{ applyDark(); }catch(e){}
 window.addEventListener('beforeprint', () => {
   try{

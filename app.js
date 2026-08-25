@@ -2927,18 +2927,54 @@ function renderSettings(){
     applyReconVisible();
     toast(RECON_ON ? 'ظهر تبويب المطابقة ✓' : 'انخفى تبويب المطابقة');
   };
-  if($('ledgerToggle')) $('ledgerToggle').onchange = (e) => {
-    LEDGER_ON = e.target.checked;
-    LS.set('mas_ledger', LEDGER_ON ? 'on' : 'off');
-    applyLedgerVisible();
-    toast(LEDGER_ON ? 'ظهر تبويب دفتر الأستاذ ✓ 📖' : 'انخفى تبويب دفتر الأستاذ');
+  /* مفتاحا الدفتر والمدقق يختلفون عن الفواتير والمطابقة بشي واحد:
+     دوالهم (applyLedgerVisible / applyAuditVisible) ساكنة بـbooks.js
+     مو بـapp.js. يعني لو books.js ما وصل — نسخة قديمة بالكاش، أو
+     الملف طاح — الدالة تصير مفقودة.
+
+     شنو چان يصير وقتها: السطر الأول يخزّن الحالة الجديدة بالذاكرة،
+     والسطر الثالث يطيح بـReferenceError، والرابع (التوست) ما يوصله
+     أبداً. النتيجة اللي يشوفها المستخدم: المفتاح ينقلب، التبويب
+     يبقى مكانه، وماكو ولا رسالة تگله شصار — بينما الذاكرة تگول
+     «مخفي». الحالة المخزّنة والمعروضة انفكّوا عن بعض بصمت.
+
+     الترتيب هسه معكوس: نطبّق أول، ونخزّن بعد ما ينجح التطبيق.
+     ولو فشل، نرجّع المفتاح لمحله ونگول للمستخدم شنو صار. */
+  const bindTabToggle = (id, label, getFn, setFlag, lsKey, onMsg, offMsg) => {
+    const el = $(id);
+    if(!el) return;
+    el.onchange = (e) => {
+      const want = e.target.checked;
+      const fn = getFn();
+      if(typeof fn !== 'function'){
+        e.target.checked = !want;   /* رجّع المفتاح — ما انطبّق شي */
+        toast('ما كدر يشتغل مفتاح «' + label + '» — حدّث الصفحة (Ctrl+Shift+R)', true);
+        return;
+      }
+      try{
+        setFlag(want);
+        fn();
+        LS.set(lsKey, want ? 'on' : 'off');   /* نخزّن بعد النجاح بس */
+        toast(want ? onMsg : offMsg);
+      }catch(err){
+        /* الإرجاع نفسه ممكن يطيح (لو المتغيّر بـTDZ)، فما نخلّي
+           فشل الإرجاع يبلع رسالة الفشل الأصلية */
+        try{ setFlag(!want); }catch(_){}
+        e.target.checked = !want;
+        toast('ما كدر يشتغل مفتاح «' + label + '»: ' + err.message, true);
+      }
+    };
   };
-  if($('auditToggle')) $('auditToggle').onchange = (e) => {
-    AUDIT_ON = e.target.checked;
-    LS.set('mas_audit', AUDIT_ON ? 'on' : 'off');
-    applyAuditVisible();
-    toast(AUDIT_ON ? 'ظهر تبويب مدقق الأرصدة ✓ 🔎' : 'انخفى تبويب المدقق');
-  };
+
+  bindTabToggle('ledgerToggle', 'دفتر الأستاذ',
+    () => (typeof applyLedgerVisible === 'function' ? applyLedgerVisible : null),
+    v => { LEDGER_ON = v; }, 'mas_ledger',
+    'ظهر تبويب دفتر الأستاذ ✓ 📖', 'انخفى تبويب دفتر الأستاذ');
+
+  bindTabToggle('auditToggle', 'مدقق الأرصدة',
+    () => (typeof applyAuditVisible === 'function' ? applyAuditVisible : null),
+    v => { AUDIT_ON = v; }, 'mas_audit',
+    'ظهر تبويب مدقق الأرصدة ✓ 🔎', 'انخفى تبويب المدقق');
   if($('holmesToggle')) $('holmesToggle').onchange = (e) => {
     try{ setHolmes(e.target.checked); }catch(_){}
   };
