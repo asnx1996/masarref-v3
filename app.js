@@ -812,6 +812,7 @@ function showSkeleton(){
 }
 async function loadMonth(month){
   state.month = month;
+  state._envOpen = null;   // ظرف مفتوح من شهر ثاني ما إله معنى هنا
   $('monthPick').value = month;
   if(!apiReady()){ render(); return; }
   inFlight = true;
@@ -1143,6 +1144,9 @@ function render(){
                    نحتفظ بيه للعرض («منها قرض لازم يرجع»)
      ------------------------------------------------------------ */
   const spentByCat = {}, fundInByCat = {}, repayByCat = {}, loanChgByCat = {};
+  /* fundInByCat يجمع السحب والقرض سوة (أساس الحساب مثل قبل)، وهذا يفرز
+     القرض بروحه — حتى سطر «لازم يرجع» باللوحة ما يشمل سحب مو قرض */
+  const fundLoanByCat = {};
   let spendingSpent = 0, fundDeposits = 0;
   state.expenses.forEach(e => {
     const kd = kindOf(e, saveNames);
@@ -1158,6 +1162,7 @@ function render(){
     if(hitsCat(kd))    spentByCat[k] = (spentByCat[k]||0) + a;
     if(hitsRemain(kd)) spendingSpent += a;
     if(kd === 'cat_fund' || kd === 'cat_loan_v1') fundInByCat[k] = (fundInByCat[k]||0) - a;
+    if(kd === 'cat_loan_v1') fundLoanByCat[k] = (fundLoanByCat[k]||0) - a;
     if(kd === 'cat_pay_v1') repayByCat[k] = (repayByCat[k]||0) + a;
     if(kd === 'cat_loan') loanChgByCat[k] = (loanChgByCat[k]||0) + a;
     if(kd === 'cat_fix')  loanChgByCat[k] = (loanChgByCat[k]||0) + a;   /* سالب — يقلّل المحمّل */
@@ -1253,34 +1258,55 @@ function render(){
     totalAvail: spendAlloc + spendCarried + fundInTotal - repayTotal
   };
 
-  /* ===== ظروف المصاريف ===== */
+  /* ===== ظروف المصاريف =====
+     الضغط على الظرف يفتح قائمته بمكانها (مصاريف الفترة + السحوبات/القروض
+     الداخلة من الصناديق) — ما ينقلك لتبويب ثاني. والفلتر (من الدونات أو
+     الليجند) يخفي باقي الظروف ويخلي المختار بروحه مفتوح. */
+  const envFilter = ($('fltCat') && $('fltCat').value) || '';
   let envHtml = '';
+  if(envFilter){
+    envHtml += `
+      <div class="env-filter" onclick="filterByCat('')" tabindex="0" role="button" aria-label="إلغاء الفلتر">
+        <span>🔎 مفلتر على «${esc(envFilter)}» — باقي الظروف مخفية</span>
+        <span class="env-filter-x">✕ إلغاء</span>
+      </div>`;
+  }
   cats.forEach((c, ci) => {
     if(c.type === 'save') return;
+    if(envFilter && c.name !== envFilter){ delete spentByCat[c.name]; return; }
     const carried = Number(c.carried)||0;
     const fundIn = fundInByCat[c.name] || 0;       // قروض/تمويل داخل من الصناديق
     const repay  = repayByCat[c.name] || 0;        // سداد قروض راجعة للصناديق
-    const loanOut = fundIn - repay;                // تمويل قرض قديم (v1) لسه ما انسدّ
+    /* السحب چان محسوب ضمن سطر «قرض من الصناديق» — وهو مو قرض. هسه
+       انفصل: السحب يزيد متاح التصنيف وخلص، بلا سطر هنا؛ تفصيله (شكد
+       سحب) يبين بملاحظة صف التصنيف بتبويب «الميزانية». واللي يبقى
+       باللوحة بس القرض، لأنه الوحيد اللي لازم يرجع. */
+    const loanOut  = (fundLoanByCat[c.name] || 0) - repay;   // قرض قديم (v1) لسه ما انسدّ
     const loanChg = loanChgByCat[c.name] || 0;     // قرض محمّل مباشرة (v2) — منخصم أصلاً
     const netSpent = spentByCat[c.name] || 0;      // الصافي (مثل قبل — أساس الحسابات)
     const realSpent = netSpent + fundIn - repay;   // الصرف الفعلي للعرض
-    const effective = (Number(c.amount)||0) + carried + loanOut;   // المتاح يشمل القرض
+    const effective = (Number(c.amount)||0) + carried + fundIn - repay;   // المتاح يشمل السحب والقرض
     const left = effective - realSpent;            // نفس قيمة (المخصص+المرحّل−الصافي)
     const pct = effective > 0 ? Math.min(100, Math.round(realSpent / effective * 100)) : (realSpent>0?100:0);
     const cls = pct >= 100 ? 'over' : (pct >= 80 ? 'warn' : '');
-    /* اللوحة عرض فقط — الضغط على الظرف يفتح سجل المصاريف مفلتر عليه،
-       وزر النقل انتقل لتبويب الميزانية */
+    const isOpen = state._envOpen === c.name;
+    /* الرأس هو الزر (وبيه كل الأرقام)، والقائمة أخته — مو جوّاه.
+       لو خلّينا القائمة داخل عنصر role="button" چان صار عدنا أزرار
+       حذف/تعديل جوّا زر، وهذا يخرب قراءة الشاشة الناطقة. */
     envHtml += `
-      <div class="env clickable" onclick="filterByCatIdx(${ci})" tabindex="0" role="button" aria-label="فلتر على تصنيف ${esc(c.name)}" title="اضغط حتى تشوف مصاريف هذا التصنيف">
-        <div class="env-top">
-          <span class="env-name">${esc(c.name)}</span>
-          <span class="env-left ${left<0?'over':''}">${left<0 ? 'تجاوز ' + fmt(-left) : 'باقي ' + fmt(left)}</span>
+      <div class="env${isOpen?' open':''}">
+        <div class="env-head clickable" onclick="toggleEnv(${ci})" tabindex="0" role="button" aria-expanded="${isOpen}" aria-label="${isOpen?'سكّر':'افتح'} حركات تصنيف ${esc(c.name)}" title="اضغط حتى تشوف مصاريف وسحوبات هذا التصنيف">
+          <div class="env-top">
+            <span class="env-name">${esc(c.name)} <span class="env-caret">${isOpen?'▲':'▼'}</span></span>
+            <span class="env-left ${left<0?'over':''}">${left<0 ? 'تجاوز ' + fmt(-left) : 'باقي ' + fmt(left)}</span>
+          </div>
+          <div class="bar"><i class="${cls}" style="width:${pct}%"></i></div>
+          <div class="env-sub"><span>صرفت ${fmt(realSpent)}</span><span>المتاح ${fmt(effective)}</span></div>
+          ${carried ? `<div class="env-carry">${carried < 0 ? '⚠️ منها تجاوز مرحّل من الفترة الماضية: ' + fmt(-carried) : '↩ منها مرحّل من الشهر الماضي: ' + fmt(carried)}</div>` : ''}
+          ${loanOut > 0 ? `<div class="env-carry">🤝 منها قرض من الصناديق (لازم يرجع): ${fmt(loanOut)}</div>` : ''}
+          ${loanChg > 0 ? `<div class="env-carry">🤝 منها مصروف بقرض من الصناديق (لازم يرجع): ${fmt(loanChg)}</div>` : ''}
         </div>
-        <div class="bar"><i class="${cls}" style="width:${pct}%"></i></div>
-        <div class="env-sub"><span>صرفت ${fmt(realSpent)}</span><span>المتاح ${fmt(effective)}</span></div>
-        ${carried ? `<div class="env-carry">${carried < 0 ? '⚠️ منها تجاوز مرحّل من الفترة الماضية: ' + fmt(-carried) : '↩ منها مرحّل من الشهر الماضي: ' + fmt(carried)}</div>` : ''}
-        ${loanOut > 0 ? `<div class="env-carry">🤝 منها قرض من الصناديق (لازم يرجع): ${fmt(loanOut)}</div>` : ''}
-        ${loanChg > 0 ? `<div class="env-carry">🤝 منها مصروف بقرض من الصناديق (لازم يرجع): ${fmt(loanChg)}</div>` : ''}
+        ${isOpen ? envMovesHtml(c.name, saveNames) : ''}
       </div>`;
     delete spentByCat[c.name];
   });
@@ -1455,6 +1481,7 @@ function render(){
   /* مصاريف على تصنيفات غير موجودة بالميزانية */
   Object.keys(spentByCat).forEach(k => {
     if(spentByCat[k] <= 0) return;
+    if(envFilter && k !== envFilter) return;
     envHtml += `
       <div class="env">
         <div class="env-top">
@@ -1465,7 +1492,12 @@ function render(){
         <div class="env-sub"><span>صرفت ${fmt(spentByCat[k])}</span><span>المتاح 0 د.ع</span></div>
       </div>`;
   });
-  $('envList').innerHTML = envHtml || '<div class="empty"><span class="emo">🗂️</span><b>ماكو ميزانية لهذا الشهر بعد</b>روح لتبويب «الميزانية» وحدد الرواتب والتصنيفات.</div>';
+  /* الفتح/الفلتر إعادة رسم بضغطة المستخدم — أنميشن الدخول المتتابع يصير
+     رفّة مزعجة بيها، فنسكّته لهاي الرسمة بس */
+  const envEl2 = $('envList');
+  envEl2.classList.toggle('no-anim', !!state._envQuiet);
+  state._envQuiet = false;
+  envEl2.innerHTML = envHtml || '<div class="empty"><span class="emo">🗂️</span><b>ماكو ميزانية لهذا الشهر بعد</b>روح لتبويب «الميزانية» وحدد الرواتب والتصنيفات.</div>';
 
   /* ===== النظرة العامة (البيانات صارت جاهزة كلها) ===== */
   renderDashView();
@@ -1534,6 +1566,8 @@ function buildFilterOptions(){
 }
 
 /* ---------- فلترة من الرسم الدائري / ظروف اللوحة ---------- */
+/* الفلتر يشتغل بمكانه: يخفي باقي الظروف، يخلي المختار بروحه، ويفتح قائمته.
+   قبل چان ينقلك لتبويب «المصروف» — نقلة تضيّع مكانك وتخليك تدور رجعة. */
 window.filterByCat = (name) => {
   const fc = $('fltCat');
   if(!fc) return;
@@ -1543,22 +1577,47 @@ window.filterByCat = (name) => {
     toast('ماكو مصاريف بهذا التصنيف حتى تنفلتر', true); return;
   }
   fc.value = name || '';
+  state._envOpen = name || null;   // المفلتر ينفتح تلقائياً
+  state._envQuiet = true;
+  if(name && dashView !== 'exp') setDashView('exp');
   render();   // يعيد رسم اللوحة + القائمة مع تظليل التصنيف المختار
   if(name){
-    /* القائمة صارت بتبويب المصروف — ننتقل له مفلتر */
-    gotoTab('tab-add');
-    setSeg('seg-exp');
     toast('مفلتر على «' + name + '» 🔎');
-    const el = $('expList');
+    const el = $('envList');
     if(el) el.scrollIntoView({ behavior:'smooth', block:'start' });
   }else{
     toast('انلغى الفلتر ✓');
   }
 };
-window.filterByCatIdx = (i) => {
+/* فتح/سكّ قائمة حركات الظرف بمكانها — بلا انتقال لأي تبويب */
+window.toggleEnv = (i) => {
   const c = ((state.budget && state.budget.categories) || [])[i];
-  if(c) filterByCat(c.name);
+  if(!c) return;
+  state._envOpen = (state._envOpen === c.name) ? null : c.name;
+  state._envQuiet = true;
+  render();
 };
+
+/* ---------- حركات تصنيف واحد — تنعرض جوّا الظرف ---------- */
+function envMovesHtml(name, saveNames){
+  const moves = (state.expenses || []).filter(e => e.category === name);
+  if(!moves.length){
+    return `<div class="env-moves">
+      <div class="env-none">ماكو أي حركة على «${esc(name)}» بهاي الفترة.</div></div>`;
+  }
+  /* الأحدث أول — والسحوبات/القروض الداخلة من الصناديق تبين وياها بنفس القائمة */
+  const rows = moves.slice().sort((a,b) => String(b.date||'').localeCompare(String(a.date||'')));
+  let spent = 0, came = 0;
+  rows.forEach(e => { const a = Number(e.amount)||0; if(a < 0) came += -a; else spent += a; });
+  return `
+    <div class="env-moves">
+      <div class="env-moves-head">
+        <span>☰ ${arCount(rows.length, 'حركة وحدة', 'حركتين', 'حركات', 'حركة')} بهاي الفترة</span>
+        <span>${came > 0 ? 'داخل ' + fmt(came) + ' · ' : ''}صرف ${fmt(spent)}</span>
+      </div>
+      ${rows.map(e => expRowHtml(e, saveNames)).join('')}
+    </div>`;
+}
 
 /* ---------- قائمة المصاريف (مع الفلتر — بدون حركات الصناديق) ---------- */
 function renderExpenseList(){
@@ -1707,6 +1766,70 @@ function applyLock(locked){
 }
 
 /* ---------- صفوف التصنيفات والصناديق ---------- */
+/* ============================================================
+   ملاحظة صغيرة تحت صف التصنيف بالميزانية: من وين طلع «المتاح»
+   ------------------------------------------------------------
+   خانة المبلغ تكتب المخصص بس. لو التصنيف واصله سحب أو قرض من
+   صندوق، المتاح الحقيقي أكبر من المكتوب — والفرق چان مخفي، فيصير
+   المستخدم يشوف رقمين ما يطابقون وما يعرف السبب. الملاحظة هنا
+   تفكّ الرقم لأجزائه: مخصص + مرحّل + سحب + قرض = المتاح.
+   ============================================================ */
+function catFundParts(name){
+  const cats = (state.budget && state.budget.categories) || [];
+  const saveNames = new Set(cats.filter(c => c.type === 'save').map(c => c.name));
+  /* wd سحب داخل · loan قرض قديم (v1) داخل · repay سداده ·
+     chg قرض محمّل مباشرة (v2) · out طالع من الصندوق · back راجع له */
+  const p = { wd:0, loan:0, repay:0, chg:0, out:0, back:0, dep:0 };
+  if(!name) return p;
+  (state.expenses || []).forEach(e => {
+    if(e.category !== name) return;
+    const a = Number(e.amount) || 0;
+    switch(kindOf(e, saveNames)){
+      /* صندوق: الحركة عليه مباشرة — الموجب يطلع منه */
+      case 'fund_wd':      p.out  += a;  break;
+      case 'fund_loan':    p.loan += a;  break;
+      case 'fund_ret':     p.back += -a; break;
+      case 'fund_dep':
+      case 'fund_dep_cat': p.dep  += -a; break;
+      /* تصنيف مصروف: الفلوس الداخلة له تنسجل سالبة */
+      case 'cat_fund':     p.wd    += -a; break;
+      case 'cat_loan_v1':  p.loan  += -a; break;
+      case 'cat_pay_v1':   p.repay += a;  break;
+      case 'cat_loan':
+      case 'cat_fix':      p.chg   += a;  break;   /* cat_fix سالب — إعدام قرض */
+      default: break;
+    }
+  });
+  return p;
+}
+/* سطر الملاحظة الجاهز — فارغ يعني ماكو شي يستاهل الذكر */
+function catRowNote(name, amount, carried, isSave){
+  const p = catFundParts(name);
+  const alloc = Number(amount) || 0;
+  carried = Number(carried) || 0;
+  if(isSave){
+    const bits = [];
+    if(carried)      bits.push('🏦 رصيد مرحّل: ' + fmt(carried) + ' · محمي من الحذف — يتقفل من بطاقته باللوحة');
+    if(p.out > 0)    bits.push('🏦 انسحب منه: ' + fmt(p.out));
+    if(p.loan > 0)   bits.push('🤝 مقروض منه: ' + fmt(p.loan));
+    if(p.back > 0)   bits.push('↩ رجع له: ' + fmt(p.back));
+    if(p.dep > 0)    bits.push('💰 انودع بيه: ' + fmt(p.dep));
+    return bits.join(' · ');
+  }
+  const loanNet = p.loan - p.repay;                 // قرض قديم لسه ما انسدّ
+  const avail = alloc + carried + p.wd + loanNet;   // نفس حساب اللوحة بالضبط
+  const extras = [];
+  if(carried)      extras.push((carried < 0 ? '⚠️ تجاوز مرحّل ' : '↩ مرحّل ') + fmt(carried));
+  if(p.wd > 0)     extras.push('🏦 سحب من الصناديق ' + fmt(p.wd));
+  if(loanNet > 0)  extras.push('🤝 قرض من الصناديق ' + fmt(loanNet));
+  if(!extras.length && p.chg <= 0) return '';
+  let note = extras.length
+    ? ('المتاح ' + fmt(avail) + ' = خصّصت ' + fmt(alloc) + ' · ' + extras.join(' · '))
+    : '';
+  if(p.chg > 0) note += (note ? '\n' : '') + '🤝 منها مصروف بقرض من الصناديق: ' + fmt(p.chg) + ' (لازم يرجع — منخصم أصلاً)';
+  return note;
+}
+
 function addRow(section, name, amount, carried, goal){
   carried = Number(carried)||0;
   goal = Number(goal)||0;
@@ -1753,12 +1876,11 @@ function addRow(section, name, amount, carried, goal){
     liveFormat(goalRow.querySelector('.cgoal'));
     wrap.appendChild(goalRow);
   }
-  if(carried){
+  const rowNote = catRowNote(name, amount, carried, isSave);
+  if(rowNote){
     const note = document.createElement('div');
     note.className = 'cat-carry';
-    note.textContent = isSave
-      ? ('🏦 رصيد مرحّل بالصندوق: ' + fmt(carried) + ' · محمي من الحذف — يتقفل من بطاقته باللوحة')
-      : ('↩ مرحّل: ' + fmt(carried) + ' · المتاح: ' + fmt((Number(amount)||0) + carried));
+    note.textContent = rowNote;
     wrap.appendChild(note);
   }
   container.appendChild(wrap);
@@ -1997,6 +2119,7 @@ window.openWithdraw = (idx) => {
     </div>
     <label>💸 أضف المبلغ لتصنيف مصروف (اختياري)</label>
     <select id="wdTo">${catOpts}</select>
+    <div class="hint" id="wdToHint" style="margin:6px 0 0"></div>
     <label style="margin-top:10px">على حساب منو؟ (اختياري — للسحب كدين)</label>
     <input type="text" id="wdAcc" placeholder="مثلاً: سلفة لأخوي / حساب الراتب">
     <label>السبب (اختياري)</label><input type="text" id="wdDesc" placeholder="شنو الغرض؟">
@@ -2005,6 +2128,23 @@ window.openWithdraw = (idx) => {
   `);
   liveFormat($('wdAmount'));
   setTimeout(() => { try{ $('wdAmount').focus(); }catch(_){} }, 260);
+  /* شكد راح يصير متاح التصنيف بعد السحب — الجواب لازم يبين قبل ما تسحب،
+     مو بعدها من ترجع للوحة تدور على الرقم */
+  const wdRefresh = () => {
+    const to = $('wdTo').value, v = num($('wdAmount').value);
+    const h = $('wdToHint');
+    if(!to){
+      h.innerHTML = 'ما اخترت تصنيف — الفلوس تطلع من الصندوق بس، وما تزيد متاح أي مصروف.';
+      return;
+    }
+    const now = catAvailable(to);
+    h.innerHTML = v > 0
+      ? `متاح «${esc(to)}» هسه <b>${fmt(now)}</b> ← بعد السحب <b style="color:var(--primary)">${fmt(now + v)}</b>`
+      : `متاح «${esc(to)}» هسه <b>${fmt(now)}</b> — المبلغ راح ينضاف عليه.`;
+  };
+  wdRefresh();
+  $('wdTo').addEventListener('change', wdRefresh);
+  $('wdAmount').addEventListener('input', wdRefresh);
   $('wdSave').onclick = async () => {
     const amount = num($('wdAmount').value);
     if(amount <= 0) return toast('دخّل المبلغ', true);
@@ -3466,7 +3606,12 @@ $('periodBar').onclick = () => openPeriodSetup(state.month, false);
 
 /* فلتر المصاريف */
 $('fltText').addEventListener('input', renderExpenseList);
-$('fltCat').addEventListener('change', () => render());   // يحدّث القائمة + تظليل الرسم
+/* اختيار تصنيف من القائمة = نفس فلتر الظروف — والمختار ينفتح وياه */
+$('fltCat').addEventListener('change', () => {
+  state._envOpen = $('fltCat').value || null;
+  state._envQuiet = true;
+  render();   // يحدّث القائمة + الظروف + تظليل الرسم
+});
 $('fltBy').addEventListener('change', renderExpenseList);
 if($('fmFund')) $('fmFund').addEventListener('change', renderFundMoves);
 if($('fmKind')) $('fmKind').addEventListener('change', renderFundMoves);

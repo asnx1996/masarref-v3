@@ -420,6 +420,34 @@
   .env-carry{font-size:.66rem;color:var(--primary-text);font-weight:600;margin-top:5px}
   .sec-head{font-weight:700;font-size:.95rem;margin:18px 4px 10px}
 
+  /* ---------- قائمة الظرف المنسدلة (حركات التصنيف بمكانها) ---------- */
+  .env-head{border-radius:calc(var(--radius-sm) - 4px)}
+  .env-head.clickable{cursor:pointer}
+  .env-caret{font-size:.6rem;color:var(--muted);vertical-align:middle;margin-inline-start:2px}
+  .env.open{border-color:var(--primary-text);box-shadow:var(--shadow)}
+  .env-moves{
+    margin-top:11px;padding-top:10px;border-top:1px dashed var(--line);
+    cursor:default;animation:envDrop .22s var(--ease) both;
+  }
+  .env-moves-head{
+    display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;
+    font-size:.68rem;font-weight:700;color:var(--muted);margin-bottom:8px;
+  }
+  .env-moves .exp{padding:9px 11px;margin-bottom:7px;border-radius:13px;background:var(--bg)}
+  .env-moves .exp .cat-dot{width:34px;height:34px;border-radius:11px;font-size:.9rem}
+  .env-moves .exp:last-child{margin-bottom:0}
+  .env-none{font-size:.72rem;color:var(--muted);padding:6px 2px}
+  .env-filter{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;
+    background:var(--primary-soft);border:1.5px solid var(--primary-text);border-radius:var(--radius-sm);
+    padding:10px 13px;margin-bottom:10px;font-size:.74rem;font-weight:700;color:var(--primary-text);
+  }
+  .env-filter-x{white-space:nowrap;opacity:.85}
+  /* رسمة جاية من ضغطة (فتح/فلتر) — بلا أنميشن دخول حتى ما تصير رفّة */
+  #envList.no-anim .env,#envList.no-anim .env-filter{animation:none!important}
+  @keyframes envDrop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){ .env-moves{animation:none} }
+
   /* ---------- صناديق الادخار (اللوحة) ---------- */
   .save-head{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:.95rem;margin:18px 4px 10px}
   .save-head span{color:var(--primary-text);font-weight:800}
@@ -571,7 +599,7 @@
     #catRows .cat-row{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) 40px 40px}
     #catRows .cat-xfer,#catRows .rm{inline-size:40px}
   }
-  .cat-carry{font-size:.68rem;color:var(--primary-text);font-weight:600;margin:-3px 2px 10px}
+  .cat-carry{font-size:.68rem;color:var(--primary-text);font-weight:600;margin:-3px 2px 10px;white-space:pre-line;line-height:1.6}
   .alloc-line{
     display:flex;justify-content:space-between;font-size:.75rem;
     padding:8px 2px 0;color:var(--muted);font-weight:500;
@@ -1228,8 +1256,9 @@
   .fund.closed .fund-name{text-decoration:line-through;text-decoration-thickness:1px}
 
   /* ---------- ملخصات اللوحة (صناديق وديون — عرض فقط) ---------- */
-  .env.clickable{cursor:pointer;transition:transform .18s var(--ease),box-shadow .2s}
-  @media (hover:hover){ .env.clickable:hover{transform:translateY(-2px);box-shadow:var(--shadow)} }
+  .env:has(.env-head.clickable){transition:transform .18s var(--ease),box-shadow .2s}
+  @media (hover:hover){ .env:has(.env-head.clickable):hover{transform:translateY(-2px);box-shadow:var(--shadow)} }
+  .env.open:has(.env-head.clickable):hover{transform:none}
 
   /* ---------- تبويبات النظرة العامة باللوحة ---------- */
   .ov-bar{margin-bottom:12px;position:static}
