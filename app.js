@@ -1345,8 +1345,12 @@ function render(){
             ${done ? '' : `<div class="goal-rem">باقي ${fmt(goal - bal)} حتى توصله</div>`}
           </div>`;
       }
+      /* خمس أزرار بكل بطاقة چانوا يغرقون الشاشة ويخلون البطاقة كلها
+         تنقرا كشريط أزرار مو كرصيد. هسه البطاقة كلها زر واحد يفتح
+         قائمة الخيارات — الرقم يبقى هو البطل، والخيارات تجي لمن
+         تطلبها. */
       rows += `
-        <div class="fund${isClosed?' closed':''}">
+        <div class="fund${isClosed?' closed':''} clickable" onclick="openFundMenu(${i})" tabindex="0" role="button" aria-label="خيارات صندوق ${esc(c.name)}" title="اضغط للخيارات: سحب، إيداع، قرض، نقل، السجل">
           <div class="fund-top">
             <span class="fund-name">🏦 ${esc(c.name)}</span>
             <span class="fund-bal">${fmt(bal)}</span>
@@ -1358,15 +1362,7 @@ function render(){
           </div>
           ${goalHtml}
           ${isClosed ? `<div class="env-carry">🔒 مغلق — من ينقفل الشهر ما راح يترحّل للشهر الجاي</div>` : ''}
-          <div class="fund-actions">
-            <button class="fa-wd" onclick="openWithdraw(${i})" ${(state.locked||isClosed)?'disabled':''}>سحب −</button>
-            <button class="fa-dep" onclick="openDeposit(${i})" ${(state.locked||isClosed)?'disabled':''}>إيداع +</button>
-            <button class="fa-loan" onclick="openLoan(${i})" ${(state.locked||isClosed)?'disabled':''}>قرض 🤝</button>
-            <button class="fa-xfer" onclick="openFundTransfer(${i})" ${(state.locked||isClosed||saveList.length<2)?'disabled':''} title="نقل لصندوق ثاني">نقل ⇄</button>
-            <button class="fa-log" onclick="openFundLog(${i})" title="سجل الحركات" aria-label="سجل حركات الصندوق">☰</button>
-            ${(!state.locked && bal===0 && !isClosed) ? `<button class="fa-del2" onclick="closeFund(${i})" title="ما يترحّل للشهر الجاي">إغلاق 🔒</button>` : ''}
-            ${(!state.locked && isClosed) ? `<button class="fa-del2" onclick="reopenFund(${i})" title="رجّعه شغّال">فتح 🔓</button>` : ''}
-          </div>
+          <div class="fund-more">اضغط للخيارات ⌄</div>
         </div>`;
       fundView.push({ name:c.name, bal, goal, closed:isClosed });
       delete spentByCat[c.name];
@@ -2414,6 +2410,49 @@ window.openDeposit = async (idx) => {
     }catch(err){ toast('ما انضاف: ' + err.message, true); }
     finally{ loading(false); }
   };
+};
+
+/* ---------- قائمة خيارات الصندوق ----------
+   بدل شريط أزرار دائم بكل بطاقة: ضغطة على البطاقة تفتح الخيارات
+   بأسماء كاملة وشرح سطر لكل واحد — أوضح من أيقونة مضغوطة، وأخف
+   على الشاشة لأنها ما تظهر إلا لمن تطلبها. */
+window.openFundMenu = (idx) => {
+  const cats = (state.budget && state.budget.categories) || [];
+  const c = cats[idx];
+  if(!c || c.type !== 'save') return;
+  const bal = fundBalance(c.name);
+  const isClosed = !!c.closed;
+  const funds = cats.filter(x => x.type === 'save');
+  const others = funds.filter(x => x.name !== c.name && !x.closed);
+  const frozen = state.locked || isClosed;
+
+  const act = (fn, ico, title, sub, off) => `
+    <button class="btn ghost fm-opt" ${off ? 'disabled' : `onclick="${fn}"`}>
+      <b>${ico} ${title}</b><span>${sub}</span>
+    </button>`;
+
+  const goal = Number(c.goal)||0;
+  const goalLine = goal > 0
+    ? (bal >= goal ? '🎉 حقق هدفه (' + fmt(goal) + ')' : '🎯 الهدف ' + fmt(goal) + ' — باقي ' + fmt(goal - bal))
+    : '';
+
+  modalOpen(`
+    <h2>🏦 ${esc(c.name)}</h2>
+    <div class="fm-bal">${fmt(bal)}<span>الرصيد الحالي</span></div>
+    ${goalLine ? `<div class="hint" style="margin:0 0 10px;text-align:center">${goalLine}</div>` : ''}
+    ${state.locked ? '<div class="hint" style="margin:0 0 10px">🔒 هذه الفترة مقفلة — العرض بس.</div>' : ''}
+    ${(!state.locked && isClosed) ? '<div class="hint" style="margin:0 0 10px">🔒 الصندوق مغلق — افتحه أول حتى تتحرك فلوسه.</div>' : ''}
+    ${act('openWithdraw(' + idx + ')', '🏦', 'سحب', 'تطلع فلوس للصرف — وتكدر تضيفها لتصنيف مصروف', frozen)}
+    ${act('openDeposit(' + idx + ')', '💰', 'إيداع', 'تزيد رصيده من الفائض أو من ميزانية تصنيف', frozen)}
+    ${act('openLoan(' + idx + ')', '🤝', 'قرض', 'فلوس تطلع ويبقى مسجّل لين ترجّعها', frozen)}
+    ${act('openFundTransfer(' + idx + ')', '⇄', 'نقل لصندوق ثاني',
+          others.length ? 'تنقل بين صندوقين — ادخارك ما ينقص، بس ينتوزّع غير' : 'ماكو صندوق ثاني مفتوح',
+          frozen || !others.length)}
+    ${act('openFundLog(' + idx + ')', '☰', 'سجل الحركات', 'كل سحب وإيداع وقرض ونقل على هذا الصندوق', false)}
+    ${(!state.locked && !isClosed && bal === 0) ? act('modalClose();closeFund(' + idx + ')', '🔒', 'إغلاق الصندوق', 'يظل ظاهر لنهاية الفترة وما يترحّل للجاية', false) : ''}
+    ${(!state.locked && isClosed) ? act('modalClose();reopenFund(' + idx + ')', '🔓', 'فتح الصندوق', 'يرجع شغّال ويترحّل عادي', false) : ''}
+    <button class="btn ghost" onclick="modalClose()" style="margin-top:6px">إغلاق</button>
+  `);
 };
 
 /* ---------- نقل بين صندوقين ----------

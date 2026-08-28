@@ -714,23 +714,24 @@
   .lg-switch{text-align:center;font-size:.76rem;color:var(--muted);margin-top:16px}
   .lg-switch a{color:var(--primary-text);font-weight:700;cursor:pointer;text-decoration:none}
 
-  /* ---------- أزرار الصندوق (سحب / إيداع / سجل) ---------- */
-  .fa-del2{flex:0 0 auto;width:42px;border:1px solid var(--red-text);background:transparent;color:var(--red-text);border-radius:12px;cursor:pointer;font-size:.9rem}
-  /* صاروا خمسة أزرار — بشاشة ضيّقة ينزلون سطر ثاني بدل ما ينضغطون
-     لحد ما يصير النص غير مقروء */
-  .fund-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}
-  .fund-actions button{
-    flex:1;border-radius:12px;padding:10px 6px;font-family:inherit;font-weight:600;font-size:.78rem;cursor:pointer;
-    transition:transform .18s var(--ease),filter .2s;
+  /* ---------- بطاقة الصندوق: ضغطة وحدة تفتح الخيارات ----------
+     چان شريط خمس أزرار بكل بطاقة — البطاقة تنقرا كشريط أزرار مو
+     كرصيد. هسه الرقم هو البطل، والخيارات تجي بضغطة. */
+  .fund.clickable{cursor:pointer;transition:transform .18s var(--ease),box-shadow .2s,border-color .2s}
+  @media (hover:hover){ .fund.clickable:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:var(--primary)} }
+  .fund.clickable:active{transform:scale(.995)}
+  .fund-more{margin-top:10px;font-size:.68rem;font-weight:600;color:var(--muted);text-align:center}
+
+  /* قائمة خيارات الصندوق (داخل الشيت) */
+  .fm-bal{
+    text-align:center;font-size:1.6rem;font-weight:800;color:var(--primary-text);
+    line-height:1.2;margin:-2px 0 12px;
   }
-  .fund-actions button:active{transform:scale(.97)}
-  .fund-actions button:disabled{opacity:.5}
-  .fa-wd{border:1.5px solid var(--primary);background:var(--primary-soft);color:var(--primary-text)}
-  .fa-dep{border:none;background:var(--primary);color:#fff}
-  .fa-log{flex:0 0 auto;width:44px;border:1px solid var(--line);background:var(--card);color:var(--muted)}
-  .fa-loan{border:1.5px solid var(--amber-text);background:transparent;color:var(--amber-text)}
-  .fa-xfer{border:1.5px solid var(--line);background:transparent;color:var(--muted)}
-  .fund-actions button:not(.fa-log):not(.fa-del2){min-width:84px}
+  .fm-bal span{display:block;font-size:.68rem;font-weight:600;color:var(--muted);margin-top:2px}
+  .fm-opt{text-align:start;margin:0 0 8px;width:100%;padding:12px 14px;line-height:1.5}
+  .fm-opt b{display:block;font-size:.86rem}
+  .fm-opt span{color:var(--muted);font-size:.72rem;font-weight:400}
+  .fm-opt:disabled{opacity:.45;cursor:not-allowed}
   .fl-edit,.fl-del{border:1px solid var(--line);background:var(--card);border-radius:9px;width:30px;height:30px;cursor:pointer;font-size:.78rem;color:var(--muted);flex-shrink:0;transition:border-color .15s,color .15s,background .15s,transform .15s var(--ease)}
   @media (hover:hover){
     .fl-edit:hover{border-color:var(--primary);color:var(--primary-text)}
@@ -851,7 +852,7 @@
   /* ---------- تفاعلية الماوس (كمبيوتر) ---------- */
   @media (hover:hover){
     .btn:hover{filter:brightness(1.07)}
-    .btn.ghost:hover,.fund-actions button:hover{filter:brightness(.96)}
+    .btn.ghost:hover{filter:brightness(.96)}
     .icon-btn:hover{background:rgba(255,255,255,.3)}
     .logout-btn:hover{background:rgba(255,255,255,.3)}
     .exp:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
@@ -1434,14 +1435,14 @@
      وتحسّها ميّتة. هسه: نزول ٧٠ms بمنحنى سريع، ورجوع بنبرة نابض.
      ============================================================ */
   body.fluid :is(.btn,.qh-add,.icon-btn,.logout-btn,.period-bar,.fund-wd,
-    .fund-actions button,.debt-actions button,.pal,.sw,.seg-btn,.qbtn,
+    .debt-actions button,.pal,.sw,.seg-btn,.qbtn,
     .cat-row .rm,.cat-xfer,.lg-clear,.exp,nav button){
     transition:transform var(--press-dur,.42s) var(--press-ease,var(--spring-bounce)),
                background .22s var(--spring-firm),box-shadow .26s var(--spring-firm),
                border-color .2s,filter .2s,color .2s;
   }
   body.fluid :is(.btn,.qh-add,.icon-btn,.logout-btn,.period-bar,.fund-wd,
-    .fund-actions button,.debt-actions button,.pal,.sw,.seg-btn,.qbtn,
+    .debt-actions button,.pal,.sw,.seg-btn,.qbtn,
     .cat-row .rm,.cat-xfer,.lg-clear,.exp,nav button):active{
     --press-dur:.07s; --press-ease:var(--ease-press);
   }
