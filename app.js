@@ -738,7 +738,10 @@ async function apiPost(p){
       call = sb.rpc('add_loan', { p_month:p.month, p_date:p.date, p_amount:p.amount, p_fund:p.fund, p_account:p.account, p_due_date:p.dueDate||'', p_descr:p.desc||'', p_to_category:p.toCategory||'' });
       break;
     case 'editWithdraw':
-      call = sb.rpc('edit_withdrawal', { p_id:p.id, p_amount:p.amount, p_date:p.date, p_descr:p.desc||'' });
+      call = sb.rpc('edit_withdrawal', { p_id:p.id, p_amount:p.amount, p_date:p.date, p_descr:p.desc||'', p_fund:p.fund||'' });
+      break;
+    case 'transferFund':
+      call = sb.rpc('transfer_fund', { p_month:p.month, p_from:p.from, p_to:p.to, p_amount:p.amount, p_date:p.date||'', p_descr:p.desc||'' });
       break;
     case 'deleteWithdraw':
       call = sb.rpc('delete_withdrawal', { p_id:p.id });
@@ -1144,9 +1147,9 @@ function render(){
                    نحتفظ بيه للعرض («منها قرض لازم يرجع»)
      ------------------------------------------------------------ */
   const spentByCat = {}, fundInByCat = {}, repayByCat = {}, loanChgByCat = {};
-  /* fundInByCat يجمع السحب والقرض سوة (أساس الحساب مثل قبل)، وهذا يفرز
-     القرض بروحه — حتى سطر «لازم يرجع» باللوحة ما يشمل سحب مو قرض */
-  const fundLoanByCat = {};
+  /* fundInByCat يجمع السحب والقرض سوة، وهذني تفرزهن: السحب إله حساب
+     غير القرض — السحب يغطّي جزء من المخصص، والقرض يزيد فوكه */
+  const fundWdByCat = {}, fundLoanByCat = {};
   let spendingSpent = 0, fundDeposits = 0;
   state.expenses.forEach(e => {
     const kd = kindOf(e, saveNames);
@@ -1162,6 +1165,7 @@ function render(){
     if(hitsCat(kd))    spentByCat[k] = (spentByCat[k]||0) + a;
     if(hitsRemain(kd)) spendingSpent += a;
     if(kd === 'cat_fund' || kd === 'cat_loan_v1') fundInByCat[k] = (fundInByCat[k]||0) - a;
+    if(kd === 'cat_fund')    fundWdByCat[k]   = (fundWdByCat[k]||0) - a;
     if(kd === 'cat_loan_v1') fundLoanByCat[k] = (fundLoanByCat[k]||0) - a;
     if(kd === 'cat_pay_v1') repayByCat[k] = (repayByCat[k]||0) + a;
     if(kd === 'cat_loan') loanChgByCat[k] = (loanChgByCat[k]||0) + a;
@@ -1281,11 +1285,12 @@ function render(){
        انفصل: السحب يزيد متاح التصنيف وخلص، بلا سطر هنا؛ تفصيله (شكد
        سحب) يبين بملاحظة صف التصنيف بتبويب «الميزانية». واللي يبقى
        باللوحة بس القرض، لأنه الوحيد اللي لازم يرجع. */
+    const fundWd   = fundWdByCat[c.name] || 0;              // سحب من صندوق وصل لهذا التصنيف
     const loanOut  = (fundLoanByCat[c.name] || 0) - repay;   // قرض قديم (v1) لسه ما انسدّ
     const loanChg = loanChgByCat[c.name] || 0;     // قرض محمّل مباشرة (v2) — منخصم أصلاً
     const netSpent = spentByCat[c.name] || 0;      // الصافي (مثل قبل — أساس الحسابات)
     const realSpent = netSpent + fundIn - repay;   // الصرف الفعلي للعرض
-    const effective = (Number(c.amount)||0) + carried + fundIn - repay;   // المتاح يشمل السحب والقرض
+    const effective = carried + catAllocPool(Number(c.amount)||0, fundWd) + loanOut;
     const left = effective - realSpent;            // نفس قيمة (المخصص+المرحّل−الصافي)
     const pct = effective > 0 ? Math.min(100, Math.round(realSpent / effective * 100)) : (realSpent>0?100:0);
     const cls = pct >= 100 ? 'over' : (pct >= 80 ? 'warn' : '');
@@ -1357,6 +1362,7 @@ function render(){
             <button class="fa-wd" onclick="openWithdraw(${i})" ${(state.locked||isClosed)?'disabled':''}>سحب −</button>
             <button class="fa-dep" onclick="openDeposit(${i})" ${(state.locked||isClosed)?'disabled':''}>إيداع +</button>
             <button class="fa-loan" onclick="openLoan(${i})" ${(state.locked||isClosed)?'disabled':''}>قرض 🤝</button>
+            <button class="fa-xfer" onclick="openFundTransfer(${i})" ${(state.locked||isClosed||saveList.length<2)?'disabled':''} title="نقل لصندوق ثاني">نقل ⇄</button>
             <button class="fa-log" onclick="openFundLog(${i})" title="سجل الحركات" aria-label="سجل حركات الصندوق">☰</button>
             ${(!state.locked && bal===0 && !isClosed) ? `<button class="fa-del2" onclick="closeFund(${i})" title="ما يترحّل للشهر الجاي">إغلاق 🔒</button>` : ''}
             ${(!state.locked && isClosed) ? `<button class="fa-del2" onclick="reopenFund(${i})" title="رجّعه شغّال">فتح 🔓</button>` : ''}
@@ -1670,7 +1676,10 @@ const KIND_UI = {
   cat_dep:      { icon:'🏦', tag:' · لصندوق' },
   cat_loan:     { icon:'🤝', tag:' · مصروف بقرض' },
   cat_pay:      { icon:'↩',  tag:' · تسديد قرض' },
-  cat_fix:      { icon:'✚',  tag:' · إعدام قرض' }
+  cat_fix:      { icon:'✚',  tag:' · إعدام قرض' },
+  /* نقل بين صندوقين — طرفين مربوطين، ما يمسّون الدخل ولا الباقي */
+  fund_xfer_out:{ icon:'⇄', tag:' · نقل طالع' },
+  fund_xfer_in: { icon:'⇄', tag:' · نقل داخل' }
 };
 function expRowHtml(e, saveNames){
   const k = kindOf(e, saveNames);
@@ -1700,6 +1709,7 @@ function isFundMove(e, saveNames){
 /* ---------- قائمة حركات الصناديق (قسم «الصناديق» بتبويب المصروف) ---------- */
 function fundMoveKind(e, saveNames){
   const k = kindOf(e, saveNames);
+  if(k === 'fund_xfer_out' || k === 'fund_xfer_in') return 'xfer';
   if(k === 'fund_dep' || k === 'fund_dep_cat') return 'dep';
   if(k === 'fund_ret') return 'ret';
   if(k === 'fund_loan') return 'loan';
@@ -1779,7 +1789,7 @@ function catFundParts(name){
   const saveNames = new Set(cats.filter(c => c.type === 'save').map(c => c.name));
   /* wd سحب داخل · loan قرض قديم (v1) داخل · repay سداده ·
      chg قرض محمّل مباشرة (v2) · out طالع من الصندوق · back راجع له */
-  const p = { wd:0, loan:0, repay:0, chg:0, out:0, back:0, dep:0 };
+  const p = { wd:0, loan:0, repay:0, chg:0, out:0, back:0, dep:0, xout:0, xin:0 };
   if(!name) return p;
   (state.expenses || []).forEach(e => {
     if(e.category !== name) return;
@@ -1788,6 +1798,8 @@ function catFundParts(name){
       /* صندوق: الحركة عليه مباشرة — الموجب يطلع منه */
       case 'fund_wd':      p.out  += a;  break;
       case 'fund_loan':    p.loan += a;  break;
+      case 'fund_xfer_out': p.xout += a;  break;
+      case 'fund_xfer_in':  p.xin  += -a; break;
       case 'fund_ret':     p.back += -a; break;
       case 'fund_dep':
       case 'fund_dep_cat': p.dep  += -a; break;
@@ -1814,18 +1826,29 @@ function catRowNote(name, amount, carried, isSave){
     if(p.loan > 0)   bits.push('🤝 مقروض منه: ' + fmt(p.loan));
     if(p.back > 0)   bits.push('↩ رجع له: ' + fmt(p.back));
     if(p.dep > 0)    bits.push('💰 انودع بيه: ' + fmt(p.dep));
+    if(p.xout > 0)   bits.push('⇄ انتقل منه لصناديق ثانية: ' + fmt(p.xout));
+    if(p.xin > 0)    bits.push('⇄ اجه من صناديق ثانية: ' + fmt(p.xin));
     return bits.join(' · ');
   }
-  const loanNet = p.loan - p.repay;                 // قرض قديم لسه ما انسدّ
-  const avail = alloc + carried + p.wd + loanNet;   // نفس حساب اللوحة بالضبط
+  const loanNet = p.loan - p.repay;                              // قرض قديم لسه ما انسدّ
+  const avail = carried + catAllocPool(alloc, p.wd) + loanNet;   // نفس حساب اللوحة بالضبط
   const extras = [];
   if(carried)      extras.push((carried < 0 ? '⚠️ تجاوز مرحّل ' : '↩ مرحّل ') + fmt(carried));
-  if(p.wd > 0)     extras.push('🏦 سحب من الصناديق ' + fmt(p.wd));
+  if(p.wd > alloc) extras.push('🏦 سحب من الصناديق ' + fmt(p.wd) + ' (أكثر من المخصص)');
   if(loanNet > 0)  extras.push('🤝 قرض من الصناديق ' + fmt(loanNet));
-  if(!extras.length && p.chg <= 0) return '';
+  if(!extras.length && p.wd <= 0 && p.chg <= 0) return '';
   let note = extras.length
     ? ('المتاح ' + fmt(avail) + ' = خصّصت ' + fmt(alloc) + ' · ' + extras.join(' · '))
-    : '';
+    : (p.wd > 0 ? 'المتاح ' + fmt(avail) : '');
+  /* بيت القصيد: شكد ينستقطع من الراتب فعلاً.
+     المخصص هو المجموع، والسحب من الصناديق يغطّي جزء منه — فالباقي
+     بس هو اللي يطلع من راتبك هالشهر. */
+  if(p.wd > 0){
+    /* لو السحب أكثر من المخصص، سطر «مغطّى» يطلع صفر وما يفيد —
+       سطر «أكثر من المخصص» فوك يكول القصة كاملة */
+    if(Math.min(alloc, p.wd) > 0) note += '\n🏦 منها مغطّى بسحب من الصناديق: ' + fmt(Math.min(alloc, p.wd));
+    note += '\n💵 صافي من راتبك: ' + fmt(catFromSalary(alloc, p.wd));
+  }
   if(p.chg > 0) note += (note ? '\n' : '') + '🤝 منها مصروف بقرض من الصناديق: ' + fmt(p.chg) + ' (لازم يرجع — منخصم أصلاً)';
   return note;
 }
@@ -1969,7 +1992,21 @@ function updateAlloc(){
   $('aIncome').textContent = fmt(income);
   $('aSpend').textContent  = fmt(spend);
   $('aSave').textContent   = fmt(save);
-  const left = (salary + income) - spend - save;
+  /* جزء من توزيع المصاريف مغطّى بسحوبات من الصناديق — هذا الجزء
+     ما يطلع من الراتب، فلازم يرجع للباقي وإلا يبين وكأنك موزّع
+     أكثر من دخلك. (نفس منطق «صافي من راتبك» بس على مستوى الشهر) */
+  let covered = 0;
+  document.querySelectorAll('#catRows .cat-row').forEach(r => {
+    const nm = r.querySelector('.cname').value.trim();
+    if(!nm) return;
+    covered += Math.min(num(r.querySelector('.camt').value), catFundParts(nm).wd);
+  });
+  const wl = $('aWdLine');
+  if(wl){
+    wl.style.display = covered > 0 ? '' : 'none';
+    $('aWd').textContent = fmt(covered);
+  }
+  const left = (salary + income) - spend - save + covered;
   $('allocLeft').textContent = fmt(left);
   $('allocLeft').className = left < 0 ? 'neg' : '';
 }
@@ -2252,7 +2289,24 @@ window.openLoan = (idx) => {
   };
 };
 
-/* ---------- المتاح بتصنيف مصروف (المخصص + المرحّل − المصروف) ---------- */
+/* ============================================================
+   حوض المخصص: شكد فلوس عند التصنيف قبل المرحّل والقروض
+   ------------------------------------------------------------
+   المخصص هو مجموع المصروف — والسحب من الصناديق يغطّي جزء منه،
+   ما يزيد فوكه. يعني تخصص ٦٥٠ وتسحب ١٣٥، يبقى المصروف ٦٥٠
+   و«اللي ينستقطع من راتبك» ٥١٥.
+   والسحب اللي أكثر من المخصص ما يضيع: الزيادة تنضاف للحوض،
+   لأن الفلوس طالعة فعلاً من الصندوق وموجودة بإيدك.
+   ============================================================ */
+function catAllocPool(alloc, wd){
+  return Math.max(Number(alloc)||0, Number(wd)||0);
+}
+/* اللي يجي من الراتب فعلاً = المخصص ناقص السحب (ما ينزل تحت صفر) */
+function catFromSalary(alloc, wd){
+  return Math.max(0, (Number(alloc)||0) - (Number(wd)||0));
+}
+
+/* ---------- المتاح بتصنيف مصروف (حوض المخصص + المرحّل + القرض − المصروف) ---------- */
 function catAvailable(name){
   const cats = (state.budget && state.budget.categories) || [];
   const c = cats.find(x => x.name === name && x.type !== 'save');
@@ -2262,7 +2316,12 @@ function catAvailable(name){
   const spent = (state.expenses||[])
     .filter(e => e.category === name && hitsCat(kindOf(e, saveNames)))
     .reduce((a,e) => a + (Number(e.amount)||0), 0);
-  return (Number(c.amount)||0) + (Number(c.carried)||0) - spent;
+  const alloc = Number(c.amount)||0;
+  const wd = catFundParts(name).wd;
+  /* الحساب القديم چان يجمع المخصص والسحب سوة (spent يحمل السحب بالسالب).
+     هسه السحب يغطّي المخصص، فننزل الجزء المشترك — والنتيجة نفس
+     (المرحّل + max(المخصص، السحب) + القرض − الصرف الفعلي). */
+  return alloc + (Number(c.carried)||0) - spent - Math.min(alloc, wd);
 }
 
 /* ---------- إيداع بصندوق ادخار — من الفائض أو من تصنيف مصروف ---------- */
@@ -2357,20 +2416,97 @@ window.openDeposit = async (idx) => {
   };
 };
 
+/* ---------- نقل بين صندوقين ----------
+   مو سحب + إيداع: النقل ما يمسّ لا الدخل ولا «الباقي للصرف» —
+   مجموع الادخار يبقى مثل ما هو، بس توزيعه بين الصناديق يتغيّر. */
+window.openFundTransfer = (idx) => {
+  if(state.locked) return;
+  const cats = (state.budget && state.budget.categories) || [];
+  const from = cats[idx];
+  if(!from || from.type !== 'save') return;
+  const bal = fundBalance(from.name);
+  const others = cats.filter(c => c.type === 'save' && c.name !== from.name && !c.closed);
+  if(!others.length) return toast('ماكو صندوق ثاني مفتوح تنقل له', true);
+  const opts = others.map(c => `<option value="${esc(c.name)}">${esc(c.name)} (${fmt(fundBalance(c.name))})</option>`).join('');
+  modalOpen(`
+    <h2>⇄ نقل من «${esc(from.name)}»</h2>
+    <div class="hint" style="margin:0 0 8px">تنقل فلوس لصندوق ادخار ثاني. رصيد «${esc(from.name)}» الحالي: <b style="color:var(--primary)">${fmt(bal)}</b>.<br>النقل ما يمسّ راتبك ولا «الباقي للصرف» — مجموع ادخارك يبقى نفسه، بس ينتوزّع غير.</div>
+    <label>إلى صندوق</label>
+    <select id="xfTo">${opts}</select>
+    <div class="row" style="margin-top:10px">
+      <div><label>المبلغ</label><input type="tel" id="xfAmount" inputmode="numeric" placeholder="0"></div>
+      <div><label>التاريخ</label><input type="date" id="xfDate" value="${periodDefaultDate(state.budget, state.month)}"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+      <button class="btn ghost" id="xfMax" style="margin:0;width:auto;padding:8px 14px;font-size:.75rem">كل الرصيد</button>
+      <span class="hint" id="xfLeft" style="margin:0"></span>
+    </div>
+    <label>السبب (اختياري)</label>
+    <input type="text" id="xfDesc" placeholder="مثلاً: غيّرت رأيي بالهدف">
+    <button class="btn" id="xfSave">نقل ⇄</button>
+    <button class="btn ghost" onclick="modalClose()">إلغاء</button>
+  `);
+  liveFormat($('xfAmount'));
+  setTimeout(() => { try{ $('xfAmount').focus(); }catch(_){} }, 260);
+  const xfRefresh = () => {
+    const v = num($('xfAmount').value);
+    const el = $('xfLeft');
+    el.textContent = v > bal ? '⚠ أكثر من الرصيد' : (v > 0 ? 'يتبقى بـ«' + from.name + '» ' + fmt(bal - v) : '');
+    el.style.color = v > bal ? 'var(--red)' : 'var(--muted)';
+  };
+  xfRefresh();
+  $('xfAmount').addEventListener('input', xfRefresh);
+  $('xfMax').onclick = () => { $('xfAmount').value = Math.max(0, bal).toLocaleString('en-US'); xfRefresh(); };
+  $('xfSave').onclick = async () => {
+    const amount = num($('xfAmount').value);
+    const to = $('xfTo').value;
+    if(amount <= 0) return toast('دخّل المبلغ', true);
+    if(amount > bal) return toast('المبلغ أكثر من رصيد الصندوق (' + fmt(bal) + ')', true);
+    loading(true);
+    try{
+      const res = await apiPost({
+        action:'transferFund', month: state.month, from: from.name, to, amount,
+        date: $('xfDate').value || periodDefaultDate(state.budget, state.month),
+        desc: $('xfDesc').value.trim()
+      });
+      if(guardAuth(res)) return;
+      if(!res.ok) throw new Error(res.error || 'خطأ');
+      modalClose();
+      toast('انتقل لـ«' + to + '» ✓ ⇄');
+      await loadMonth(state.month);
+    }catch(err){ toast('ما انتقل: ' + err.message, true); }
+    finally{ loading(false); }
+  };
+};
+
+/* ---------- رصيد صندوق ادخار (المرحّل + مساهمة الشهر − صافي حركاته) ---------- */
+function fundBalance(name){
+  const c = ((state.budget && state.budget.categories) || []).find(x => x.name === name && x.type === 'save');
+  if(!c) return 0;
+  const moved = (state.expenses || [])
+    .filter(e => e.category === name)
+    .reduce((a, e) => a + (Number(e.amount) || 0), 0);
+  return (Number(c.carried)||0) + (Number(c.amount)||0) - moved;
+}
+
 /* ---------- سجل حركات الصندوق ---------- */
 window.openFundLog = (idx) => {
   const c = (state.budget.categories||[])[idx];
   if(!c) return;
+  const saveNames = new Set(((state.budget&&state.budget.categories)||[]).filter(x=>x.type==='save').map(x=>x.name));
+  /* الاسم ينجاب من e.kind — قبل چان ينشتق من نص الوصف، فحركة النقل
+     الداخلة (سالبة) چانت تنقرا «إرجاع دين» وهي مو دين أصلاً */
+  const FLOG_NAME = {
+    fund_wd:'سحب', fund_loan:'قرض', fund_dep:'إيداع', fund_dep_cat:'إيداع',
+    fund_ret:'إرجاع دين', fund_xfer_out:'نقل لصندوق', fund_xfer_in:'نقل من صندوق'
+  };
   const moves = state.expenses.filter(e => e.category === c.name);
   let rows = '';
   moves.forEach(e => {
-    const isDep = e.amount < 0 && String(e.desc||'').indexOf('إيداع') === 0;
-    const isRet = e.amount < 0 && !isDep;
-    const isLoan = e.amount > 0 && String(e.desc||'').indexOf('قرض') === 0;
     const sign = e.amount < 0 ? '+' : '−';
     const cls = e.amount < 0 ? 'plus' : 'minus';
-    const kind = isDep ? 'إيداع' : (isRet ? 'إرجاع دين' : (isLoan ? 'قرض' : 'سحب'));
-    const canEdit = e.amount > 0 && !state.locked;   // سحب أو قرض
+    const kind = FLOG_NAME[kindOf(e, saveNames)] || (e.amount < 0 ? 'إيداع' : 'سحب');
+    const canEdit = e.amount > 0 && !state.locked;   // الطرف الطالع بس — الداخل ينضبط وياه
     rows += `
       <div class="flog">
         <div>
@@ -2397,30 +2533,55 @@ window.openEditWithdraw = (id, fundIdx) => {
   if(state.locked) return;
   const e = (state.expenses||[]).find(x => x.id === id);
   if(!e) return;
-  const isLoan = String(e.desc||'').indexOf('قرض') === 0;
+  const cats = (state.budget && state.budget.categories) || [];
+  const saveNames = new Set(cats.filter(c => c.type === 'save').map(c => c.name));
+  const kd = kindOf(e, saveNames);
+  const isLoan = kd === 'fund_loan' || String(e.desc||'').indexOf('قرض') === 0;
+  const isXfer = kd === 'fund_xfer_out';
+  const title  = isXfer ? 'النقل' : (isLoan ? 'القرض' : 'السحب');
+  /* الطرف الثاني للنقل — ما ينفع يصير هو نفسه صندوق المصدر */
+  const otherSide = (state.expenses||[]).find(x => x.linkId === id);
+  const blocked = new Set([e.category]);
+  if(isXfer && otherSide) blocked.add(otherSide.category);
+  /* نقل الحركة لصندوق ثاني: الصندوق الغلط چان يعني احذف وسجّل من جديد،
+     وهذا يضيّع الدين المرتبط وتاريخ الحركة. هسه ينتقل وكلشي مربوط بيه وياه. */
+  const fundOpts = cats.filter(c => c.type === 'save' && (c.name === e.category || (!c.closed && !blocked.has(c.name))))
+    .map(c => `<option value="${esc(c.name)}"${c.name === e.category ? ' selected' : ''}>${esc(c.name)}</option>`).join('');
   const backBtn = (fundIdx == null)
     ? `<button class="btn ghost" onclick="modalClose()">إلغاء</button>`
     : `<button class="btn ghost" onclick="openFundLog(${fundIdx})">رجوع</button>`;
   modalOpen(`
-    <h2>تعديل ${isLoan?'القرض':'السحب'} ✎</h2>
+    <h2>تعديل ${title} ✎</h2>
     <div class="hint" style="margin:0 0 8px">أي تغيير هنا ينضبط تلقائياً على: رصيد الصندوق، والدين/القرض المرتبط، وتمويل التصنيف إذا موجود.</div>
     <div class="row">
       <div><label>المبلغ</label><input type="tel" id="ewAmount" inputmode="numeric" value="${Math.abs(e.amount).toLocaleString('en-US')}"></div>
       <div><label>التاريخ</label><input type="date" id="ewDate" value="${esc(e.date)}"></div>
     </div>
-    <label>التفاصيل</label><input type="text" id="ewDesc" value="${esc(e.desc||'')}">
+    <label>🏦 الصندوق</label>
+    <select id="ewFund">${fundOpts}</select>
+    <div class="hint" id="ewFundHint" style="margin:6px 0 0"></div>
+    <label style="margin-top:10px">التفاصيل</label><input type="text" id="ewDesc" value="${esc(e.desc||'')}">
     <button class="btn" id="ewSave">حفظ التعديل</button>
     ${backBtn}
   `);
   liveFormat($('ewAmount'));
   setTimeout(() => { try{ $('ewAmount').focus(); }catch(_){} }, 260);
+  const ewRefresh = () => {
+    const f = $('ewFund').value;
+    $('ewFundHint').innerHTML = f === e.category
+      ? `رصيد «${esc(f)}» هسه <b>${fmt(fundBalance(f))}</b>.`
+      : `راح تنقل الحركة من «${esc(e.category)}» لـ«${esc(f)}» — المبلغ يرجع للأول وينخصم من الثاني، والدين المرتبط ينتقل وياها.`;
+  };
+  ewRefresh();
+  $('ewFund').addEventListener('change', ewRefresh);
   $('ewSave').onclick = async () => {
     const amount = num($('ewAmount').value);
     if(amount <= 0) return toast('دخّل المبلغ', true);
     const date = $('ewDate').value || e.date;   /* التاريخ حر — الفترة ما تتغيّر */
+    const fund = $('ewFund').value;
     loading(true);
     try{
-      const res = await apiPost({ action:'editWithdraw', id, amount, date, desc: $('ewDesc').value.trim() });
+      const res = await apiPost({ action:'editWithdraw', id, amount, date, desc: $('ewDesc').value.trim(), fund });
       if(guardAuth(res)) return;
       if(!res.ok) throw new Error(res.error || 'خطأ');
       modalClose();

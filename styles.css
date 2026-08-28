@@ -716,7 +716,9 @@
 
   /* ---------- أزرار الصندوق (سحب / إيداع / سجل) ---------- */
   .fa-del2{flex:0 0 auto;width:42px;border:1px solid var(--red-text);background:transparent;color:var(--red-text);border-radius:12px;cursor:pointer;font-size:.9rem}
-  .fund-actions{display:flex;gap:8px;margin-top:11px}
+  /* صاروا خمسة أزرار — بشاشة ضيّقة ينزلون سطر ثاني بدل ما ينضغطون
+     لحد ما يصير النص غير مقروء */
+  .fund-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}
   .fund-actions button{
     flex:1;border-radius:12px;padding:10px 6px;font-family:inherit;font-weight:600;font-size:.78rem;cursor:pointer;
     transition:transform .18s var(--ease),filter .2s;
@@ -727,6 +729,8 @@
   .fa-dep{border:none;background:var(--primary);color:#fff}
   .fa-log{flex:0 0 auto;width:44px;border:1px solid var(--line);background:var(--card);color:var(--muted)}
   .fa-loan{border:1.5px solid var(--amber-text);background:transparent;color:var(--amber-text)}
+  .fa-xfer{border:1.5px solid var(--line);background:transparent;color:var(--muted)}
+  .fund-actions button:not(.fa-log):not(.fa-del2){min-width:84px}
   .fl-edit,.fl-del{border:1px solid var(--line);background:var(--card);border-radius:9px;width:30px;height:30px;cursor:pointer;font-size:.78rem;color:var(--muted);flex-shrink:0;transition:border-color .15s,color .15s,background .15s,transform .15s var(--ease)}
   @media (hover:hover){
     .fl-edit:hover{border-color:var(--primary);color:var(--primary-text)}
