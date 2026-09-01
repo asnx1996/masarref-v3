@@ -105,22 +105,25 @@
   /* شاشة الافتتاح — كل الحركة هنا محصورة بـtransform وopacity، يعني
      الكرت الرسومي يتكفّل بيها والخيط الرئيسي يبقى فاضي. الملاحظات
      مكتوبة عند كل سطر لأن التقطيع چان يجي من التفاصيل هذي بالضبط. */
+  /* ⚠️ الخروج مربوط بـJS مو بمؤقّت CSS.
+     قبل چان: animation-delay:1.95s ثابت — يعني الشاشة تكعد ٢٫٥ ثانية
+     حتى لو التطبيق جاهز بعد ٣٠٠ms (وهو جاهز). هسه boot.js يحط
+     .leaving أول ما تخلص الجلسة، بحد أدنى قصير حتى ما تصير ومضة. */
   #splash{
     position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;
     background:linear-gradient(160deg,#D67A54 0%,#C86B4A 55%,#A9522F 100%);
-    /* خروج بالشفافية بس. قبل چان يزحف ١٠٠vh لفوق — سطح بحجم الشاشة
-       كاملة يتنقّل، وهذا أثقل شي تكدر تطلبه من المتصفح. */
-    animation:splashOut .55s ease-in 1.95s forwards;
   }
+  /* خروج بالشفافية بس. قبل چان يزحف ١٠٠vh لفوق — سطح بحجم الشاشة
+     كاملة يتنقّل، وهذا أثقل شي تكدر تطلبه من المتصفح. */
+  #splash.leaving{animation:splashOut .38s ease-in forwards}
   #splash.done{display:none!important}
   .splash-inner{
     display:flex;flex-direction:column;align-items:center;gap:14px;
-    /* forwards مو both للثاني: لو چان both، حالته الأولى تنطبّق من
-       الثانية صفر وتلغي تكبير الدخول (آخر أنميشن بالقائمة يفوز) */
-    animation:splashIn .5s var(--spring-enter,cubic-bezier(.18,.9,.32,1.06)) both,
-              splashZoom .55s ease-in 1.95s forwards;  /* يتكبّر شوي وهو يخبي — نفس طريق الدخول بالعكس */
+    animation:splashIn .5s var(--spring-enter,cubic-bezier(.18,.9,.32,1.06)) both;
     will-change:transform,opacity;
   }
+  /* يتكبّر شوي وهو يخبي — نفس طريق الدخول بالعكس */
+  #splash.leaving .splash-inner{animation:splashZoom .38s ease-in forwards}
   /* اللوجو يطير، والظل طبقة ثابتة تحته (بلا فلتر على المتحرّك) */
   .splash-logo-wrap{position:relative;display:flex;align-items:center;justify-content:center}
   /* box-shadow مو filter:blur — الفلتر يحتاج مرور رسم لحاله بكل مرة
@@ -144,10 +147,10 @@
   @keyframes splashOut{to{opacity:0;visibility:hidden;pointer-events:none}}
   .perf .splash-logo{animation:none}
   .perf .splash-logo-shadow{box-shadow:0 8px 16px rgba(0,0,0,.22)}
-  .perf #splash{animation-delay:1.45s}
-  /* الأب عنده أنميشنين — التأخير الثاني بس (الخروج)، الدخول يبقى فوري */
-  .perf .splash-inner{animation-delay:0s,1.45s}
-  @media (prefers-reduced-motion:reduce){#splash{animation:splashFade .4s ease 1.2s forwards}.splash-inner{animation:none}}
+  @media (prefers-reduced-motion:reduce){
+    #splash.leaving{animation:splashFade .25s ease forwards}
+    .splash-inner,#splash.leaving .splash-inner{animation:none}
+  }
   @keyframes splashFade{to{opacity:0;visibility:hidden}}
 
   /* ---------- خلفية السماء المتدرّجة (شمس/قمر/نجوم) ---------- */
@@ -691,6 +694,25 @@
     content:'✕';position:absolute;inset-inline-end:13px;top:50%;
     transform:translateY(-50%);font-size:.78rem;opacity:.85;
   }
+  /* شريط «نزلت نسخة جديدة» — ينبني بـboot.js لما ينتظر SW جديد.
+     نفس مقاس التوست حتى ما يكسر الإيقاع البصري، بس ينضغط. */
+  #updateBar{
+    position:fixed;bottom:calc(95px + env(safe-area-inset-bottom));right:50%;
+    transform:translateX(50%) translateY(10px);
+    display:flex;align-items:center;gap:12px;
+    background:var(--ink);color:#fff;font:inherit;font-size:.8rem;font-weight:500;
+    padding:10px 12px 10px 18px;border:none;border-radius:99px;z-index:99;
+    opacity:0;pointer-events:none;cursor:pointer;
+    transition:opacity .28s var(--ease),transform .28s var(--ease);
+    max-width:90vw;box-shadow:var(--shadow-lg);
+  }
+  #updateBar.show{opacity:1;transform:translateX(50%) translateY(0);pointer-events:auto}
+  #updateBar b{
+    background:var(--primary);color:#fff;font-weight:800;
+    padding:5px 13px;border-radius:99px;white-space:nowrap;
+  }
+  #updateBar:disabled{cursor:default;opacity:.7}
+
   #loader{
     position:fixed;inset:0;background:color-mix(in srgb, var(--bg) 72%, transparent);
     display:none;align-items:center;justify-content:center;z-index:180;
@@ -844,9 +866,12 @@
   .report-doc .p-row{display:flex;justify-content:space-between;font-size:.9rem;padding:4px 0;border-bottom:1px solid #eee}
   .report-doc .p-row b{font-weight:700}
 
-  /* ---------- حركة دخول العناصر ---------- */
+  /* ---------- حركة دخول العناصر ----------
+     ⚠️ تحت .fresh بس (= عند تحميل شهر). قبل چانت على .exp مباشرة،
+     يعني ٨٠ صف يعيدون الأنميشن بكل إعادة رسم — وإعادة الرسم تصير
+     بكل حرف تكتبه بفلتر البحث. شوف الملاحظة الطويلة عند .fresh تحت. */
   @keyframes itemIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-  .exp,.env,.fund,.debt,.dgrp{animation:itemIn .3s var(--ease) both}
+  .fresh .dgrp{animation:itemIn .3s var(--ease) both}
   .env,.fund,.debt,.dgrp{transition:transform .18s var(--ease),box-shadow .2s}
 
   /* ---------- تفاعلية الماوس (كمبيوتر) ---------- */
@@ -1128,12 +1153,16 @@
 
   /* ============================================================
      Glass Sky — بطاقات زجاجية مثلجة فوق السماء + عمق طبقي + حركة دخول
+
+     ⚠️ قاعدة أداء (مهمة): backdrop-filter أغلى خاصية بالـCSS على الموبايل —
+     كل عنصر بيها = تمريرة تغويش منفصلة على الـGPU بكل إطار. فتنحط على
+     الأسطح الكبيرة اللي ما تتكرر بس (.card / .login-card).
+     صفوف القوائم (.exp / .env / .fund / .debt) تتكرر عشرات المرات
+     بالشاشة الوحدة — قبل چان يطلع ٩٨ طبقة تغويش سوة، وهذا سبب
+     التقطيع بالتمرير. هسه تاخذ خلفية شبه صلبة: نفس المنظر تقريباً
+     بلا أي كلفة رسم. لا تضيف .exp أو أي عنصر متكرر للقائمة الجاية.
      ============================================================ */
   body.sky-on .card,
-  body.sky-on .env,
-  body.sky-on .fund,
-  body.sky-on .debt,
-  body.sky-on .exp,
   body.sky-on .login-card{
     background:color-mix(in srgb, var(--card) 64%, transparent);
     -webkit-backdrop-filter:saturate(160%) blur(16px);
@@ -1142,12 +1171,25 @@
     box-shadow:0 10px 30px rgba(90,50,20,.15), inset 0 1px 0 rgba(255,255,255,.55);
   }
   body.dark.sky-on .card,
+  body.dark.sky-on .login-card{
+    background:color-mix(in srgb, var(--card) 56%, transparent);
+    border-color:rgba(255,255,255,.10);
+    box-shadow:0 12px 34px rgba(0,0,0,.44), inset 0 1px 0 rgba(255,255,255,.07);
+  }
+  /* صفوف القوائم — نفس اللبس الزجاجي بلا تغويش (خلفية أكثف تعوّضه) */
+  body.sky-on .env,
+  body.sky-on .fund,
+  body.sky-on .debt,
+  body.sky-on .exp{
+    background:color-mix(in srgb, var(--card) 93%, transparent);
+    border:1px solid rgba(255,255,255,.5);
+    box-shadow:0 10px 30px rgba(90,50,20,.15), inset 0 1px 0 rgba(255,255,255,.55);
+  }
   body.dark.sky-on .env,
   body.dark.sky-on .fund,
   body.dark.sky-on .debt,
-  body.dark.sky-on .exp,
-  body.dark.sky-on .login-card{
-    background:color-mix(in srgb, var(--card) 56%, transparent);
+  body.dark.sky-on .exp{
+    background:color-mix(in srgb, var(--card) 90%, transparent);
     border-color:rgba(255,255,255,.10);
     box-shadow:0 12px 34px rgba(0,0,0,.44), inset 0 1px 0 rgba(255,255,255,.07);
   }
@@ -1158,18 +1200,18 @@
   body.dark.sky-on .debt{border-right:3px solid var(--amber-text)}
   body.sky-on .debt.loan,
   body.dark.sky-on .debt.loan{border-right-color:var(--primary-text)}
-  /* مجموعة الديون هي البطاقة الزجاجية — والبطاقات جوّاها تبقى سطحاً
-     داخلياً بلا زجاج ثاني (زجاج فوق زجاج يضبّب النص ويكسر العمق). */
+  /* مجموعة الديون هي بطاقة القرض — والبطاقات جوّاها تبقى سطحاً
+     داخلياً بلا زجاج ثاني (زجاج فوق زجاج يضبّب النص ويكسر العمق).
+     بلا backdrop-filter: .dgrp تتكرر بعدد الحسابات، فهي صف قائمة
+     مو سطح مفرد — شوف ملاحظة الأداء فوق. */
   body.sky-on .dgrp{
-    background:color-mix(in srgb, var(--card) 64%, transparent);
-    -webkit-backdrop-filter:saturate(160%) blur(16px);
-    backdrop-filter:saturate(160%) blur(16px);
+    background:color-mix(in srgb, var(--card) 93%, transparent);
     border:1px solid rgba(255,255,255,.5);
     border-right:3px solid var(--primary-text);
     box-shadow:0 10px 30px rgba(90,50,20,.15), inset 0 1px 0 rgba(255,255,255,.55);
   }
   body.dark.sky-on .dgrp{
-    background:color-mix(in srgb, var(--card) 56%, transparent);
+    background:color-mix(in srgb, var(--card) 90%, transparent);
     border-color:rgba(255,255,255,.10);
     border-right:3px solid var(--primary-text);
     box-shadow:0 12px 34px rgba(0,0,0,.44), inset 0 1px 0 rgba(255,255,255,.07);
@@ -1197,20 +1239,14 @@
   }
 
   /* ===== حركة دخول اللوحة ===== */
-  @keyframes cardRise{from{opacity:0;transform:translateY(16px) scale(.985)}to{opacity:1;transform:none}}
-  @keyframes donutFade{from{opacity:0}to{opacity:1}}
-  .tab.active .sum-card{animation:cardRise .55s var(--ease) both}
-  /* الدونات: القطع تترسم بنعومة عبر JS (animateDonut)؛ هنا فقط ظهور ناعم للوسط */
-  .tab.active .donut svg text{animation:donutFade .7s ease .35s both}
+  /* الدونات: القطع تترسم بنعومة عبر JS (animateDonut) */
   .donut .dseg{transition:opacity .18s}
-  /* تتابع دخول عناصر القوائم */
-  #envList .env,#saveList .fund,#debtList .debt,#expList .exp{animation:cardRise .5s var(--ease) both}
-  #envList .env:nth-child(1),#saveList .fund:nth-child(1),#debtList .debt:nth-child(1),#expList .exp:nth-child(1){animation-delay:.03s}
-  #envList .env:nth-child(2),#saveList .fund:nth-child(2),#debtList .debt:nth-child(2),#expList .exp:nth-child(2){animation-delay:.08s}
-  #envList .env:nth-child(3),#saveList .fund:nth-child(3),#debtList .debt:nth-child(3),#expList .exp:nth-child(3){animation-delay:.13s}
-  #envList .env:nth-child(4),#saveList .fund:nth-child(4),#debtList .debt:nth-child(4),#expList .exp:nth-child(4){animation-delay:.18s}
-  #envList .env:nth-child(5),#saveList .fund:nth-child(5),#debtList .debt:nth-child(5),#expList .exp:nth-child(5){animation-delay:.23s}
-  #envList .env:nth-child(n+6),#saveList .fund:nth-child(n+6),#debtList .debt:nth-child(n+6),#expList .exp:nth-child(n+6){animation-delay:.28s}
+
+  /* ⚠️ قاعدة أداء: حركات الدخول تنحط تحت .fresh بس — شوف تحت.
+     قبل چانت هنا حركة دائمة على #expList .exp و.sum-card و.donut text،
+     و render() يعيد بناء الـinnerHTML بكل تحديث (حتى بكل حرف تكتبه
+     بفلتر البحث) — يعني الصفوف كلها تعيد الأنميشن من الصفر كل مرة،
+     والأرقام تختفي ٣٥٠ms قبل ما ترجع. لا ترجّع أي حركة دخول هنا. */
 
   /* ============================================================
      أنميشن تفاعلي مع الماوس (كمبيوتر فقط) — لكل شاشة إحساسها
@@ -1290,15 +1326,18 @@
   /* ---------- دخول متدرّج عند تحميل الشهر (حركات بركات 😄) ---------- */
   @keyframes riseIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
   @keyframes barGrow{from{width:0}}
-  .fresh .insight,.fresh .sum-card,.fresh .env,.fresh .fund,.fresh .ov-row,.fresh .debt{animation:riseIn .5s var(--ease) both}
-  .fresh .env:nth-of-type(2),.fresh .fund:nth-of-type(2),.fresh .ov-row:nth-of-type(2){animation-delay:.07s}
-  .fresh .env:nth-of-type(3),.fresh .fund:nth-of-type(3),.fresh .ov-row:nth-of-type(3){animation-delay:.14s}
-  .fresh .env:nth-of-type(4),.fresh .fund:nth-of-type(4),.fresh .ov-row:nth-of-type(4){animation-delay:.21s}
-  .fresh .env:nth-of-type(5),.fresh .fund:nth-of-type(5),.fresh .ov-row:nth-of-type(5){animation-delay:.28s}
-  .fresh .env:nth-of-type(n+6),.fresh .fund:nth-of-type(n+6),.fresh .ov-row:nth-of-type(n+6){animation-delay:.35s}
+  /* .fresh تنحط على #appMain بـloadMonth() لـ١.٤ ثانية بس — يعني التتابع
+     يبيّن لما تفتح شهر، ومايعيد نفسه بكل رسمة صغيرة. هذا محلّ حركات
+     الدخول كلها. */
+  .fresh .insight,.fresh .sum-card,.fresh .env,.fresh .fund,.fresh .ov-row,.fresh .debt,.fresh .exp{animation:riseIn .5s var(--ease) both}
+  .fresh .env:nth-of-type(2),.fresh .fund:nth-of-type(2),.fresh .ov-row:nth-of-type(2),.fresh .exp:nth-of-type(2){animation-delay:.07s}
+  .fresh .env:nth-of-type(3),.fresh .fund:nth-of-type(3),.fresh .ov-row:nth-of-type(3),.fresh .exp:nth-of-type(3){animation-delay:.14s}
+  .fresh .env:nth-of-type(4),.fresh .fund:nth-of-type(4),.fresh .ov-row:nth-of-type(4),.fresh .exp:nth-of-type(4){animation-delay:.21s}
+  .fresh .env:nth-of-type(5),.fresh .fund:nth-of-type(5),.fresh .ov-row:nth-of-type(5),.fresh .exp:nth-of-type(5){animation-delay:.28s}
+  .fresh .env:nth-of-type(n+6),.fresh .fund:nth-of-type(n+6),.fresh .ov-row:nth-of-type(n+6),.fresh .exp:nth-of-type(n+6){animation-delay:.35s}
   .fresh .bar i{animation:barGrow .9s var(--ease) .25s backwards}
   @media (prefers-reduced-motion:reduce){
-    .fresh .insight,.fresh .sum-card,.fresh .env,.fresh .fund,.fresh .ov-row,.fresh .debt,.fresh .bar i{animation:none!important}
+    .fresh .insight,.fresh .sum-card,.fresh .env,.fresh .fund,.fresh .ov-row,.fresh .debt,.fresh .exp,.fresh .bar i{animation:none!important}
   }
 
   /* ---------- أقسام الإعدادات المطوية ---------- */

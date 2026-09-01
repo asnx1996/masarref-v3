@@ -579,11 +579,17 @@ async function fetchProfile(userId){
   return { name: data.display_name, hh: data.household_id, admin: !!data.is_admin };
 }
 
+/* أول ما تنعرض شاشة حقيقية (دخول أو تطبيق) نشير لشاشة الافتتاح تنشال —
+   ما ننتظر تحميل بيانات الشهر، لأن loadMonth يعرض هيكل تحميل (skeleton)
+   أصلاً. splashReady آمنة للنداء أكثر من مرة وقبل ما تنعرّف. */
+function splashDone(){ try{ window.splashReady && window.splashReady(); }catch(_){} }
+
 function showLogin(){
   $('loginScreen').classList.add('show');
   $('appHeader').style.display='none';
   $('appMain').style.display='none';
   $('appNav').style.display='none';
+  splashDone();
 }
 function showApp(){
   $('loginScreen').classList.remove('show');
@@ -591,6 +597,7 @@ function showApp(){
   $('appMain').style.display='';
   $('appNav').style.display='';
   $('userName').textContent = 'مرحباً ' + (session && session.name ? session.name : '');
+  splashDone();
 }
 function doLogout(){ clearTimeout(idleTimer); stopRealtime(); sb.auth.signOut().catch(()=>{}); session = null; showLogin(); }
 
@@ -657,25 +664,52 @@ function stopRealtime(){
   if(rtChannel){ try{ sb.removeChannel(rtChannel); }catch(_){} rtChannel = null; }
   clearTimeout(rtTimer);
 }
+/* ============================================================
+   توقيع البيانات — يمنع إعادة الرسم على صدى كتابتنا إحنا
+   ------------------------------------------------------------
+   أي تعديل محلي يسوّي: loadMonth() (جلب كامل + render كامل)، وبعدها
+   بـ450ms الـrealtime يسمع نفس التغيير — تغييرنا إحنا — فيسوّي جلب
+   ثاني ورسم ثاني. يعني كل مصروف تضيفه = رسمتين كاملتين لكل التبويبات.
+   الحل: نقارن توقيع البيانات الجاية بالتوقيع الحالي؛ لو نفسه (وهو
+   نفسه بالضبط بحالة الصدى) نوقف قبل render.
+   آمن ١٠٠٪: ما نرمي أي تغيير حقيقي — أي اختلاف فعلي يغيّر التوقيع.
+   ============================================================ */
+let lastDataSig = '';
+function dataSigOf(res){
+  try{ return JSON.stringify([res.budget, res.expenses, res.debts]); }
+  catch(_){ return String(Math.random()); }   // ما نكدر نوقّع → اعتبرها مختلفة
+}
+
+let rtDirty = false;
 function onRemoteChange(){
+  rtDirty = true;
   clearTimeout(rtTimer);
-  rtTimer = setTimeout(async () => {
-    if(inFlight || !session) return;
-    try{
-      const res = await apiGet(state.month);
-      if(res.ok){
-        state.budget = res.budget;
-        state.expenses = res.expenses;
-        state.debts = res.debts || [];
-        render();
-        loadQuick();
-        const bt = $('tab-bills');
-        if(bt && bt.classList.contains('active')) loadBills();
-        const rt = $('tab-recon');
-        if(rt && rt.classList.contains('active')) loadRecons();
-      }
-    }catch(_){}
-  }, 450);
+  rtTimer = setTimeout(pumpRemote, 450);
+}
+async function pumpRemote(){
+  if(!session || !rtDirty) return;
+  /* أكو جلب شغّال — نأجّل، ما نرمي الحدث.
+     (قبل چان `if(inFlight) return` — يعني أي تغيير من الطرف الثاني
+      يوصل أثناء تحميل الشهر چان يضيع بلا رجعة) */
+  if(inFlight){ rtTimer = setTimeout(pumpRemote, 300); return; }
+  rtDirty = false;
+  try{
+    const res = await apiGet(state.month);
+    if(!res.ok) return;
+    const sig = dataSigOf(res);
+    if(sig === lastDataSig) return;   // صدى كتابتنا — ماكو جديد، ماكو رسم
+    lastDataSig = sig;
+    bumpData();
+    state.budget = res.budget;
+    state.expenses = res.expenses;
+    state.debts = res.debts || [];
+    render();
+    loadQuick();
+    const bt = $('tab-bills');
+    if(bt && bt.classList.contains('active')) loadBills();
+    const rt = $('tab-recon');
+    if(rt && rt.classList.contains('active')) loadRecons();
+  }catch(_){}
 }
 
 /* ---------- API (Supabase RPC) ---------- */
@@ -825,6 +859,8 @@ async function loadMonth(month){
     const res = await apiGet(month);
     if(guardAuth(res)) return;
     if(!res.ok) throw new Error(res.error || 'خطأ بالخادم');
+    lastDataSig = dataSigOf(res);   // حتى صدى الـrealtime يعرف إن عدنا نفس البيانات
+    bumpData();                     // بيانات جديدة → التبويبات المخفية صارت قديمة
     state.budget = res.budget;
     state.expenses = res.expenses;
     state.debts = res.debts || [];
@@ -1122,6 +1158,35 @@ window.toggleDebtGroup = (gi) => {
   else       { debtShut.add(g.fund);   debtOpened.delete(g.fund); }
 };
 
+/* ============================================================
+   رسم كسول للتبويبات — التبويب المخفي ما ينبني DOM إله
+   ------------------------------------------------------------
+   .tab{display:none} يعني ثمن تبويبات ساكنة بالـDOM ووحدة بس تنشاف،
+   و render() چان يكتب innerHTML للثمانية كلهن بكل نداء — بضمنهن
+   تبويبات محد فاتحها. وينندى بكل حرف تكتبه بفلتر البحث.
+   هسه: الحساب يظل كامل (رخيص، وأرقام الهيدر والملخص تعتمد عليه،
+   ونفس اللفّات تجمع state._dashFunds/_dashDebts للوحة)، بس الكتابة
+   على الـDOM — وهي الغالية: تحليل HTML + حساب أنماط + تخطيط —
+   تتأجّل للتبويب النشط، وتنعمل بـgotoTab أول ما المستخدم يفتحه.
+
+   وحتى تبديل التبويبات ما يصير هو نفسه ثقيل، نستعمل «نسخة البيانات»:
+   كل ما تتبدّل بيانات الشهر يزيد الرقم، وكل تبويب ينخزن عند أي نسخة
+   انبنى. فلو بدّلت تبويب وماكو جديد، ما ينعاد بناؤه أبداً — التبديل
+   يبقى مجاني مثل ما چان.
+   ============================================================ */
+let dataVersion = 0;
+const tabBuiltAt = Object.create(null);
+function bumpData(){ dataVersion++; }
+function tabShown(id){
+  const el = document.getElementById(id);
+  if(!(el && el.classList.contains('active'))) return false;
+  tabBuiltAt[id] = dataVersion;
+  return true;
+}
+function tabIsStale(id){ return tabBuiltAt[id] !== dataVersion; }
+/* التبويبات اللي render() مسؤول عن بنائها — الباقي إله دواله الخاصة */
+const LAZY_TABS = new Set(['tab-dash', 'tab-add', 'tab-budget']);
+
 function render(){
   const b = state.budget || { salary1:0, salary2:0, categories:[], locked:false };
   state.locked = !!b.locked;
@@ -1253,7 +1318,7 @@ function render(){
   if(prog.left > 0 && remain > 0) insights.push('💡 باقي ' + prog.left + ' يوم بالشهر وتكدر تصرف ' + fmt(canDaily) + ' باليوم');
   if(!insights.length) insights.push('😌 كلشي تحت السيطرة — التحقيق ما لگه شي مريب');
   state._insights = insights;
-  renderInsightCard();
+  if(tabShown('tab-dash')) renderInsightCard();
 
   /* بيانات النظرة العامة — تنخزن وتنرسم حسب التبويب المختار (renderDashView) */
   state._dash = {
@@ -1370,8 +1435,8 @@ function render(){
     saveHtml = `<div class="save-head">صناديق الادخار 🏦 <span>الإجمالي: ${fmt(totalBal)}</span></div>` + rows;
     state._fundTotal = totalBal;
   }
-  $('saveList').innerHTML = saveHtml;
-  state._dashFunds = fundView;
+  state._dashFunds = fundView;   /* اللوحة تحتاجها حتى لو تبويب المصروف مخفي */
+  if(tabShown('tab-add')) $('saveList').innerHTML = saveHtml;
 
   /* ============================================================
      ديون الصناديق — مجمّعة على مستوى الصندوق
@@ -1477,8 +1542,8 @@ function render(){
     });
     debtHtml = `<div class="save-head">ديون الصناديق ⏳ <span>الإجمالي: ${fmt(totalDebt)}</span></div>` + html;
   }
-  $('debtList').innerHTML = debtHtml;
-  state._dashDebts = open;
+  state._dashDebts = open;       /* نفس السبب — الحساب دائماً، الرسم حسب التبويب */
+  if(tabShown('tab-add')) $('debtList').innerHTML = debtHtml;
 
   /* مصاريف على تصنيفات غير موجودة بالميزانية */
   Object.keys(spentByCat).forEach(k => {
@@ -1496,38 +1561,46 @@ function render(){
   });
   /* الفتح/الفلتر إعادة رسم بضغطة المستخدم — أنميشن الدخول المتتابع يصير
      رفّة مزعجة بيها، فنسكّته لهاي الرسمة بس */
-  const envEl2 = $('envList');
-  envEl2.classList.toggle('no-anim', !!state._envQuiet);
-  state._envQuiet = false;
-  envEl2.innerHTML = envHtml || '<div class="empty"><span class="emo">🗂️</span><b>ماكو ميزانية لهذا الشهر بعد</b>روح لتبويب «الميزانية» وحدد الرواتب والتصنيفات.</div>';
+  /* ===== اللوحة: الظروف + النظرة العامة ===== */
+  if(tabShown('tab-dash')){
+    const envEl2 = $('envList');
+    envEl2.classList.toggle('no-anim', !!state._envQuiet);
+    state._envQuiet = false;
+    envEl2.innerHTML = envHtml || '<div class="empty"><span class="emo">🗂️</span><b>ماكو ميزانية لهذا الشهر بعد</b>روح لتبويب «الميزانية» وحدد الرواتب والتصنيفات.</div>';
+    renderDashView();
+  }
 
-  /* ===== النظرة العامة (البيانات صارت جاهزة كلها) ===== */
-  renderDashView();
+  /* ===== تبويب المصروف: الفلتر + القوائم + تصنيفات الفورم ===== */
+  if(tabShown('tab-add')){
+    buildFilterOptions();
+    renderExpenseList();
+    buildFundMoveFilters();
+    renderFundMoves();
 
-  /* ===== فلتر + قائمة المصاريف + حركات الصناديق ===== */
-  buildFilterOptions();
-  renderExpenseList();
-  buildFundMoveFilters();
-  renderFundMoves();
+    /* قائمة تصنيفات فورم الإضافة (بدون صناديق الادخار) */
+    const sel = $('expCat');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">— بلا تصنيف —</option>' +
+      cats.filter(c=>c.type!=='save').map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
+    sel.value = cur;
+  }
 
-  /* ===== قائمة تصنيفات فورم الإضافة (بدون صناديق الادخار) ===== */
-  const sel = $('expCat');
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">— بلا تصنيف —</option>' +
-    cats.filter(c=>c.type!=='save').map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');
-  sel.value = cur;
-
-  /* ===== فورم الميزانية ===== */
-  $('salaryRows').innerHTML = '';
-  $('catRows').innerHTML = '';
-  $('saveRows').innerHTML = '';
-  $('incomeRows').innerHTML = '';
-  ((b.salaries && b.salaries.length) ? b.salaries : [{person:'راتبي', amount:b.salary1||0},{person:'راتب زوجتي', amount:b.salary2||0}]).forEach(s => addSalaryRow(s.person, s.amount));
-  if(!document.querySelector('#salaryRows .cat-row')) addSalaryRow('', '');
-  cats.forEach(c => addRow(c.type === 'save' ? 'save' : 'spend', c.name, c.amount, c.carried, c.goal));
-  (b.incomes || []).forEach(x => addIncomeRow(x.desc, x.amount));
-  if(!document.querySelector('#catRows .cat-row')) addRow('spend','','',0);
-  updateAlloc();
+  /* ===== فورم الميزانية =====
+     ⚠️ readSalaries()/readCats() يقرون من الصفوف هذي، فلازم تكون مبنية
+     قبل أي حفظ. آمن: أزرار الحفظ كلها ساكنة جوّا tab-budget، فالمستخدم
+     ما يوصلهن إلا بعد ما gotoTab يبني التبويب. */
+  if(tabShown('tab-budget')){
+    $('salaryRows').innerHTML = '';
+    $('catRows').innerHTML = '';
+    $('saveRows').innerHTML = '';
+    $('incomeRows').innerHTML = '';
+    ((b.salaries && b.salaries.length) ? b.salaries : [{person:'راتبي', amount:b.salary1||0},{person:'راتب زوجتي', amount:b.salary2||0}]).forEach(s => addSalaryRow(s.person, s.amount));
+    if(!document.querySelector('#salaryRows .cat-row')) addSalaryRow('', '');
+    cats.forEach(c => addRow(c.type === 'save' ? 'save' : 'spend', c.name, c.amount, c.carried, c.goal));
+    (b.incomes || []).forEach(x => addIncomeRow(x.desc, x.amount));
+    if(!document.querySelector('#catRows .cat-row')) addRow('spend','','',0);
+    updateAlloc();
+  }
 
   /* شريط الفترة */
   renderPeriodBar();
@@ -3759,6 +3832,12 @@ function gotoTab(id){
   const nb = document.querySelector('nav button[data-tab="'+id+'"]');
   if(nb) nb.classList.add('active');
   const t = $(id); if(t) t.classList.add('active');
+  /* التبويبات الثلاثة هذي بس اللي render() يبنيها. لو انبنت آخر مرة
+     على نسخة بيانات أقدم من الحالية نبنيها هسه، وإلا ما نلمسها.
+     لازم بعد ما ينضاف .active لأن render() يقرا التبويب النشط.
+     (الباقي — الإعدادات/الفواتير/المطابقة/الدفتر/التدقيق — إلها
+      دوالها الخاصة بالأسطر الجاية، فما تمر من هنا) */
+  if(LAZY_TABS.has(id) && tabIsStale(id)) try{ render(); }catch(_){}
   if(id === 'tab-settings') renderSettings();
   if(id === 'tab-bills') loadBills();
   if(id === 'tab-recon') loadRecons();

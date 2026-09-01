@@ -11,8 +11,8 @@
 <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
   script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
-  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-  font-src 'self' https://fonts.gstatic.com;
+  style-src 'self' 'unsafe-inline';
+  font-src 'self';
   img-src 'self' data: blob:;
   connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net;
   worker-src 'self';
@@ -30,8 +30,9 @@
 <meta name="apple-mobile-web-app-title" content="Pocky">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- ماكو preconnect لجوجل: الخطوط محليّة بمجلد fonts/ من زمان.
+     الاتصالان چانوا ينفتحون بكل فتحة بلا أي طلب وراهم. -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="fonts.css">
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -383,18 +384,22 @@
 <div id="loader" role="status" aria-live="polite" aria-label="جاري التحميل"><div class="spin" aria-hidden="true"></div></div>
 <div id="printArea" aria-hidden="true"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js" integrity="sha384-WmjsOVSSw3JNqIKfmDU35+uddOzBdP9PlYIWCg7xdnVOesjWVGpRcooOVheFFwH4" crossorigin="anonymous"></script>
-<script src="core.js"></script>
-<script src="app.js"></script>
-<script src="i18n.js"></script>
-<script src="decor.js"></script>
-<script src="holmes.js"></script>
-<script src="books.js"></script>
+<!-- كلهن defer: التنزيل يصير بالتوازي وأثناء تحليل الصفحة، والتنفيذ
+     بعد ما يخلص التحليل — بنفس الترتيب المكتوب (defer يحفظ الترتيب).
+     بلاها چان كل سكربت يوقف المحلّل لحد ما ينزل وينفّذ، ومكتبة
+     Supabase لحالها تاخذ ٣٢٠ms حتى محليّاً. -->
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js" integrity="sha384-WmjsOVSSw3JNqIKfmDU35+uddOzBdP9PlYIWCg7xdnVOesjWVGpRcooOVheFFwH4" crossorigin="anonymous"></script>
+<script defer src="core.js"></script>
+<script defer src="app.js"></script>
+<script defer src="i18n.js"></script>
+<script defer src="decor.js"></script>
+<script defer src="holmes.js"></script>
+<script defer src="books.js"></script>
 <!-- طبقة الحركة السائلة — تجي بعد app/decor لأنها تلبس بعض دوالهن،
      وقبل boot لأن boot هو اللي يشغّل initSwipe -->
-<script src="fluid.js"></script>
+<script defer src="fluid.js"></script>
 <!-- طبقة الوصول — تلبس sheetShow/sheetHide بعد fluid وقبل ما boot يشغّل التطبيق -->
-<script src="a11y.js"></script>
-<script src="boot.js"></script>
+<script defer src="a11y.js"></script>
+<script defer src="boot.js"></script>
 </body>
 </html>
