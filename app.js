@@ -471,32 +471,50 @@ function setCurrency(id){
 }
 
 /* ---------- نوع الخط ----------
-   الخطوط تتحمّل من Google Fonts عند اختيارها فقط (كسول) حتى ما تثقّل
-   الإقلاع. «روبيك» محمّل أصلاً بالرأس. الاختيار ينحفظ بالجهاز. */
+   الخطوط كلها مستضافة عدنا بمجلد fonts/ — ماكو أي طلب لجوجل.
+   قبل چانت تنجاب من fonts.googleapis.com، وبعد ما انسكّر الـCSP
+   (style-src 'self') صارت تنحجب بصمت: التطبيق يضبط font-family
+   على خط ما وصل، فالجهاز يرجع لخط النظام — وهذا سبب «الخط انتغيّر
+   وصار ثخين». هسه كل خط إله ملف CSS محلي ينتحمّل عند اختياره بس
+   (كسول)، والـservice worker يخزّنه فيصير يشتغل حتى بلا نت.
+   «روبيك» محمّل أصلاً بالرأس. الاختيار ينحفظ بالجهاز. */
 const FONTS = {
   rubik:   { name:'روبيك (الافتراضي)',   stack:"'Rubik','Alexandria'",     url:'' },
-  cairo:   { name:'القاهرة',             stack:"'Cairo'",                  url:'https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap' },
-  tajawal: { name:'تجوّل',               stack:"'Tajawal'",                url:'https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap' },
-  almarai: { name:'المراعي',             stack:"'Almarai'",                url:'https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap' },
-  ibm:     { name:'IBM بلكس عربي',       stack:"'IBM Plex Sans Arabic'",   url:'https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap' },
-  amiri:   { name:'أميري (نسخ كلاسيكي)', stack:"'Amiri'",                  url:'https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap' },
-  reem:    { name:'ريم كوفي',            stack:"'Reem Kufi'",              url:'https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400;500;600;700&display=swap' }
+  cairo:   { name:'القاهرة',             stack:"'Cairo'",                  url:'fonts/cairo.css' },
+  tajawal: { name:'تجوّل',               stack:"'Tajawal'",                url:'fonts/tajawal.css' },
+  almarai: { name:'المراعي',             stack:"'Almarai'",                url:'fonts/almarai.css' },
+  ibm:     { name:'IBM بلكس عربي',       stack:"'IBM Plex Sans Arabic'",   url:'fonts/ibm.css' },
+  amiri:   { name:'أميري (نسخ كلاسيكي)', stack:"'Amiri'",                  url:'fonts/amiri.css' },
+  reem:    { name:'ريم كوفي',            stack:"'Reem Kufi'",              url:'fonts/reem.css' }
 };
 const FONT_FALLBACK = ",-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif";
 const _fontLinks = {};
+/* يرجّع وعد ينحل لما ينتحمّل ملف الخط — نستنّاه قبل ما نبدّل
+   font-family حتى ما تلمع الصفحة بخط النظام بالوسط */
 function loadFont(id){
   const f = FONTS[id];
-  if(!f || !f.url || _fontLinks[id]) return;
-  const l = document.createElement('link');
-  l.rel = 'stylesheet'; l.href = f.url;
-  document.head.appendChild(l);
-  _fontLinks[id] = true;
+  if(!f || !f.url) return Promise.resolve();
+  if(_fontLinks[id]) return _fontLinks[id];
+  _fontLinks[id] = new Promise((ok, no) => {
+    const l = document.createElement('link');
+    l.rel = 'stylesheet'; l.href = f.url;
+    l.onload = ok;
+    l.onerror = () => { delete _fontLinks[id]; l.remove(); no(new Error(f.url)); };
+    document.head.appendChild(l);
+  });
+  return _fontLinks[id];
 }
 function applyFont(id, save){
   const f = FONTS[id] || FONTS.rubik;
-  if(id !== 'rubik') loadFont(id);
-  document.body.style.fontFamily = f.stack + FONT_FALLBACK;
   if(save !== false){ try{ LS.set('mas_font', id); }catch(_){} }
+  const use = st => { document.body.style.fontFamily = st + FONT_FALLBACK; };
+  if(!f.url){ use(f.stack); return; }
+  /* لو ما وصل الملف نبقى على روبيك — أحسن من الطيحة على خط النظام
+     اللي يطلع ثخين ومختلف بلا ما يفهم المستخدم شصار */
+  loadFont(id).then(() => use(f.stack)).catch(() => {
+    use(FONTS.rubik.stack);
+    if(typeof toast === 'function') toast('ما كدرت أحمّل خط «' + f.name + '» — رجعناك لروبيك', true);
+  });
 }
 function curFontId(){
   let id = ''; try{ id = LS.get('mas_font') || ''; }catch(_){}
@@ -1200,6 +1218,11 @@ function render(){
   });
   const saveNames = new Set(cats.filter(c=>c.type==='save').map(c=>c.name));
 
+  /* خيارات الفلتر تنبني بكل رسمة — مو بس لما يكون تبويب «المصروف» مفتوح.
+     قبل چانت تنبني جوّا tabShown('tab-add') بس، فالضغط على الدونات أو الليجند
+     من اللوحة يلقى القائمة فارغة ويطلّع «ماكو مصاريف بهذا التصنيف». */
+  buildFilterOptions();
+
   /* المصروف حسب التصنيف (الإرجاعات السالبة تنطرح تلقائياً)
      + نفرز حركات القروض/التمويل الداخلة من الصناديق (سالبة) وسدادها (موجب)
      حتى نعرض «صرفت» = الصرف الفعلي، والقرض بسطر واضح لحاله */
@@ -1572,7 +1595,6 @@ function render(){
 
   /* ===== تبويب المصروف: الفلتر + القوائم + تصنيفات الفورم ===== */
   if(tabShown('tab-add')){
-    buildFilterOptions();
     renderExpenseList();
     buildFundMoveFilters();
     renderFundMoves();
@@ -1630,6 +1652,7 @@ function buildFilterOptions(){
   const saveNames = new Set(((state.budget&&state.budget.categories)||[]).filter(c=>c.type==='save').map(c=>c.name));
   const pure = state.expenses.filter(e => !isFundMove(e, saveNames));   // مصاريف صافية بس
   const fc = $('fltCat'), fb = $('fltBy');
+  if(!fc || !fb) return;
   const curC = fc.value, curB = fb.value;
   const catNames = Array.from(new Set(pure.map(e=>e.category).filter(Boolean)));
   fc.innerHTML = '<option value="">كل التصنيفات</option>' + catNames.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
@@ -1637,7 +1660,8 @@ function buildFilterOptions(){
   const people = Array.from(new Set(pure.map(e=>e.by).filter(Boolean)));
   fb.innerHTML = '<option value="">الكل</option>' + people.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join('');
   fb.value = curB;
-  $('filterBar').style.display = pure.length ? 'flex' : 'none';
+  const bar = $('filterBar');
+  if(bar) bar.style.display = pure.length ? 'flex' : 'none';
 }
 
 /* ---------- فلترة من الرسم الدائري / ظروف اللوحة ---------- */

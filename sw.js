@@ -3,7 +3,7 @@
 
    ⚠️ مهم: كل ما تعدّل أي ملف من ملفات الواجهة (index.html / styles.css /
    core.js / app.js / i18n.js / decor.js / holmes.js / books.js / fluid.js / a11y.js / boot.js)، غيّر رقم
-   النسخة بالسطر التحت (مثلاً masareef-v50 ← masareef-v51).
+   النسخة بالسطر التحت (مثلاً masareef-v51 ← masareef-v52).
 
    📌 سياسة التحديث (انتغيّرت بـv50):
    بـv41 صارت «الشبكة أول» لكل الكود، حتى يوصل التحديث بنفس الفتحة.
@@ -22,7 +22,7 @@
    بعدها شغّالة بالكود القديم، ينخلط app.js قديم ويّا styles.css جديد.
    التبديل ينصير بإعادة تحميل واحدة نظيفة بس.
    ============================================================ */
-const CACHE = 'masareef-v50';
+const CACHE = 'masareef-v51';
 const SHELL = [
   './', './index.html', './manifest.json', './icon-192.png', './icon-512.png',
   './fonts.css', './styles.css',
