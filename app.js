@@ -3170,7 +3170,7 @@ function renderSettings(){
       <summary><span class="sa-ico">🎨</span>المظهر<span class="sa-chev">›</span></summary>
       <div class="sa-body">
       ${typeof appearanceSettings === 'function' ? appearanceSettings() : ''}
-      <div class="set-toggle" id="legacyDarkControl" style="margin-top:0" ${['pearl','midnight','sage'].includes(curPal)?'hidden':''}>
+      <div class="set-toggle" id="legacyDarkControl" style="margin-top:0" ${typeof isModernAppearance === 'function' && isModernAppearance(curPal)?'hidden':''}>
         <span class="st-lbl">🌙 الوضع الداكن (دارك مود)</span>
         <label class="switch"><input type="checkbox" id="darkToggle" ${DARK_ON?'checked':''}><span class="track"></span><span class="knob"></span></label>
       </div>
@@ -4087,8 +4087,8 @@ let reconItems = [];
 let RECON_ON = LS.get('mas_recon') !== 'off';   // ظاهر افتراضياً
 let DARK_ON = LS.get('mas_dark') === 'on';      // فاتح افتراضياً
 function applyDark(){
-  const modern = ['pearl','midnight','sage'].includes(curPaletteId());
-  document.body.classList.toggle('dark', modern ? curPaletteId() === 'midnight' : DARK_ON);
+  const modern = typeof isModernAppearance === 'function' && isModernAppearance(curPaletteId());
+  document.body.classList.toggle('dark', modern ? !!APPEARANCE_THEMES[curPaletteId()].dark : DARK_ON);
   if(typeof syncAppearance === 'function') syncAppearance();
   const meta = document.querySelector('meta[name="theme-color"]');
   if(meta) meta.content = getComputedStyle(document.body).getPropertyValue('--bg').trim();

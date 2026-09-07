@@ -1,4 +1,52 @@
-/* Three complete surface palettes. Accent/status roles still come from setRole. */
+/* Curated surface palettes. Accent/status roles still come from setRole. */
+body[data-appearance="lavender"],.preview-lavender{
+  --bg:#F0EDF6;--bg-2:#FAF8FD;--card:#FEFCFF;--ink:#382E49;--muted:#655B76;
+  --line:#DCD5E6;--line-strong:#92859F;--surface-sunken:#EAE4F2;--input-bg:#FFFDFF;--placeholder:#746681;
+  --ambient-color:#BAA7D6;--ambient-secondary:#D8BCCB;--preview-accent:#695195;
+}
+body[data-appearance="blush"],.preview-blush{
+  --bg:#F7EEF0;--bg-2:#FFF8F8;--card:#FFFBFC;--ink:#472F3B;--muted:#785B69;
+  --line:#E6D4DB;--line-strong:#A18490;--surface-sunken:#F1E3E8;--input-bg:#FFFCFD;--placeholder:#846875;
+  --ambient-color:#D9A7BC;--ambient-secondary:#E4C6AC;--preview-accent:#954D69;
+}
+body[data-appearance="clay"],.preview-clay{
+  --bg:#F4EEE5;--bg-2:#FCF7F0;--card:#FFFCF7;--ink:#49372D;--muted:#776254;
+  --line:#E3D5C8;--line-strong:#A18A76;--surface-sunken:#EEE3D7;--input-bg:#FFFDF9;--placeholder:#826B5A;
+  --ambient-color:#CBA086;--ambient-secondary:#D6BC87;--preview-accent:#96553A;
+}
+body[data-appearance="lagoon"],.preview-lagoon{
+  --bg:#EAF3F3;--bg-2:#F3FBFA;--card:#FAFEFD;--ink:#203F46;--muted:#526E73;
+  --line:#CFE0DF;--line-strong:#7E9A9D;--surface-sunken:#DFEEEE;--input-bg:#FCFFFF;--placeholder:#617C80;
+  --ambient-color:#89BFC2;--ambient-secondary:#B8D6C0;--preview-accent:#166878;
+}
+body[data-appearance="graphite"],.preview-graphite{
+  --bg:#16191F;--bg-2:#1D222B;--card:#232934;--ink:#EFF2F7;--muted:#B6BFCD;
+  --line:#404A5A;--line-strong:#7B889E;--surface-sunken:#1B2029;--input-bg:#1C222C;--placeholder:#ADB9CA;
+  --ambient-color:#79869C;--ambient-secondary:#5B718A;--primary-soft:#323D50;--preview-accent:#B8C8E2;
+}
+body[data-appearance="plum"],.preview-plum{
+  --bg:#201725;--bg-2:#291E30;--card:#32253B;--ink:#F6EDF9;--muted:#C8B7D0;
+  --line:#574261;--line-strong:#9D83A7;--surface-sunken:#291D31;--input-bg:#291F30;--placeholder:#C5B0CE;
+  --ambient-color:#9469AB;--ambient-secondary:#A66986;--primary-soft:#493355;--preview-accent:#D8AFEB;
+}
+body[data-appearance="evergreen"],.preview-evergreen{
+  --bg:#101F1B;--bg-2:#172B24;--card:#1C332B;--ink:#EDF7EF;--muted:#B1C8BA;
+  --line:#365448;--line-strong:#729B89;--surface-sunken:#152A22;--input-bg:#162B23;--placeholder:#A9C5B5;
+  --ambient-color:#4E987E;--ambient-secondary:#8EAA70;--primary-soft:#244E40;--preview-accent:#8FD7BD;
+}
+body[data-appearance="mocha"],.preview-mocha{
+  --bg:#221B17;--bg-2:#2C231D;--card:#362B24;--ink:#F7EFE5;--muted:#CDBBA9;
+  --line:#594738;--line-strong:#A08A72;--surface-sunken:#2B211B;--input-bg:#2C231E;--placeholder:#CAB5A0;
+  --ambient-color:#A7805E;--ambient-secondary:#AD986A;--primary-soft:#513B2B;--preview-accent:#E5BF9C;
+}
+body[data-appearance="deepsea"],.preview-deepsea{
+  --bg:#0D2027;--bg-2:#142B33;--card:#18353E;--ink:#EAF7F7;--muted:#A8C9CF;
+  --line:#325862;--line-strong:#709CA5;--surface-sunken:#102B33;--input-bg:#122D35;--placeholder:#A6C6CD;
+  --ambient-color:#408A99;--ambient-secondary:#538E82;--primary-soft:#214C58;--preview-accent:#93D7E3;
+}
+body[data-appearance]:not([data-appearance="classic"]):not(.dark){--shadow:0 1px 2px #25304008,0 5px 18px #25304009;--shadow-lg:0 20px 60px #25304026}
+body[data-appearance]:not([data-appearance="classic"]).dark{--shadow:0 1px 2px #00000018,0 5px 22px #00000020;--shadow-lg:0 20px 60px #00000066;--green-soft:#15382F;--amber-soft:#3B301D;--red-soft:#48242D}
+.theme-preview{--preview-bg:var(--bg);--preview-card:var(--card)}
 body[data-appearance="pearl"]{
   --bg:#F5F2EB;--bg-2:#FFFEFB;--card:#FFFEFB;--ink:#233C40;--muted:#52666A;
   --line:#D9DEDA;--line-strong:#859693;--surface-sunken:#EDEEE8;--input-bg:#FFFFFF;--placeholder:#657774;
@@ -27,6 +75,11 @@ body[data-appearance="classic"]{--ambient-color:var(--primary);--ambient-seconda
 body[data-background="glow"] #ambientBackground::before{
   background:radial-gradient(ellipse at 8% 4%,color-mix(in srgb,var(--ambient-color) 48%,transparent),transparent 55%),radial-gradient(ellipse at 98% 50%,color-mix(in srgb,var(--ambient-secondary) 28%,transparent),transparent 55%);
 }
+body[data-background="mesh"] #ambientBackground::before{
+  background:radial-gradient(ellipse at 5% 10%,color-mix(in srgb,var(--ambient-color) 70%,transparent),transparent 60%),radial-gradient(ellipse at 95% 65%,color-mix(in srgb,var(--ambient-secondary) 60%,transparent),transparent 60%),radial-gradient(ellipse at 25% 100%,color-mix(in srgb,var(--ambient-color) 25%,transparent),transparent 55%);
+}
+body[data-background="dots"] #ambientBackground::before{background-image:radial-gradient(circle,color-mix(in srgb,var(--ambient-color) 65%,transparent) 1px,transparent 1.2px);background-size:20px 20px}
+body[data-background="linen"] #ambientBackground::before{background-image:repeating-linear-gradient(0deg,color-mix(in srgb,var(--ambient-color) 20%,transparent) 0 1px,transparent 1px 5px),repeating-linear-gradient(90deg,color-mix(in srgb,var(--ambient-secondary) 20%,transparent) 0 1px,transparent 1px 5px)}
 body[data-background="curves"] #ambientBackground::before{
   inset:-30vh 45% 50vh -25%;border-radius:42% 58% 67% 33%;transform:rotate(-24deg);
   background:linear-gradient(135deg,color-mix(in srgb,var(--ambient-color) 50%,transparent),color-mix(in srgb,var(--ambient-color) 8%,transparent));
@@ -50,7 +103,7 @@ body[data-appearance]:not([data-appearance="classic"]) .hstat.main{background:va
 body[data-appearance]:not([data-appearance="classic"]) .hstat .lbl{color:var(--muted);opacity:1}
 body[data-appearance]:not([data-appearance="classic"]) nav{background:var(--card)}
 body[data-appearance]:not([data-appearance="classic"]) .month-pick::-webkit-calendar-picker-indicator{filter:none}
-body[data-appearance="midnight"] .month-pick::-webkit-calendar-picker-indicator{filter:invert(1)}
+body[data-appearance]:not([data-appearance="classic"]).dark .month-pick::-webkit-calendar-picker-indicator{filter:invert(1)}
 body[data-appearance]:not([data-appearance="classic"]) .head-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 body[data-appearance]:not([data-appearance="classic"]) .hstat{min-width:0}
 body[data-appearance]:not([data-appearance="classic"]) .hstat.main{grid-column:1/-1;order:-1;text-align:center;padding:18px 12px}
@@ -68,6 +121,12 @@ body[data-appearance]:not([data-appearance="classic"]) :is(.card,.login-card,.en
 .appearance-heading p,.background-heading span{color:var(--muted);font-size:.78rem;line-height:1.7}
 .appearance-local{font-size:.68rem;color:var(--muted);white-space:nowrap;padding-top:3px}
 .theme-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.theme-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.theme-filters{display:flex;gap:4px;background:var(--surface-sunken);padding:4px;border-radius:12px}
+.theme-filters button{min-height:44px;padding:8px 14px;font:inherit;font-size:.78rem;background:transparent;border:1px solid transparent;border-radius:9px;color:var(--muted);cursor:pointer}
+.theme-filters button[aria-pressed="true"]{background:var(--card);border-color:var(--line-strong);color:var(--primary-text);font-weight:700}
+.theme-count{font-size:.7rem;color:var(--muted)}
+.theme-filters button:focus-visible{outline:3px solid var(--primary-text);outline-offset:2px}
 .theme-choice{min-width:0;text-align:start;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line-strong);border-radius:16px;padding:7px;cursor:pointer;transition:transform .15s,border-color .15s}
 .theme-choice[aria-pressed="true"]{border-color:var(--primary-text);outline:1px solid var(--primary-text);background:var(--primary-soft)}
 .theme-preview{display:flex;flex-direction:column;gap:8px;height:140px;border-radius:10px;padding:12px;background:var(--preview-bg);color:var(--preview-accent);overflow:hidden;position:relative}
@@ -78,7 +137,7 @@ body[data-appearance]:not([data-appearance="classic"]) :is(.card,.login-card,.en
 .preview-balance{display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--preview-card);padding:12px 3px;border-radius:7px}
 .preview-balance i{width:30%;height:3px;background:var(--preview-accent);opacity:.4}.preview-balance b{font-size:1rem;font-variant-numeric:tabular-nums}
 .preview-rows{display:flex;flex-direction:column;gap:4px}.preview-rows i{height:5px;border-radius:3px;background:var(--preview-card)}
-.preview-rows i:nth-child(2){width:75%}.preview-action{height:12px;border-radius:4px;background:var(--preview-accent);margin-top:auto}
+.preview-rows i:nth-child(2){width:75%}.preview-action{height:12px;flex-shrink:0;border-radius:4px;background:var(--preview-accent);margin-top:auto}
 .theme-label{display:flex;align-items:center;justify-content:space-between;gap:3px;padding:10px 3px 2px;font-size:.8rem}
 .theme-description{display:block;padding:0 3px 5px;color:var(--muted);font-size:.68rem;line-height:1.7}
 .theme-check,.background-check{opacity:0;color:var(--primary-text)}
@@ -91,6 +150,9 @@ body[data-appearance]:not([data-appearance="classic"]) :is(.card,.login-card,.en
 .background-check{margin-inline-start:auto}
 .background-swatch{width:30px;height:30px;flex-shrink:0;border-radius:8px;border:1px solid var(--line);background:var(--bg);overflow:hidden}
 .swatch-glow{background:radial-gradient(circle at 20% 20%,var(--ambient-color),var(--bg) 85%)}
+.swatch-mesh{background:radial-gradient(ellipse at 0 0,var(--ambient-color),transparent 80%),radial-gradient(ellipse at 100% 100%,var(--ambient-secondary),var(--bg) 90%)}
+.swatch-dots{background-image:radial-gradient(circle,var(--ambient-color) 1px,transparent 1.2px);background-size:6px 6px}
+.swatch-linen{background-image:repeating-linear-gradient(0deg,color-mix(in srgb,var(--ambient-color) 40%,transparent) 0 1px,transparent 1px 4px),repeating-linear-gradient(90deg,color-mix(in srgb,var(--ambient-secondary) 40%,transparent) 0 1px,transparent 1px 4px)}
 .swatch-curves{background:radial-gradient(ellipse at 0 0,var(--ambient-color) 50%,var(--bg) 52%)}
 .swatch-landscape{background:linear-gradient(150deg,transparent 50%,var(--ambient-color) 51%),linear-gradient(30deg,var(--ambient-secondary) 40%,var(--bg) 41%)}
 .background-slider{display:flex;align-items:center;gap:16px}.background-slider input{flex:1;min-width:0;padding:0;accent-color:var(--primary);min-height:44px;box-shadow:none}
