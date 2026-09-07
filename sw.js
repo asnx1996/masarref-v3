@@ -22,10 +22,10 @@
    بعدها شغّالة بالكود القديم، ينخلط app.js قديم ويّا styles.css جديد.
    التبديل ينصير بإعادة تحميل واحدة نظيفة بس.
    ============================================================ */
-const CACHE = 'masareef-v51';
+const CACHE = 'masareef-v52';
 const SHELL = [
   './', './index.html', './manifest.json', './icon-192.png', './icon-512.png',
-  './fonts.css', './styles.css',
+  './fonts.css', './styles.css', './appearance.css', './appearance.js',
   './core.js', './app.js', './i18n.js', './decor.js', './holmes.js', './books.js', './fluid.js', './a11y.js', './boot.js',
   './fonts/rubik-arabic.woff2', './fonts/rubik-latin.woff2',
   './fonts/alexandria-arabic.woff2', './fonts/alexandria-latin.woff2'

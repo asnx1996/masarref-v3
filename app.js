@@ -11,7 +11,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
    كل السماء (نهار/غروب/ليل + الفصول) بنفس العائلة اللونية.
    (هذا كله ألوان/بيانات عرض — ما يمسّ أي حساب أو استدعاء بيانات)
    ============================================================ */
-const DEFAULT_PAL = 'ocean';
+const DEFAULT_PAL = 'sage';
 // ألوان الرسم البياني (الدونات) — تُضبط حسب الباليت الفعّال.
 // قِطَع الدونات لازم تتميّز عن بعضها قبل ما تتناسق ويّا الثيم: القوس اللوني
 // واسع (٣٠٠°) والإضاءة تتناوب، فأي قطعتين متجاورتين تفرقان بمحورين مو بواحد.
@@ -176,7 +176,7 @@ const SEASON_NAMES = {
   auto:'تلقائي (حسب الوقت) ☀️🌙', spring:'ربيع 🌸', summer:'صيف ☀️', autumn:'خريف 🍂',
   winter:'شتاء ❄️', night:'ليل ونجوم 🌌', sunset:'غروب 🌇', sea:'بحر 🌊'
 };
-let activePal = PALETTES[DEFAULT_PAL];
+let activePal = PALETTES[DEFAULT_PAL] || PALETTES.ocean;
 
 let state = { month:'', budget:null, expenses:[], debts:[], locked:false };
 let session = null;
@@ -389,6 +389,9 @@ PALETTES.mint  = makePal('نعناع بارد 🧊', '#0E9280', '#C8942E', '#4EA
 PALETTES.rose  = makePal('ورد شتوي 🌹',   '#C2456B', '#C8912E', '#3E9E7A', '#B8383C');
 PALETTES.olive = makePal('زيتون ذهبي 🫒', '#7E8A1E', '#C87A2E', '#3E9E7A', '#C0453E');
 PALETTE_ORDER.push('berry', 'mint', 'rose', 'olive');
+PALETTES.pearl = makePal('اللؤلؤي', '#075665', '#B47725', '#287A57', '#B43D40');
+PALETTES.midnight = makePal('منتصف الليل', '#326DC7', '#B47725', '#287A57', '#B43D40');
+PALETTES.sage = makePal('المريمي', '#365E45', '#B47725', '#287A57', '#B43D40');
 
 /* والخلفيات الثلاث الجديدة تنضاف للباليتات المكتوبة بالإيد هم —
    ما ننسخهن يدوي، نشتقهن من لون كل باليت بنفس الوصف */
@@ -424,6 +427,7 @@ function saveTheme(primary){
 
 /* ---------- الباليت (لون الموقع + السماء المنسّقة) ---------- */
 function applyPalette(id, save){
+  if(typeof pauseAppearanceTransitions === 'function') pauseAppearanceTransitions();
   const p = PALETTES[id] || PALETTES[DEFAULT_PAL];
   activePal = p;
   setRole('primary', p.primary);
@@ -3165,7 +3169,8 @@ function renderSettings(){
     <details class="card set-acc" data-g="look" ${openAttr('look')}>
       <summary><span class="sa-ico">🎨</span>المظهر<span class="sa-chev">›</span></summary>
       <div class="sa-body">
-      <div class="set-toggle" style="margin-top:0">
+      ${typeof appearanceSettings === 'function' ? appearanceSettings() : ''}
+      <div class="set-toggle" id="legacyDarkControl" style="margin-top:0" ${['pearl','midnight','sage'].includes(curPal)?'hidden':''}>
         <span class="st-lbl">🌙 الوضع الداكن (دارك مود)</span>
         <label class="switch"><input type="checkbox" id="darkToggle" ${DARK_ON?'checked':''}><span class="track"></span><span class="knob"></span></label>
       </div>
@@ -3181,9 +3186,10 @@ function renderSettings(){
         <option value="mean">متنمّرة — يعايرك بفلوسك 😈</option>
       </select>
       <div class="hint" style="margin-top:4px">تحدد شلون يحچي ويّاك: نكت وسوالف، لو تحقيق مرح، لو محقق قلقان على فلوسك، لو متنمّر ما يرحم.</div>
-      <label>🎨 ثيم الألوان</label>
+      <details class="legacy-palettes"><summary>ثيمات الألوان السابقة</summary>
       <div class="pal-grid">${palCards}</div>
-      <div class="hint" style="margin-top:2px">كل ثيم يصبغ لون الموقع + السماء (نهار/غروب/ليل والفصول) بنفس العائلة — يتطبّق فوراً وينحفظ بجهازك.</div>
+      </details>
+      <div id="landscapeControls" ${typeof currentBackground === 'function' && currentBackground() !== 'landscape'?'hidden':''}>
       <label style="margin-top:12px">🌤 ثيم الخلفية (الفصول)</label>
       <select id="seasonSel">
         ${Object.keys(SEASON_NAMES).map(k => `<option value="${k}">${SEASON_NAMES[k]}</option>`).join('')}
@@ -3192,6 +3198,7 @@ function renderSettings(){
       <label style="margin-top:12px">🌫️ تغويش الخلفية (${skyBlur}٪)</label>
       <div class="blur-row"><input type="range" id="skyBlurRange" min="0" max="100" step="1" value="${skyBlur}"><span class="blur-val" id="skyBlurVal">${skyBlur}</span></div>
       <div class="hint" style="margin-top:4px">يغوّش السماء والخلفية فقط — البطاقات تبقى واضحة.</div>
+      </div>
       <label style="margin-top:12px">🔤 نوع الخط</label>
       <select id="fontSel">
         ${Object.keys(FONTS).map(k => `<option value="${k}" style="font-family:${FONTS[k].stack}${FONT_FALLBACK}">${FONTS[k].name}</option>`).join('')}
@@ -3279,6 +3286,7 @@ function renderSettings(){
     </details>` : ''}
   `;
 
+  if(typeof bindAppearanceSettings === 'function') bindAppearanceSettings();
   /* كود العائلة */
   sb.from('households').select('join_code').single().then(({ data }) => {
     $('famCode') && ($('famCode').textContent = (data && data.join_code) || '—');
@@ -4079,9 +4087,11 @@ let reconItems = [];
 let RECON_ON = LS.get('mas_recon') !== 'off';   // ظاهر افتراضياً
 let DARK_ON = LS.get('mas_dark') === 'on';      // فاتح افتراضياً
 function applyDark(){
-  document.body.classList.toggle('dark', DARK_ON);
+  const modern = ['pearl','midnight','sage'].includes(curPaletteId());
+  document.body.classList.toggle('dark', modern ? curPaletteId() === 'midnight' : DARK_ON);
+  if(typeof syncAppearance === 'function') syncAppearance();
   const meta = document.querySelector('meta[name="theme-color"]');
-  if(meta) meta.content = DARK_ON ? '#1C1712' : (getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || '#C86B4A');
+  if(meta) meta.content = getComputedStyle(document.body).getPropertyValue('--bg').trim();
 }
 function applyReconVisible(){
   const nb = $('navRecon');

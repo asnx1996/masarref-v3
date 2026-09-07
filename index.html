@@ -35,8 +35,10 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="stylesheet" href="fonts.css">
 <link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="appearance.css">
 </head>
 <body>
+<div id="ambientBackground" aria-hidden="true"></div>
 <a class="skip-link" href="#appMain">تخطَّ إلى المحتوى</a>
 <div id="splash">
   <div class="splash-inner">
@@ -400,6 +402,7 @@
 <script defer src="fluid.js"></script>
 <!-- طبقة الوصول — تلبس sheetShow/sheetHide بعد fluid وقبل ما boot يشغّل التطبيق -->
 <script defer src="a11y.js"></script>
+<script defer src="appearance.js"></script>
 <script defer src="boot.js"></script>
 </body>
 </html>

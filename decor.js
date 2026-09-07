@@ -210,6 +210,10 @@ function setSeason(s){
 function updateSky(){
   const sky = $('sky'), bodyEl = $('skyBody');
   if(!sky || !bodyEl) return;
+  if(typeof currentBackground === 'function' && currentBackground() !== 'landscape'){
+    document.body.classList.remove('sky-on');
+    return;
+  }
   document.body.classList.add('sky-on');
   buildStars();
   buildTrees();
