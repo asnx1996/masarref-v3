@@ -277,8 +277,20 @@ function harmonizeRed(redBase, primary){
   const [L, C, hr] = _oklch(redBase), hp = _oklch(primary)[2];
   const gap = (a,b)=>{ const d = Math.abs(a-b) % (2*Math.PI); return Math.min(d, 2*Math.PI-d); };
   if(gap(hr, hp) >= RED_MIN_SEP) return redBase;
+  /* الاتجاه لازم ينحسب، ما ينفع يكون ثابت.
+     چان دائماً ينزل «نحو القرمزي» — وهذا يشتغل ما دام الأساسي أعلى من
+     الأحمر بالصبغة (طين ٤٣°، جمرة ٤١°): الأحمر ينزل ويبتعد.
+     بس إذا الأساسي *تحت* الأحمر (أوركيد ٤°، والأحمر ٢٣°) فالنزول يمشي
+     باتجاه الأساسي، يعبره، ويطلع بالجهة الثانية بالأرجواني — فزر «احذف»
+     وشريط «تجاوز» يطلعون بنفسجيين، ويضيع معنى اللون كله.
+     الحل: نحسب الفرق المؤشَّر من الأساسي للأحمر وندور بنفس إشارته،
+     يعني نبتعد دائماً بدل ما نقترب. */
+  let d = hr - hp;
+  while(d >  Math.PI) d -= 2*Math.PI;
+  while(d < -Math.PI) d += 2*Math.PI;
+  const step = (d >= 0 ? 1 : -1) * Math.PI/180;
   let h = hr;
-  for(let i = 0; i < 90 && gap(h, hp) < RED_MIN_SEP; i++) h -= Math.PI/180;  // نحو القرمزي
+  for(let i = 0; i < 90 && gap(h, hp) < RED_MIN_SEP; i++) h += step;
   return _lch(L, C, h);
 }
 /* ============================================================

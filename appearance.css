@@ -44,6 +44,49 @@ body[data-appearance="deepsea"],.preview-deepsea{
   --line:#668D98;--line-strong:#7CA8B1;--surface-sunken:#132D36;--input-bg:#102B33;--placeholder:#8BAAB1;
   --ambient-color:#408A99;--ambient-secondary:#538E82;--primary-soft:#214C58;--preview-accent:#93D7E3;
 }
+/* ============================================================
+   العائلة المتشبّعة — ستّة ثيمات
+   ------------------------------------------------------------
+   الفرق عن الاثنعش الأوائل مو الصبغة، التشبّع. عجلة الصبغات چانت
+   مغطّاة أصلاً (كل مرشّح جديد يقع على بُعد ١٧° أو أقل من ثيم موجود)،
+   بس ألوانها الأساسية كلها بين ٠٫٠٣ و٠٫١٥ تشبّع — يعني عائلة هادية
+   كاملة بلا أي خيار جريء. هذولا بين ٠٫١٢ و٠٫٢٥، وأسطحهن مصبوغة
+   بوضوح (تشبّع الخلفية ٠٫٠٣٤ مقابل ٠٫٠١–٠٫٠٢ بالقديمة).
+
+   واللي ما انتغيّر: كل توكن هنا محلول على نفس أهداف APCA تبع بقية
+   الملف — حبر ٩٢/-٨٤، ثانوي ٧٣، فاصل ٣٢، حافة مُدخل ٤٥، عنصر نائب ٥٠.
+   التشبّع ينزاد بالصبغة والتعبئة، مو على حساب المقروئية.
+   ============================================================ */
+body[data-appearance="indigo"],.preview-indigo{
+  --bg:#E3E7FF;--bg-2:#EEF1FE;--card:#F9FAFE;--ink:#373B5B;--muted:#666B86;
+  --line:#B9BDD6;--line-strong:#9FA5C4;--surface-sunken:#E3E7FF;--input-bg:#FCFDFE;--placeholder:#9A9FB7;
+  --ambient-color:#8B7CF6;--ambient-secondary:#67C8F0;--preview-accent:#4338CA;
+}
+body[data-appearance="orchid"],.preview-orchid{
+  --bg:#FEE0E6;--bg-2:#FEECF0;--card:#FEF8FA;--ink:#56313B;--muted:#83636A;
+  --line:#D4B6BC;--line-strong:#C19CA4;--surface-sunken:#FEE0E6;--input-bg:#FEFCFC;--placeholder:#B4989E;
+  --ambient-color:#F472B6;--ambient-secondary:#FBA94C;--preview-accent:#BE185D;
+}
+body[data-appearance="jade"],.preview-jade{
+  --bg:#D3EFE2;--bg-2:#E4F6ED;--card:#F3FDF8;--ink:#1B4535;--muted:#557466;
+  --line:#AAC5B9;--line-strong:#8BAE9E;--surface-sunken:#D1F0E1;--input-bg:#F7FFFB;--placeholder:#8BA699;
+  --ambient-color:#34D399;--ambient-secondary:#A3D96B;--preview-accent:#00875C;
+}
+body[data-appearance="ember"],.preview-ember{
+  --bg:#2C140C;--bg-2:#371A0F;--card:#3F2116;--ink:#F1DBD4;--muted:#ECC6B8;
+  --line:#A07A6C;--line-strong:#BE9282;--surface-sunken:#33190F;--input-bg:#2E180F;--placeholder:#BB9B90;
+  --ambient-color:#F97316;--ambient-secondary:#E0B341;--primary-soft:#5A2E18;--preview-accent:#F79155;
+}
+body[data-appearance="azure"],.preview-azure{
+  --bg:#00202A;--bg-2:#002834;--card:#042F3C;--ink:#CEE4EC;--muted:#ACD5E4;
+  --line:#5F8998;--line-strong:#73A4B5;--surface-sunken:#002530;--input-bg:#03232C;--placeholder:#85A8B4;
+  --ambient-color:#22D3EE;--ambient-secondary:#5B8DEF;--primary-soft:#0A4557;--preview-accent:#6FD9F2;
+}
+body[data-appearance="nebula"],.preview-nebula{
+  --bg:#1F172C;--bg-2:#271D37;--card:#2F243F;--ink:#E4DDEF;--muted:#D5C8EA;
+  --line:#897C9E;--line-strong:#A496BC;--surface-sunken:#251B32;--input-bg:#221A2E;--placeholder:#A79DB9;
+  --ambient-color:#C05CF5;--ambient-secondary:#F05BA8;--primary-soft:#42305A;--preview-accent:#D9A6FA;
+}
 body[data-appearance]:not([data-appearance="classic"]):not(.dark){--shadow:0 1px 2px #25304008,0 5px 18px #25304009;--shadow-lg:0 20px 60px #25304026}
 body[data-appearance]:not([data-appearance="classic"]).dark{--shadow:0 1px 2px #00000018,0 5px 22px #00000020;--shadow-lg:0 20px 60px #00000066;--green-soft:#15382F;--amber-soft:#3B301D;--red-soft:#48242D}
 .theme-preview{--preview-bg:var(--bg);--preview-card:var(--card)}

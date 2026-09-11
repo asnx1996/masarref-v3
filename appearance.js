@@ -11,7 +11,14 @@ const APPEARANCE_THEMES = {
   plum: { name:'برقوق ليلي', en:'Plum', note:'بنفسجي عميق ولمسة موف', noteEn:'Deep plum, muted mauve', background:'glow', accent:'#895A9D', dark:true },
   evergreen: { name:'زمرد', en:'Emerald', note:'أخضر غامق ولمسة نعناعية', noteEn:'Forest depths, mint accents', background:'curves', accent:'#287761', dark:true },
   mocha: { name:'موكا', en:'Mocha', note:'قهوة داكنة وكراميل دافئ', noteEn:'Dark coffee, warm caramel', background:'linen', accent:'#926448', dark:true },
-  deepsea: { name:'أعماق البحر', en:'Deep sea', note:'بترولي غامق وفيروز مضيء', noteEn:'Deep petrol, luminous teal', background:'mesh', accent:'#267481', dark:true }
+  deepsea: { name:'أعماق البحر', en:'Deep sea', note:'بترولي غامق وفيروز مضيء', noteEn:'Deep petrol, luminous teal', background:'mesh', accent:'#267481', dark:true },
+  /* --- العائلة المتشبّعة: نفس عجلة الصبغات، بس بتشبّع ضِعف الأوائل --- */
+  indigo: { name:'نيلي', en:'Indigo', note:'نيلي كهربائي وأسطح ثلجية', noteEn:'Electric indigo, icy surfaces', background:'mesh', accent:'#4338CA' },
+  orchid: { name:'أوركيد', en:'Orchid', note:'فوشي جريء ولمسة مشمشية', noteEn:'Bold fuchsia, apricot accents', background:'glow', accent:'#BE185D' },
+  jade:   { name:'يشم', en:'Jade', note:'زمردي منعش وأخضر نعناعي', noteEn:'Crisp emerald, mint highlights', background:'curves', accent:'#00875C' },
+  ember:  { name:'جمرة', en:'Ember', note:'برتقالي متوهّج على فحم دافئ', noteEn:'Glowing orange on warm char', background:'glow', accent:'#D9541A', dark:true },
+  azure:  { name:'لازورد', en:'Azure', note:'سماوي كهربائي وأعماق حبرية', noteEn:'Electric cyan, inky depths', background:'mesh', accent:'#0093BE', dark:true },
+  nebula: { name:'سديم', en:'Nebula', note:'بنفسجي متوهّج ووردي مجرّي', noteEn:'Glowing violet, galactic pink', background:'glow', accent:'#9333EA', dark:true }
 };
 // Register the extra palettes before boot loads the saved preference.
 Object.entries(APPEARANCE_THEMES).forEach(([id,t]) => {
@@ -61,7 +68,7 @@ function appearanceSettings(){
     <span class="appearance-local">${appearanceText('ينحفظ تلقائياً', 'Saved automatically')}</span></div>
     <div class="theme-toolbar"><div class="theme-filters" role="group" aria-label="${appearanceText('عرض الثيمات','Filter themes')}">
       ${[['all','الكل','All'],['light','فاتحة','Light'],['dark','داكنة','Dark']].map(([id,ar,en]) => `<button type="button" data-theme-filter="${id}" aria-pressed="${appearanceFilter===id}">${appearanceText(ar,en)}</button>`).join('')}
-    </div><span class="theme-count">${appearanceText('١٢ ثيم متناسق','12 curated themes')}</span></div>
+    </div><span class="theme-count">${(n => appearanceText(`${toArDigits(n)} ثيم متناسق`, `${n} curated themes`))(Object.keys(APPEARANCE_THEMES).length)}</span></div>
     <div class="theme-choices" role="group" aria-label="${appearanceText('الثيم', 'Theme')}">
     ${Object.entries(APPEARANCE_THEMES).map(([id,t]) => `<button type="button" class="theme-choice" data-theme-choice="${id}" data-theme-mode="${t.dark?'dark':'light'}" ${appearanceFilter!=='all'&&appearanceFilter!==(t.dark?'dark':'light')?'hidden':''} aria-pressed="${theme===id}">
       <span class="theme-preview preview-${id}" aria-hidden="true"><span class="preview-top"><i></i><i></i></span><span class="preview-balance"><i></i><b>850,000</b></span><span class="preview-rows"><i></i><i></i><i></i></span><span class="preview-action"></span></span>
