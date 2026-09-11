@@ -256,7 +256,11 @@ function setRole(name, base){
   // جنب بعض، ولو الاثنتان بنفس درجة الشحوب ما تنفرقان بالنظرة السريعة.
   // ولأن سطحه أغمق، نصّه لازم ينزل معه حتى يبقى فوقه Lc 60
   const soft = name === 'red' ? [0.74, 0.66] : [0.88, 0.80];
-  const txtMax = name === 'red' ? 0.48 : ROLE_TEXT_LIGHT_MAX;
+  // ٠٫٤٦ مو ٠٫٤٨: بـ٠٫٤٨ كان --red-text على --red-soft يطلع Lc ٥٩ بكل
+  // الثيمات الفاتحة — نقطة وحدة تحت حد ٦٠ للنص غير الجسمي، وهذا اللون
+  // يحمل «احذف» و«ألغِ» و«متأخّر». التغميق بالنص مو بالسطح، حتى تبقى
+  // صبغة السطح الأقوى (٠٫٧٤) اللي تفرّق شارة الحذف عن شارة الترجيع.
+  const txtMax = name === 'red' ? 0.46 : ROLE_TEXT_LIGHT_MAX;
   const txtMin = name === 'red' ? 0.90 : ROLE_TEXT_DARK_MIN;
   R.setProperty('--' + name,            shiftL(base, { max: FILL_MAX[name] || ROLE_FILL_MAX }));
   R.setProperty('--' + name + '-text-l', shiftL(base, { max: txtMax }));

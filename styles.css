@@ -17,13 +17,20 @@
      نص الجسم Lc 75، النص الثانوي Lc 60، عناصر الواجهة Lc 30.
      ============================================================ */
   :root{
-    --bg:#FBF7F1;
-    --bg-2:#FFFFFF;
+    /* سلّم الأسطح: الصفحة تنزل خطوة تحت البطاقة (Lc ٩) بدل ما تتطابق
+       وياها. قبل چان --bg:#FBF7F1 و--card:#FFFFFF — الفرق بينهن تحت
+       قصّ APCA (Lc صفر)، يعني البطاقة ما إلها حافة ولا عمق: الواجهة
+       كلها صفحة وحدة مسطّحة. */
+    --bg:#F1EDE7;
+    --bg-2:#F6F6F6;           /* سطح وسط: غاطس جوّا البطاقة، فوق الصفحة */
     --card:#FFFFFF;
-    --ink:#2A2018;
-    --muted:#5E5449;          /* Lc 81 على --bg — كان #93887C بـ Lc 58 */
-    --line:#D8CBB8;           /* فاصل/حافة بطاقة — Lc 27 على البطاقة */
-    --line-strong:#9B9287;    /* حافة مُدخل أو زر — عنصر واجهة، 3:1 على الأبيض */
+    /* نص الجسم Lc ٩٢ — فوق «المفضّل» ٩٠ بـAPCA. قبل چان #2A2018 بـLc
+       ١٠٣: أسود شبه صافي على أبيض شبه صافي، وهذا أعلى من أي حد مطلوب
+       ويتعب العين بالقراءة الطويلة بلا ما يزيد وضوح. */
+    --ink:#4F443B;
+    --muted:#7C7166;          /* Lc 73 على البطاقة، 63 على السطح الغاطس */
+    --line:#CFC2AF;           /* فاصل/حافة بطاقة — Lc 32، حد عناصر الواجهة ٣٠ */
+    --line-strong:#B4AA9F;    /* حافة مُدخل أو زر — Lc 45 على البطاقة */
 
     /* قيم احتياطية لحد ما يشتغل app.js (ثيم «بحر هادئ») */
     --primary:#1580A1;   --primary-text-l:#007797; --primary-text-d:#7CD9FC;
@@ -42,8 +49,8 @@
     --red-text:var(--red-text-l);         --red-soft:var(--red-soft-l);
 
     --surface-sunken:#F2EDE5; /* سطح غاطس محايد (بانر، مُدخل) */
-    --input-bg:#fff;
-    --placeholder:#7C7266;
+    --input-bg:#FFFFFF;
+    --placeholder:#ABA094;    /* Lc 50 على خلفية المُدخل — حد العنصر النائب ٣٠ */
     --radius:22px;
     --radius-sm:16px;
     /* مقياس التباعد — أساس 4px. كل الهوامش تطلع من هنا بدل أرقام متفرقة */
@@ -57,6 +64,7 @@
     --blur:saturate(160%) blur(20px);
     --ease:cubic-bezier(.32,.72,0,1);
     --header-grad:linear-gradient(160deg in oklab, var(--primary), color-mix(in oklab, var(--primary) 74%, #3a1c0e 26%));
+
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 
@@ -65,13 +73,20 @@
      نسختها الداكنة (إضاءة أعلى، نفس الصبغة) — بدونها كان اللون
      الأساسي بثيم «رصاصي» يطلع Lc 7 على البطاقة، يعني مختفي. */
   body.dark{
-    --bg:#1C1712;
-    --bg-2:#241C15;
-    --card:#2A2018;
-    --ink:#F3E9DD;
-    --muted:#E2D2C0;          /* Lc -78 على البطاقة — كان #B9A996 بـ Lc -55 */
-    --line:#64574B;           /* حافة بطاقة تنشاف فعلاً — كانت Lc -4 */
-    --line-strong:#8A7C6F;    /* حافة مُدخل — Lc 32 / 3.9:1 على البطاقة */
+    /* القاع يرتفع عن السواد شوي، والبطاقة ترتفع فوقه خطوة إضاءة.
+       الفرق بين سطحين كبيرين بالوضع الداكن يبقى تحت قصّ APCA مهما
+       سوّينا (لازم قفزة تخلّي «البطاقة» رمادي وسط حتى توصل Lc ٧)،
+       فاللي يحمل التمييز فعلاً هي الحافة --line المرفوعة تحت. */
+    --bg:#231E19;
+    --bg-2:#2E241C;
+    --card:#362B23;
+    /* نص الجسم Lc -84 بدل -92. الوهج (halation) — تفتّح حروف فاتحة
+       على قاع غامق — هو أكبر مصدر إجهاد بالوضع الداكن، ومصدره النص
+       شبه الأبيض مو الخلفية. والنتيجة بعدها فوق حد ٧٥ لنص الجسم. */
+    --ink:#E9E0D4;
+    --muted:#DDCDBB;          /* Lc -73 على البطاقة */
+    --line:#8F8174;           /* حافة/فاصل — Lc -32؛ كانت -15 يعني شبه مختفية */
+    --line-strong:#A99B8D;    /* حافة مُدخل — Lc -45 على البطاقة */
 
     --primary-text:var(--primary-text-d); --primary-soft:var(--primary-soft-d);
     --amber-text:var(--amber-text-d);     --amber-soft:var(--amber-soft-d);
@@ -79,8 +94,8 @@
     --red-text:var(--red-text-d);         --red-soft:var(--red-soft-d);
 
     --surface-sunken:#221A13;
-    --input-bg:#33271D;
-    --placeholder:#A2917D;
+    --input-bg:#2B1F15;       /* ينزل تحت البطاقة — الخانة تبيّن بلا ما تعتمد على الحافة بس */
+    --placeholder:#B2A08C;    /* Lc -50 على خلفية المُدخل */
     --shadow:0 1px 2px rgba(0,0,0,.40), 0 6px 22px rgba(0,0,0,.34);
     --shadow-lg:0 12px 44px rgba(0,0,0,.58);
     color:#F3E9DD;
@@ -91,6 +106,36 @@
   body.dark ::-webkit-calendar-picker-indicator{filter:invert(1)}
   html{-webkit-text-size-adjust:100%}
   body{
+    /* ============================================================
+       طبقة التدرّجات
+       ------------------------------------------------------------
+       أسطح التطبيق چانت تعبئة صلبة وحدة — صفحة وبطاقة وهيدر بنفس
+       اللون تقريباً — فالواجهة كلها تنقرا ورقة مسطّحة بلا عمق.
+
+       قاعدتان تحكمن كل تدرّج هنا:
+
+       ١) المدى ضيّق ومربوط بالتوكنات. كل محطة مشتقّة بـcolor-mix من
+          سطح أو لون موجود، فتبقى داخل نطاق إضاءة السطح نفسه. يعني
+          قياسات التباين اللي فوق تبقى صحيحة بكل نقطة من التدرّج،
+          مو بالمتوسط بس — والنص ما ينحط أبداً فوق منطقة تفرق كثير.
+
+       ٢) المزج بـoklab مو sRGB. المزج الافتراضي يمرّ بخط مستقيم
+          داخل sRGB، فينزّل وسط التدرّج ويطفّيه (المنطقة الرمادية
+          الميّتة). oklab يمشي بإضاءة متساوية، فالوسط يبقى حيّ.
+       ============================================================ */
+    /* البطاقة: قمّة أفتح شوي وقاع يميل للون الصفحة — اتجاه الضوء الطبيعي */
+    --grad-card:linear-gradient(176deg in oklab,
+      var(--card) 0%,
+      color-mix(in oklab, var(--bg) 34%, var(--card)) 100%);
+    /* الزر الأساسي: يغمق للأسفل — والنص الأبيض يكسب تبايناً بالقاع مو يخسر */
+    --grad-primary:linear-gradient(180deg in oklab,
+      var(--primary) 0%,
+      color-mix(in oklab, #000 15%, var(--primary)) 100%);
+    /* الصفحة: غسلة خفيفة بلون الثيم بدل لون صلب واحد */
+    --grad-page:linear-gradient(185deg in oklab,
+      color-mix(in oklab, var(--ambient-color, var(--primary)) 9%, var(--bg)) 0%,
+      var(--bg) 46%,
+      color-mix(in oklab, var(--ambient-secondary, var(--amber)) 7%, var(--bg)) 100%);
     font-family:'Rubik','Alexandria',-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;
     background:var(--bg);
     color:var(--ink);
@@ -255,7 +300,7 @@
   }
   #loginScreen.show{display:flex}
   .login-card{
-    width:100%;max-width:360px;background:var(--card);border:1px solid var(--line);
+    width:100%;max-width:360px;background:var(--grad-card);border:1px solid var(--line);
     border-radius:24px;box-shadow:var(--shadow);padding:30px 22px;
     animation:pop .4s var(--ease);
   }
@@ -354,7 +399,7 @@
   .tab.active{display:block;animation:fade .32s var(--ease)}
   @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   .card{
-    background:var(--card);border:1px solid var(--line);
+    background:var(--grad-card);border:1px solid var(--line);
     border-radius:var(--radius);box-shadow:var(--shadow);
     padding:var(--sp-4);margin-bottom:var(--gap-card);
   }
@@ -376,7 +421,7 @@
   .btn{
     width:100%;border:none;border-radius:14px;cursor:pointer;
     font-family:inherit;font-weight:700;font-size:.95rem;
-    padding:14px;background:var(--primary);color:#fff;margin-top:14px;
+    padding:14px;background:var(--grad-primary);color:#fff;margin-top:14px;
     transition:transform .18s var(--ease),filter .2s;
     box-shadow:0 4px 14px color-mix(in srgb, var(--primary) 30%, transparent);
   }
@@ -408,7 +453,7 @@
 
   /* ---------- ظروف الميزانية (الداشبورد) ---------- */
   .env{
-    background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);
+    background:var(--grad-card);border:1px solid var(--line);border-radius:var(--radius-sm);
     box-shadow:var(--shadow);padding:13px 14px;margin-bottom:10px;
   }
   .env-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
@@ -455,7 +500,7 @@
   .save-head{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:.95rem;margin:18px 4px 10px}
   .save-head span{color:var(--primary-text);font-weight:800}
   .fund{
-    background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);
+    background:var(--grad-card);border:1px solid var(--line);border-radius:var(--radius-sm);
     box-shadow:var(--shadow);padding:13px 14px;margin-bottom:10px;
   }
   .fund-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
@@ -472,7 +517,7 @@
 
   /* ---------- ديون الصناديق ---------- */
   .debt{
-    background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);
+    background:var(--grad-card);border:1px solid var(--line);border-radius:var(--radius-sm);
     box-shadow:var(--shadow);padding:13px 14px;margin-bottom:10px;border-right:3px solid var(--amber-text);
   }
   .debt-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
@@ -493,7 +538,7 @@
      بلا ما تنفتح، والتفاصيل تنزل بحركة ارتفاع نظيفة (0fr→1fr)
      بدل max-height المقدّرة اللي تخلي الحركة تتقطع أو تتأخر. */
   .dgrp{
-    background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);
+    background:var(--grad-card);border:1px solid var(--line);border-radius:var(--radius-sm);
     box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden;
     border-right:3px solid var(--primary-text);
   }
@@ -544,7 +589,7 @@
   .filter-bar input,.filter-bar select{padding:10px 12px;font-size:.82rem;border-radius:12px}
   .exp{
     display:flex;align-items:center;gap:12px;cursor:pointer;
-    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    background:var(--grad-card);border:1px solid var(--line);border-radius:16px;
     padding:12px 14px;margin-bottom:9px;transition:transform .15s var(--ease),box-shadow .2s,border-color .2s;
     touch-action:pan-y;
   }
@@ -1776,6 +1821,49 @@
   @media (forced-colors:active){
     :where(button,a,[tabindex]):focus-visible{outline:2px solid Highlight;outline-offset:2px}
     nav button.active{border:1px solid Highlight}
+  }
+
+  /* ---------- ٩.٣ التباين الأعلى ----------
+     خفّضنا نص الجسم من Lc ١٠٣ إلى ٩٢ (فاتح) ومن -٩٢ إلى -٨٤ (داكن)
+     لأن الطرفين الأقصيين يتعبون العين بالاستعمال الطويل بلا ما يزيدون
+     وضوح — كلاهما بعده فوق حد ٧٥ لنص الجسم وفوق «المفضّل» ٩٠ بالفاتح.
+
+     بس اللي مفعّل «تباين أعلى» بالنظام طالب العكس صراحةً، فنرجّعله
+     الطرف كاملاً: النص ينسحب للأقصى والحواف تثقل. والسحب بـoklab حتى
+     الصبغة تبقى صبغة الثيم بدل ما تروح للرمادي.
+
+     ⚠️ الاشتقاق من --card مو من التوكن نفسه. لو كتبنا
+        --ink:color-mix(..., var(--ink), ...) چان صار المتغيّر يشير
+        لنفسه على نفس العنصر — وهذي حلقة، والمواصفة تعتبرها قيمة
+        باطلة وقت الحساب، فالتوكن يضيع كله بدل ما يتقوّى.
+        و--card ما ننلمسه هنا، فالاشتقاق منه آمن، وبنفس الوقت
+        يخلّي أثر صبغة الثيم موجود بدل أسود/أبيض ميّت.
+
+     النِّسَب مقاسة على كل الثيمات الاثنعش: الرقم هو حصّة --card
+     بالخلط، فكل ما قلّ اقترب اللون من الطرف.                      */
+  @media (prefers-contrast:more){
+    /* فاتح — السحب نحو الأسود:  حبر ١٠٤ (كان ٩٢)، ثانوي ٨٤ (٧٣)،
+       حافة مُدخل ٦٣ (٤٥)، فاصل ٤٨ (٣٢) */
+    body:not(.dark){
+      --ink:color-mix(in oklab, var(--card) 10%, #000);
+      --muted:color-mix(in oklab, var(--card) 45%, #000);
+      --line-strong:color-mix(in oklab, var(--card) 62%, #000);
+      --line:color-mix(in oklab, var(--card) 72%, #000);
+    }
+    /* داكن — السحب نحو الأبيض: حبر ٩٣ (كان ٨٤)، ثانوي ٨٤ (٧٣)،
+       حافة مُدخل ٦٣ (٤٥)، فاصل ٥٣ (٣٢) */
+    body.dark{
+      --ink:color-mix(in oklab, var(--card) 6%, #fff);
+      --muted:color-mix(in oklab, var(--card) 12%, #fff);
+      --line-strong:color-mix(in oklab, var(--card) 28%, #fff);
+      --line:color-mix(in oklab, var(--card) 36%, #fff);
+    }
+    /* التدرّجات تنطفي هنا: التباين الأعلى يريد حافة قاطعة بين سطح
+       وسطح، والتدرّج بطبيعته يميّع الحافة. */
+    :is(.card,.env,.fund,.debt,.dgrp,.exp,.login-card){background:var(--card)}
+    body[data-appearance]:not([data-appearance="classic"]) header{background:var(--card)}
+    #ambientBackground{background:var(--bg)}
+    #ambientBackground::before,#ambientBackground::after{opacity:0}
   }
 
   /* ---------- ٩.٤ مساحة اللمس ----------
