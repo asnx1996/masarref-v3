@@ -394,6 +394,172 @@ function setCursorGlow(on){
 }
 
 /* ============================================================
+   قائمة الكلك اليمين — اختصارات سريعة (كمبيوتر بس)
+   ------------------------------------------------------------
+   كلك يمين بأي مكان بالصفحة يفتح قائمة صغيرة عند المؤشر: تنقّل بين
+   التبويبات + شوية أوامر سريعة. المستخدم يحدّد شنو يظهر بيها من
+   الإعدادات، ويكدر يطفيها كلها.
+
+   قواعد ثابتة حتى ما نسرق سلوك المتصفح بلا فايدة:
+   • حقول الكتابة والروابط والصور والنص المحدّد ← قائمة المتصفح
+     الأصلية تبقى (نسخ/لصق/فتح بتبويب — ماكو بديل عندنا لهذولا).
+   • Shift + كلك يمين ← دائماً قائمة المتصفح، بأي مكان.
+   • شاشة الدخول ما إلها قائمة — ماكو تبويبات أصلاً.
+   ============================================================ */
+let CTX_ON = LS.get('mas_ctx') !== 'off';
+let ctxEl = null, ctxBound = false, ctxLastFocus = null;
+const CTX_ACTS = [
+  { id:'act:top',   ic:'↑',  ar:'فوق الصفحة', en:'Back to top',  run:() => window.scrollTo({ top:0, behavior:'smooth' }) },
+  { id:'act:chart', ic:'📈', ar:'رسم الأشهر', en:'Months chart', run:() => showMonthsChart() },
+  { id:'act:pdf',   ic:'📄', ar:'تقرير PDF',  en:'PDF report',   run:() => pdfReport() },
+  { id:'act:music', ic:'🎵', ar:'الموسيقى',   en:'Music',        run:() => openMusic() }
+];
+const ctxTxt = (ar, en) => (typeof LANG !== 'undefined' && LANG.cur === 'en') ? en : ar;
+
+/* قائمة كل الاختصارات الممكنة. التبويبات تنقرا من أزرار الشريط نفسها:
+   يعني تجي مترجمة تلقائياً، والتبويب المطفي من الإعدادات (زره مخفي)
+   ما يظهر هنا أصلاً — بلا أي قائمة ثانية نضل نزامنها بالإيد */
+function ctxCatalogue(){
+  const tabs = [...document.querySelectorAll('nav button[data-tab]')]
+    .filter(b => b.style.display !== 'none')
+    .map(b => ({
+      id: 'tab:' + b.dataset.tab,
+      ic: ((b.querySelector('.ic') || {}).textContent || '•').trim(),
+      /* نص الزر بلا الأيقونة — الأيقونة بـspan والاسم عقدة نص عارية */
+      label: [...b.childNodes].filter(n => n.nodeType === 3).map(n => n.textContent).join('').trim(),
+      active: b.classList.contains('active'),
+      run: () => gotoTab(b.dataset.tab)
+    }));
+  return tabs.concat(CTX_ACTS.map(a => ({ id:a.id, ic:a.ic, label:ctxTxt(a.ar, a.en), run:a.run, act:true })));
+}
+/* null = ما اختار شي بعد ← كلشي يظهر */
+function ctxPicked(){
+  const raw = LS.get('mas_ctxitems');
+  return raw === null ? null : new Set(raw ? raw.split(',') : []);
+}
+function ctxClose(){
+  if(!ctxEl || ctxEl.hidden) return;
+  ctxEl.hidden = true;
+  if(ctxLastFocus && document.contains(ctxLastFocus)){ try{ ctxLastFocus.focus({ preventScroll:true }); }catch(_){} }
+  ctxLastFocus = null;
+}
+function ctxOpen(x, y, byKeyboard){
+  const picked = ctxPicked();
+  const items = ctxCatalogue().filter(i => !picked || picked.has(i.id));
+  if(!items.length) return false;          /* فاضية ← خلّي قائمة المتصفح تطلع */
+  if(!ctxEl){
+    ctxEl = document.createElement('div');
+    ctxEl.id = 'ctxMenu';
+    ctxEl.setAttribute('role', 'menu');
+    ctxEl.hidden = true;
+    document.body.appendChild(ctxEl);
+  }
+  ctxEl.setAttribute('aria-label', ctxTxt('اختصارات سريعة', 'Quick shortcuts'));
+  ctxEl.innerHTML = '';
+  items.forEach((it, i) => {
+    /* فاصل بين التبويبات والأوامر */
+    if(it.act && i > 0 && !items[i-1].act){
+      const hr = document.createElement('hr');
+      hr.className = 'cx-sep';
+      ctxEl.appendChild(hr);
+    }
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.setAttribute('role', 'menuitem');
+    b.tabIndex = -1;
+    if(it.active) b.setAttribute('aria-current', 'true');
+    const ic = document.createElement('span');
+    ic.className = 'cx-ic';
+    ic.setAttribute('aria-hidden', 'true');
+    ic.textContent = it.ic;
+    const lb = document.createElement('span');
+    lb.textContent = it.label;              /* نص، مو HTML — بلا أي حقن */
+    b.append(ic, lb);
+    b.onclick = () => {
+      ctxClose();
+      try{ it.run(); }
+      catch(err){ try{ toast('ما اشتغل الاختصار: ' + err.message, true); }catch(_){} }
+    };
+    ctxEl.appendChild(b);
+  });
+
+  /* نفتحها مخفية بصرياً حتى نكدر نقيسها قبل ما نحدّد مكانها */
+  ctxEl.hidden = false;
+  ctxEl.style.visibility = 'hidden';
+  ctxEl.style.left = '0px';
+  ctxEl.style.top = '0px';
+  const r = ctxEl.getBoundingClientRect(), M = 8;
+  const rtl = getComputedStyle(document.body).direction === 'rtl';
+  /* بالعربي تنفتح لليسار من المؤشر (اتجاه القراءة)، وتنقلب إذا ضاق المحل */
+  let left = rtl ? x - r.width : x;
+  if(left + r.width > window.innerWidth - M) left = x - r.width;
+  if(left < M) left = Math.max(M, Math.min(x, window.innerWidth - r.width - M));
+  let top = y;
+  if(top + r.height > window.innerHeight - M) top = y - r.height;
+  if(top < M) top = Math.max(M, window.innerHeight - r.height - M);
+  ctxEl.style.left = left + 'px';
+  ctxEl.style.top = top + 'px';
+  /* الحركة تطلع من الزاوية اللي عند المؤشر */
+  ctxEl.style.transformOrigin =
+    (Math.abs(top - y) <= Math.abs(top + r.height - y) ? 'top' : 'bottom') + ' ' +
+    (Math.abs(left - x) <= Math.abs(left + r.width - x) ? 'left' : 'right');
+  ctxEl.style.visibility = '';
+
+  /* الفوكس ينحط بالعنصر الأول إذا انفتحت بالكيبورد (زر القائمة /
+     Shift+F10) — هناك المستخدم ينتظرها تستلم الفوكس. بالماوس لا:
+     حلقة الفوكس تطلع بلا سبب بينما إيده على الماوس. الأسهم تشتغل
+     بالحالتين لأن المستمع على document مو على القائمة. */
+  ctxLastFocus = document.activeElement;
+  const first = ctxEl.querySelector('button');
+  if(byKeyboard && first){ try{ first.focus({ preventScroll:true }); }catch(_){} }
+  return true;
+}
+function initCtxMenu(){
+  if(ctxBound) return;
+  if(!window.matchMedia) return;
+  if(!window.matchMedia('(hover:hover) and (pointer:fine) and (min-width:1000px)').matches) return;
+  ctxBound = true;
+
+  document.addEventListener('contextmenu', (e) => {
+    if(!CTX_ON || e.shiftKey) return;
+    const login = document.getElementById('loginScreen');
+    if(login && login.classList.contains('show')) return;
+    if(e.target.closest && e.target.closest('input,textarea,select,[contenteditable="true"],a[href],img')) return;
+    const sel = window.getSelection && window.getSelection();
+    if(sel && !sel.isCollapsed && String(sel).trim()) return;
+    /* زر القائمة بالكيبورد يجي بـbutton=0 (الماوس اليمين =2) */
+    if(ctxOpen(e.clientX, e.clientY, e.button !== 2)) e.preventDefault();
+  });
+
+  /* الضغط برّاها يسكّرها — capture حتى نسبق أي مستمع ثاني يوقف الحدث */
+  document.addEventListener('pointerdown', (e) => {
+    if(ctxEl && !ctxEl.hidden && !ctxEl.contains(e.target)) ctxClose();
+  }, true);
+  document.addEventListener('keydown', (e) => {
+    if(!ctxEl || ctxEl.hidden) return;
+    const items = [...ctxEl.querySelectorAll('button')];
+    const i = items.indexOf(document.activeElement);
+    const go = (n) => { e.preventDefault(); items[(n + items.length) % items.length].focus(); };
+    if(e.key === 'Escape'){ e.preventDefault(); ctxClose(); }
+    else if(e.key === 'ArrowDown') go(i + 1);
+    else if(e.key === 'ArrowUp') go(i < 0 ? items.length - 1 : i - 1);
+    else if(e.key === 'Home') go(0);
+    else if(e.key === 'End') go(items.length - 1);
+  });
+  window.addEventListener('blur', ctxClose);
+  window.addEventListener('resize', ctxClose);
+  /* أي تمرير — بالصفحة أو جوّا أي قائمة — يخلّي مكانها غلط، فتنسكّر */
+  window.addEventListener('scroll', ctxClose, { passive:true, capture:true });
+}
+/* مفاتيح الإعدادات */
+function setCtxMenu(on){
+  CTX_ON = !!on;
+  LS.set('mas_ctx', CTX_ON ? 'on' : 'off');
+  if(CTX_ON) initCtxMenu(); else ctxClose();
+}
+function setCtxItems(ids){ LS.set('mas_ctxitems', ids.join(',')); }
+
+/* ============================================================
    سحب صف المصروف أفقياً للحذف (موبايل) — يشغّل نفس تأكيد الحذف
    ============================================================ */
 function initSwipe(){

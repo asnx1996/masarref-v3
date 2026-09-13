@@ -3190,9 +3190,24 @@ function renderSettings(){
         <span class="st-lbl">🌙 الوضع الداكن (دارك مود)</span>
         <label class="switch"><input type="checkbox" id="darkToggle" ${DARK_ON?'checked':''}><span class="track"></span><span class="knob"></span></label>
       </div>
-      <div class="set-toggle">
-        <span class="st-lbl">✨ هالة المؤشر — ضوء يلحگ الماوس (كمبيوتر بس)</span>
+      <div class="set-sec">🖱️ المؤشر والاختصارات (كمبيوتر بس)</div>
+      <div class="set-toggle" style="margin-top:0">
+        <span class="st-lbl">✨ هالة المؤشر — ضوء يلحگ الماوس</span>
         <label class="switch"><input type="checkbox" id="glowToggle" ${(typeof GLOW_ON !== 'undefined' && GLOW_ON)?'checked':''}><span class="track"></span><span class="knob"></span></label>
+      </div>
+      <div class="set-toggle">
+        <span class="st-lbl">🖱️ قائمة الكلك اليمين — اختصارات وتنقّل سريع</span>
+        <label class="switch"><input type="checkbox" id="ctxToggle" ${(typeof CTX_ON !== 'undefined' && CTX_ON)?'checked':''}><span class="track"></span><span class="knob"></span></label>
+      </div>
+      <div id="ctxPickWrap" ${(typeof CTX_ON !== 'undefined' && CTX_ON)?'':'hidden'}>
+        <label>شنو يظهر بالقائمة؟</label>
+        <div class="ctx-pick" role="group" aria-label="عناصر قائمة الكلك اليمين">
+        ${(typeof ctxCatalogue === 'function' ? ctxCatalogue() : []).map(i => {
+          const on = typeof ctxPicked === 'function' ? (p => !p || p.has(i.id))(ctxPicked()) : true;
+          return `<button type="button" data-ctx-pick="${esc(i.id)}" aria-pressed="${on}"><span aria-hidden="true">${esc(i.ic)}</span>${esc(i.label)}</button>`;
+        }).join('')}
+        </div>
+        <div class="hint">كلك يمين بأي مكان بالصفحة تفتحلك القائمة عند المؤشر. بحقول الكتابة والنص المحدّد تبقى قائمة المتصفح مثل ما هي، و<b>Shift + كلك يمين</b> يرجّعلك قائمة المتصفح بأي مكان.</div>
       </div>
       <div class="set-toggle">
         <span class="st-lbl">🕵️ شيرلوك هولمز باللوحة (يمشي ويحقق وينصح)</span>
@@ -3444,6 +3459,22 @@ function renderSettings(){
     try{ setCursorGlow(e.target.checked); }catch(_){}
     toast(e.target.checked ? 'الهالة تلحگ الماوس ✨' : 'انطفت هالة المؤشر');
   };
+  if($('ctxToggle')) $('ctxToggle').onchange = (e) => {
+    try{ setCtxMenu(e.target.checked); }catch(_){}
+    if($('ctxPickWrap')) $('ctxPickWrap').hidden = !e.target.checked;
+    toast(e.target.checked ? 'كلك يمين ← اختصاراتك 🖱️' : 'رجعت قائمة المتصفح الأصلية');
+  };
+  /* المحدّد ينحفظ كامل بكل ضغطة — بلا زر «حفظ» ينتسى */
+  document.querySelectorAll('[data-ctx-pick]').forEach(b => {
+    b.onclick = () => {
+      b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true');
+      const ids = [...document.querySelectorAll('[data-ctx-pick]')]
+        .filter(x => x.getAttribute('aria-pressed') === 'true')
+        .map(x => x.dataset.ctxPick);
+      try{ setCtxItems(ids); }catch(_){}
+      if(!ids.length) toast('ما خليت ولا اختصار — القائمة ما راح تفتح');
+    };
+  });
   if($('holmesToggle')) $('holmesToggle').onchange = (e) => {
     try{ setHolmes(e.target.checked); }catch(_){}
   };

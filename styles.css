@@ -1340,28 +1340,69 @@
     width:300px;height:300px;mix-blend-mode:multiply;
     background:radial-gradient(closest-side, color-mix(in srgb, var(--primary) 42%, transparent), transparent 70%);
   }
-  /* النقطة: قلب بلون الثيم وحلقة بيضة رفيعة حواليه. بلا الحلقة تختفي
-     النقطة لمن تمرّ فوق زر بنفس لون الثيم (زر «دخول» مثلاً) */
+  /* الحلقة: مخفية بالوضع العادي (بالمشي ماكو غير الهالة الناعمة)،
+     وتظهر بس لمن تكعد فوك شي ينضغط — تنكمش من ٢٦px لـ١٨px فتحسّها
+     «تلزم» العنصر. فاضية من الوسط حتى نص الزر يبقى مقروء، وحلقة
+     بيضة رفيعة حواليها حتى ما تختفي فوك زر بنفس لون الثيم */
   #curGlow .cg-dot{
-    width:8px;height:8px;background:var(--primary);
-    box-shadow:0 0 0 1.5px rgba(255,255,255,.75), 0 0 12px color-mix(in srgb, var(--primary) 60%, transparent);
+    width:26px;height:26px;background-color:transparent;border-width:2px;
+    box-shadow:0 0 0 1.5px rgba(255,255,255,.55), 0 0 12px color-mix(in srgb, var(--primary) 45%, transparent);
   }
   #curGlow.on .cg-halo{opacity:.5}
-  #curGlow.on .cg-dot{opacity:.85}
-  /* فوق شي ينضغط: الهالة تتوسّع، والنقطة تنفتح حلقة فاضية بدل ما تكبر
-     قرص مصمّت — لأن القرص الكبير يغطّي حرف من نص الزر اللي تحته */
   #curGlow.hot .cg-halo{width:400px;height:400px}
   #curGlow.on.hot .cg-halo{opacity:.62}
-  #curGlow.hot .cg-dot{width:22px;height:22px;border-width:2px;background-color:transparent}
+  #curGlow.on.hot .cg-dot{width:18px;height:18px;opacity:.9}
   /* نبزة الضغط — تنكمش لحظة وترجع */
   #curGlow.tap .cg-halo{width:220px;height:220px}
+  #curGlow.on.hot.tap .cg-dot{width:13px;height:13px}
   body.dark #curGlow .cg-halo{mix-blend-mode:screen}
   body.dark #curGlow.on .cg-halo{opacity:.4}
-  body.dark #curGlow .cg-dot{box-shadow:0 0 0 1.5px rgba(255,255,255,.45), 0 0 16px color-mix(in srgb, var(--primary) 75%, transparent)}
+  body.dark #curGlow .cg-dot{box-shadow:0 0 0 1.5px rgba(255,255,255,.35), 0 0 16px color-mix(in srgb, var(--primary) 60%, transparent)}
   /* decor.js أصلاً ما يبنيها بهالحالات — وهذي ضمانة ثانية */
   .perf #curGlow{display:none}
   @media (prefers-reduced-motion:reduce){#curGlow{display:none}}
   @media print{#curGlow{display:none}}
+
+  /* ============================================================
+     قائمة الكلك اليمين — اختصارات سريعة (كمبيوتر بس)
+     ------------------------------------------------------------
+     تنفتح بمكان المؤشر، وتنقلب لجهة ثانية إذا ما بقى محل بالحافة.
+     transform-origin يتغيّر من decor.js حسب الجهة اللي انفتحت بيها
+     حتى الحركة تطلع من عند المؤشر مو من زاوية غريبة.
+     ============================================================ */
+  #ctxMenu{
+    position:fixed;z-index:910;min-width:196px;max-width:280px;padding:6px;
+    background:var(--card);border:1px solid var(--line);border-radius:var(--radius-sm);
+    box-shadow:var(--shadow-lg);display:flex;flex-direction:column;gap:2px;
+    animation:ctxIn .15s var(--ease);
+  }
+  #ctxMenu[hidden]{display:none}
+  @keyframes ctxIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:none}}
+  #ctxMenu button{
+    display:flex;align-items:center;gap:10px;width:100%;text-align:start;
+    background:transparent;border:0;border-radius:12px;padding:9px 10px;
+    font:inherit;font-size:.82rem;font-weight:600;color:var(--ink);cursor:pointer;
+    transition:background .14s, color .14s;
+  }
+  #ctxMenu button:hover,#ctxMenu button:focus-visible{background:var(--primary-soft);color:var(--primary-text)}
+  /* التبويب المفتوح هسه — علامة حتى تعرف وينك */
+  #ctxMenu button[aria-current="true"]{color:var(--primary-text)}
+  #ctxMenu button[aria-current="true"]::after{content:'•';margin-inline-start:auto;color:var(--primary)}
+  #ctxMenu .cx-ic{width:20px;text-align:center;flex-shrink:0}
+  #ctxMenu .cx-sep{border:0;border-top:1px solid var(--line);margin:4px 6px}
+  @media print{#ctxMenu{display:none}}
+
+  /* منتقي عناصر القائمة بالإعدادات */
+  .ctx-pick{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .ctx-pick button{
+    display:flex;align-items:center;gap:7px;border:1.5px solid var(--line);border-radius:99px;
+    background:var(--card);color:var(--muted);padding:7px 13px;font:inherit;font-size:.76rem;
+    font-weight:600;cursor:pointer;transition:border-color .2s,color .2s,background .2s;
+  }
+  .ctx-pick button[aria-pressed="true"]{
+    border-color:var(--primary);color:var(--primary-text);background:var(--primary-soft);
+  }
+  .ctx-pick button:active{transform:scale(.97)}
 
   /* ============================================================
      شيمر التحميل (skeleton) + حالات فاضية ألطف
