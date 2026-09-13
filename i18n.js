@@ -82,6 +82,7 @@ const I18N = {
   'تلقائي (حسب الوقت) ☀️🌙':'Auto (by time of day) ☀️🌙','ربيع 🌸':'Spring 🌸','صيف ☀️':'Summer ☀️','خريف 🍂':'Autumn 🍂','شتاء ❄️':'Winter ❄️',
   'ليل ونجوم 🌌':'Night & stars 🌌','غروب 🌇':'Sunset 🌇','بحر 🌊':'Sea 🌊',
   '🌙 الوضع الداكن (دارك مود)':'🌙 Dark mode',
+  '✨ هالة المؤشر — ضوء يلحگ الماوس (كمبيوتر بس)':'✨ Cursor glow — a light that follows the mouse (desktop only)',
   'تعديل السحب ✎':'Edit withdrawal ✎','تعديل القرض ✎':'Edit loan ✎','حفظ التعديل':'Save changes','رجوع':'Back',
   'أي تغيير هنا ينضبط تلقائياً على: رصيد الصندوق، والدين/القرض المرتبط، وتمويل التصنيف إذا موجود.':'Any change here automatically syncs the fund balance, the linked debt/loan, and the linked category funding.',
   '💸 أضف المبلغ لتصنيف مصروف (اختياري)':'💸 Add the amount to a spending category (optional)','— بلا (بس اسحب) —':'— None (just withdraw) —',

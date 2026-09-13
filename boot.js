@@ -127,6 +127,7 @@ afterSplash(() => startDeco());
 afterSplash(() => { updateSky(); setInterval(updateSky, 5 * 60 * 1000); });
 afterSplash(() => initDepth());
 afterSplash(() => initAmbient());
+afterSplash(() => initCursorGlow());
 (async () => {
   try{
     const { data:{ session: s } } = await sb.auth.getSession();

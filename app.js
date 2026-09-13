@@ -3191,6 +3191,10 @@ function renderSettings(){
         <label class="switch"><input type="checkbox" id="darkToggle" ${DARK_ON?'checked':''}><span class="track"></span><span class="knob"></span></label>
       </div>
       <div class="set-toggle">
+        <span class="st-lbl">✨ هالة المؤشر — ضوء يلحگ الماوس (كمبيوتر بس)</span>
+        <label class="switch"><input type="checkbox" id="glowToggle" ${(typeof GLOW_ON !== 'undefined' && GLOW_ON)?'checked':''}><span class="track"></span><span class="knob"></span></label>
+      </div>
+      <div class="set-toggle">
         <span class="st-lbl">🕵️ شيرلوك هولمز باللوحة (يمشي ويحقق وينصح)</span>
         <label class="switch"><input type="checkbox" id="holmesToggle" ${(typeof HOLMES_ON !== 'undefined' && HOLMES_ON)?'checked':''}><span class="track"></span><span class="knob"></span></label>
       </div>
@@ -3436,6 +3440,10 @@ function renderSettings(){
     () => (typeof applyAuditVisible === 'function' ? applyAuditVisible : null),
     v => { AUDIT_ON = v; }, 'mas_audit',
     'ظهر تبويب مدقق الأرصدة ✓ 🔎', 'انخفى تبويب المدقق');
+  if($('glowToggle')) $('glowToggle').onchange = (e) => {
+    try{ setCursorGlow(e.target.checked); }catch(_){}
+    toast(e.target.checked ? 'الهالة تلحگ الماوس ✨' : 'انطفت هالة المؤشر');
+  };
   if($('holmesToggle')) $('holmesToggle').onchange = (e) => {
     try{ setHolmes(e.target.checked); }catch(_){}
   };

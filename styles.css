@@ -1311,6 +1311,59 @@
   .amb-on .sum-card{transition:transform .16s ease-out, box-shadow .2s;transform-style:preserve-3d;will-change:transform}
 
   /* ============================================================
+     هالة المؤشر (Cursor glow) — كمبيوتر فقط
+     ------------------------------------------------------------
+     طبقتين: نقطة صغيرة تلزم المؤشر بالضبط، وهالة أوسع تلحگ وراها
+     بتأخير بسيط (المواقع يحسبها decor.js). الثنتين pointer-events:none
+     فما تعترض ولا ضغطة وحدة، والحركة كلها transform — بلا إعادة تخطيط.
+
+     ⚠️ الحاوية #curGlow لازم تبقى بلا opacity/filter/transform: أي وحدة
+     منهن تسوّي «سياق تكديس»، ووقتها mix-blend-mode مال الأولاد يمتزج
+     وية لا شي بدل ما يمتزج وية الصفحة — يعني الهالة تنطفي. عشان هيك
+     التلاشي محطوط على الأولاد نفسهم مو على الحاوية.
+
+     والمزج يفرق حسب الوضع: بالداكن نضيف ضوء (screen)، وبالفاتح نضرب
+     (multiply) لأن إضافة الضوء على خلفية فاتحة ما تبيّن أصلاً.
+     ============================================================ */
+  /* فوق كل شي (بس تحت رابط التخطّي): المؤشر يلزم يبقى فوق البطاقات
+     والمودالات — وإلا يختفي أول ما يدخل فوك أي بطاقة. pointer-events:none
+     يخلّيه ما يعترض ولا ضغطة */
+  #curGlow{position:fixed;inset:0;z-index:900;pointer-events:none}
+  #curGlow i{
+    position:absolute;top:0;left:0;display:block;border-radius:50%;opacity:0;
+    box-sizing:border-box;border:0 solid var(--primary);
+    transition:opacity .3s ease, width .2s ease, height .2s ease,
+               border-width .2s ease, background-color .2s ease;
+    will-change:transform;
+  }
+  #curGlow .cg-halo{
+    width:300px;height:300px;mix-blend-mode:multiply;
+    background:radial-gradient(closest-side, color-mix(in srgb, var(--primary) 42%, transparent), transparent 70%);
+  }
+  /* النقطة: قلب بلون الثيم وحلقة بيضة رفيعة حواليه. بلا الحلقة تختفي
+     النقطة لمن تمرّ فوق زر بنفس لون الثيم (زر «دخول» مثلاً) */
+  #curGlow .cg-dot{
+    width:8px;height:8px;background:var(--primary);
+    box-shadow:0 0 0 1.5px rgba(255,255,255,.75), 0 0 12px color-mix(in srgb, var(--primary) 60%, transparent);
+  }
+  #curGlow.on .cg-halo{opacity:.5}
+  #curGlow.on .cg-dot{opacity:.85}
+  /* فوق شي ينضغط: الهالة تتوسّع، والنقطة تنفتح حلقة فاضية بدل ما تكبر
+     قرص مصمّت — لأن القرص الكبير يغطّي حرف من نص الزر اللي تحته */
+  #curGlow.hot .cg-halo{width:400px;height:400px}
+  #curGlow.on.hot .cg-halo{opacity:.62}
+  #curGlow.hot .cg-dot{width:22px;height:22px;border-width:2px;background-color:transparent}
+  /* نبزة الضغط — تنكمش لحظة وترجع */
+  #curGlow.tap .cg-halo{width:220px;height:220px}
+  body.dark #curGlow .cg-halo{mix-blend-mode:screen}
+  body.dark #curGlow.on .cg-halo{opacity:.4}
+  body.dark #curGlow .cg-dot{box-shadow:0 0 0 1.5px rgba(255,255,255,.45), 0 0 16px color-mix(in srgb, var(--primary) 75%, transparent)}
+  /* decor.js أصلاً ما يبنيها بهالحالات — وهذي ضمانة ثانية */
+  .perf #curGlow{display:none}
+  @media (prefers-reduced-motion:reduce){#curGlow{display:none}}
+  @media print{#curGlow{display:none}}
+
+  /* ============================================================
      شيمر التحميل (skeleton) + حالات فاضية ألطف
      ============================================================ */
   @keyframes shimmer{100%{background-position:-200% 0}}

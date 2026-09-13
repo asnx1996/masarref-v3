@@ -310,6 +310,90 @@ function initAmbient(){
 }
 
 /* ============================================================
+   هالة المؤشر (Cursor glow) — كمبيوتر فقط
+   ------------------------------------------------------------
+   نقطة صغيرة تلزم مكان المؤشر بالضبط، ووراها هالة أوسع تلحگ
+   بتأخير بسيط. التأخير هذا هو كل السر: النقطة تقول «هنا أنت»،
+   والهالة تعطي إحساس بالوزن — مثل ما تجرّ ضوء وراك.
+
+   • الهالة تلحگ بـlerp: كل إطار تقطع نسبة ثابتة من المسافة
+     الباقية، فتقرب بسرعة أول وتهدى بالنهاية (نفس منحنى النابض
+     المخمّد بلا تجاوز).
+   • حلقة الرسم تشتغل وقت الحركة بس، وتوقف روحها لمن تستقر
+     الهالة على المؤشر — بالوقوف ماكو ولا إطار ينرسم.
+   • الرسم كله transform — ما يلمس التخطيط ولا يعيد الطلاء.
+   ============================================================ */
+let GLOW_ON = LS.get('mas_curglow') !== 'off';
+let glowEl = null, glowBound = false;
+function initCursorGlow(){
+  if(!GLOW_ON || glowEl) return;
+  if(document.documentElement.classList.contains('perf')) return;
+  if(!window.matchMedia) return;
+  /* ماوس حقيقي وشاشة كمبيوتر بس — باللمس ماكو مؤشر يتبعه أصلاً */
+  if(!window.matchMedia('(hover:hover) and (pointer:fine) and (min-width:1000px)').matches) return;
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  glowEl = document.createElement('div');
+  glowEl.id = 'curGlow';
+  glowEl.setAttribute('aria-hidden', 'true');
+  glowEl.innerHTML = '<i class="cg-halo"></i><i class="cg-dot"></i>';
+  document.body.appendChild(glowEl);
+  if(glowBound) return;
+  glowBound = true;
+
+  const FOLLOW = 0.15;          /* كل إطار تقطع الهالة ١٥٪ من المسافة الباقية */
+  const HOT = 'button,a,input,select,textarea,summary,label.switch,.exp,.env,.fund,.debt,.sw,.pal,.theme-choice,[role="button"]';
+  let tx = 0, ty = 0, hx = 0, hy = 0, raf = null, tapT = null;
+
+  function place(el, x, y){
+    el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) translate(-50%, -50%)`;
+  }
+  function frame(){
+    raf = null;
+    if(!glowEl) return;
+    const dx = tx - hx, dy = ty - hy;
+    hx += dx * FOLLOW; hy += dy * FOLLOW;
+    place(glowEl.firstElementChild, hx, hy);   /* الهالة — متأخرة */
+    place(glowEl.lastElementChild, tx, ty);    /* النقطة — بالضبط تحت المؤشر */
+    /* نصف بكسل = فرق ما تشوفه العين. نوقف هنا بدل ما ندور للأبد */
+    if(Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) raf = requestAnimationFrame(frame);
+  }
+
+  document.addEventListener('pointermove', (e) => {
+    if(!glowEl || e.pointerType === 'touch') return;
+    tx = e.clientX; ty = e.clientY;
+    /* أول ظهور (أو رجعة بعد ما طلع الماوس برّا): تقفز الهالة لمكانها
+       بدل ما تعبر الشاشة كلها بسحبة وحدة */
+    if(!glowEl.classList.contains('on')){ hx = tx; hy = ty; glowEl.classList.add('on'); }
+    const hot = e.target.closest ? e.target.closest(HOT) : null;
+    glowEl.classList.toggle('hot', !!hot);
+    if(!raf) raf = requestAnimationFrame(frame);
+  }, { passive: true });
+
+  /* الماوس طلع برّا النافذة (relatedTarget فاضي) — نطفيها */
+  document.addEventListener('pointerout', (e) => {
+    if(glowEl && !e.relatedTarget) glowEl.classList.remove('on');
+  }, { passive: true });
+  window.addEventListener('blur', () => { if(glowEl) glowEl.classList.remove('on'); });
+  /* لمسة إصبع تخفيها — ماكو مؤشر يلاحگ بالشاشة اللمسية */
+  document.addEventListener('touchstart', () => { if(glowEl) glowEl.classList.remove('on'); }, { passive: true });
+
+  document.addEventListener('pointerdown', (e) => {
+    if(!glowEl || e.pointerType === 'touch') return;
+    glowEl.classList.add('tap');
+    clearTimeout(tapT);
+    tapT = setTimeout(() => { if(glowEl) glowEl.classList.remove('tap'); }, 220);
+  }, { passive: true });
+}
+/* مفتاح الإعدادات — الإطفاء يشيل العنصر، والمستمعات تخرج من أول سطر */
+function setCursorGlow(on){
+  GLOW_ON = !!on;
+  LS.set('mas_curglow', GLOW_ON ? 'on' : 'off');
+  if(GLOW_ON) initCursorGlow();
+  else if(glowEl){ glowEl.remove(); glowEl = null; }
+}
+
+/* ============================================================
    سحب صف المصروف أفقياً للحذف (موبايل) — يشغّل نفس تأكيد الحذف
    ============================================================ */
 function initSwipe(){
