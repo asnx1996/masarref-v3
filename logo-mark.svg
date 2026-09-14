@@ -1,0 +1,8 @@
+<!-- العلامة الحرّة بلا خلفية — للهيدر والمطبوعات.
+     نسخة اللون الواحد: خلّي الجيب والقرص بنفس اللون وحطّ الحلقة
+     الفاصلة بلون الخلفية (شوف نسخة «لون واحد» بكانفس الهوية). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="8 15 48 41" width="48" height="41" role="img" aria-label="Pocky">
+  <circle cx="41" cy="24" r="9" fill="#D08A3C"/>
+  <rect x="8" y="30" width="48" height="26" rx="9" fill="#0D6E5F"/>
+  <path d="M15 37h34" stroke="#F6F2EB" stroke-width="2.4" stroke-linecap="round" opacity=".38"/>
+</svg>

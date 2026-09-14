@@ -156,7 +156,7 @@
      .leaving أول ما تخلص الجلسة، بحد أدنى قصير حتى ما تصير ومضة. */
   #splash{
     position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;
-    background:linear-gradient(160deg,#D67A54 0%,#C86B4A 55%,#A9522F 100%);
+    background:linear-gradient(160deg,#F6F2EB 0%,#F1EDE7 55%,#E4DBCE 100%);
   }
   /* خروج بالشفافية بس. قبل چان يزحف ١٠٠vh لفوق — سطح بحجم الشاشة
      كاملة يتنقّل، وهذا أثقل شي تكدر تطلبه من المتصفح. */
@@ -175,14 +175,14 @@
      يتغيّر مقياس الأب، والـbox-shadow ينرسم ويّا الطبقة نفسها */
   .splash-logo-shadow{
     position:absolute;left:50%;top:50%;width:104px;height:104px;margin:-52px 0 0 -52px;
-    border-radius:26px;box-shadow:0 14px 32px 3px rgba(0,0,0,.30);
+    border-radius:26px;box-shadow:0 14px 32px 3px rgba(13,110,95,.26);
   }
   .splash-logo{
     position:relative;animation:splashFloat 2.6s ease-in-out infinite;
     will-change:transform;transform:translateZ(0);
   }
-  .splash-name{font-size:2.4rem;font-weight:800;color:#fff;animation:splashText .6s ease .3s both}
-  .splash-tag{font-size:1rem;color:rgba(255,255,255,.8);animation:splashText .6s ease .44s both}
+  .splash-name{font-size:2.4rem;font-weight:800;color:#0D6E5F;animation:splashText .6s ease .3s both}
+  .splash-tag{font-size:1rem;color:#837567;animation:splashText .6s ease .44s both}
   /* التكبير من ٠٫٧٢ مو ٠٫٤ — قفزة ٢٫٥× تجبر إعادة رسم أكبر بكل إطار،
      وبنفس الوقت الدخول الأهدى يحسّه أوثق */
   @keyframes splashIn{from{opacity:0;transform:scale(.72)}to{opacity:1;transform:none}}
@@ -191,7 +191,7 @@
   @keyframes splashFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
   @keyframes splashOut{to{opacity:0;visibility:hidden;pointer-events:none}}
   .perf .splash-logo{animation:none}
-  .perf .splash-logo-shadow{box-shadow:0 8px 16px rgba(0,0,0,.22)}
+  .perf .splash-logo-shadow{box-shadow:0 8px 16px rgba(13,110,95,.20)}
   @media (prefers-reduced-motion:reduce){
     #splash.leaving{animation:splashFade .25s ease forwards}
     .splash-inner,#splash.leaving .splash-inner{animation:none}
@@ -305,6 +305,7 @@
     animation:pop .4s var(--ease);
   }
   @keyframes pop{from{opacity:0;transform:scale(.96) translateY(8px)}to{opacity:1;transform:none}}
+  .login-card .lg-mark{display:block;margin:0 auto 12px;color:var(--primary-text)}
   .login-card .lg-brand{font-weight:800;font-size:1.6rem;color:var(--primary-text);text-align:center}
   .login-card .lg-sub{font-size:.78rem;color:var(--muted);text-align:center;margin:4px 0 18px}
   .login-card label{margin-top:12px}
@@ -320,7 +321,8 @@
     box-shadow:0 6px 24px color-mix(in srgb, var(--primary) 28%, transparent);
   }
   .head-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
-  .brand{font-weight:800;font-size:1.18rem;letter-spacing:0}
+  .brand{font-weight:800;font-size:1.18rem;letter-spacing:0;display:flex;align-items:center;gap:9px;min-width:0}
+  .brand-mark{flex-shrink:0}
   .brand small{display:block;font-weight:300;font-size:.7rem;opacity:.88;margin-top:2px}
   .head-actions{display:flex;align-items:center;gap:8px}
   .icon-btn{

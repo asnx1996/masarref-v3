@@ -24,11 +24,14 @@
   upgrade-insecure-requests">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Pocky — مصاريفنا</title>
-<meta name="theme-color" content="#C86B4A">
+<!-- لون البوت بس — app.js يبدّله للون الثيم المحفوظ أول ما يشتغل.
+     يطابق خلفية شاشة الانطلاق حتى ما تصير قفزة لون بأول إطار. -->
+<meta name="theme-color" content="#F1EDE7">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Pocky">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/svg+xml" href="logo.svg">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
 <!-- ماكو preconnect لجوجل: الخطوط محليّة بمجلد fonts/ من زمان.
      الاتصالان چانوا ينفتحون بكل فتحة بلا أي طلب وراهم. -->
@@ -47,13 +50,15 @@
          وبنفس الوقت أصح فيزيائياً: الظل يبقى بمحله واللوجو يطير فوقه. -->
     <div class="splash-logo-wrap">
     <i class="splash-logo-shadow" aria-hidden="true"></i>
-    <svg class="splash-logo" viewBox="0 0 120 120" width="120" height="120" aria-hidden="true">
-      <rect width="120" height="120" rx="27" fill="#C86B4A"/>
-      <g fill="#FBF3E8">
-        <path d="M60 30 L92 56 L84 64 L82 62 L82 88 L38 88 L38 62 L36 64 L28 56 Z M44 46 L44 34 L52 34 L52 40 Z"/>
+    <!-- نفس هندسة logo.svg بالضبط (شبكة ٦٤) — العلامة داخل بلاطة بنصف
+         قطر ٢٢٪ من الضلع، مثل ما تنرسم بالأيقونات. -->
+    <svg class="splash-logo" viewBox="0 0 64 64" width="120" height="120" aria-hidden="true">
+      <rect width="64" height="64" rx="14.3" fill="#0D6E5F"/>
+      <g transform="translate(32 32) scale(.827) translate(-32 -35.5)">
+        <circle cx="41" cy="24" r="9" fill="#E8B268"/>
+        <rect x="8" y="30" width="48" height="26" rx="9" fill="#F6F2EB"/>
+        <path d="M15 37h34" stroke="#0D6E5F" stroke-width="2.4" stroke-linecap="round" opacity=".38"/>
       </g>
-      <circle cx="60" cy="66" r="15" fill="#C86B4A" stroke="#FBF3E8" stroke-width="4"/>
-      <text x="60" y="73" font-size="20" font-weight="800" fill="#F5F0E1" text-anchor="middle" font-family="Georgia,serif">$</text>
     </svg>
     </div>
     <div class="splash-name">Pocky</div>
@@ -76,6 +81,10 @@
 <!-- ============ شاشة الدخول ============ -->
 <div id="loginScreen">
   <div class="login-card">
+    <svg class="lg-mark" viewBox="8 15 48 41" width="54" height="46" aria-hidden="true">
+      <circle cx="41" cy="24" r="9" fill="var(--amber)"/>
+      <rect x="8" y="30" width="48" height="26" rx="9" fill="currentColor"/>
+    </svg>
     <div class="lg-brand">Pocky</div>
     <div class="lg-sub">سجّل الدخول للمتابعة</div>
     <div id="liSetupWarn" class="lock-banner">⚠️ الموقع غير مربوط بقاعدة البيانات — عدّل SUPABASE_URL بالملف.</div>
@@ -110,7 +119,15 @@
 <!-- ============ التطبيق ============ -->
 <header id="appHeader" style="display:none">
   <div class="head-top">
-    <div class="brand">Pocky<small>مصاريفنا · ميزانية البيت</small></div>
+    <div class="brand">
+      <!-- العلامة بـcurrentColor حتى تمشي ويّا كل الثيمات: الجيب ياخذ
+           لون نص الهيدر، والقرص لون --amber من الثيم نفسه. -->
+      <svg class="brand-mark" viewBox="8 15 48 41" width="30" height="26" aria-hidden="true">
+        <circle cx="41" cy="24" r="9" fill="var(--amber)"/>
+        <rect x="8" y="30" width="48" height="26" rx="9" fill="currentColor"/>
+      </svg>
+      <span>Pocky<small>مصاريفنا · ميزانية البيت</small></span>
+    </div>
     <div id="clockSkin" class="clock-wrap head-clock" aria-hidden="true"></div>
     <div class="head-actions">
       <input type="month" id="monthPick" class="month-pick" aria-label="اختر الشهر">
