@@ -660,15 +660,15 @@ function ensureAudio(){
 function openMusic(){
   const pct = Math.round(MUSIC.vol * 100);
   modalOpen(`
-    <h2>🎵 موسيقى الخلفية</h2>
+    <h2>${ic('music')} موسيقى الخلفية</h2>
     <div class="hint" style="margin:0 0 12px">موزارت — كونشيرتو الكمان رقم ٥، الحركة الثانية (Adagio). هادئة تناسب المتابعة.</div>
-    <button class="btn" id="mzToggle">${MUSIC.on ? '⏸ إيقاف' : '▶ تشغيل'}</button>
+    <button class="btn" id="mzToggle">${MUSIC.on ? ic('pause') + ' إيقاف' : ic('play') + ' تشغيل'}</button>
     <label style="margin-top:14px">مستوى الصوت — <span id="mzVal">${pct}%</span></label>
     <input type="range" id="mzVol" min="0" max="100" value="${pct}" style="width:100%">
     <div class="hint" style="margin-top:6px">اختيارك ينحفظ بالجهاز. الموسيقى تشتغل بهذا الجهاز بس، ما تنسمع عند غيرك.</div>
     <button class="btn ghost" onclick="modalClose()" style="margin-top:14px">إغلاق</button>
   `);
-  $('mzToggle').onclick = () => { toggleMusic(); $('mzToggle').textContent = MUSIC.on ? '⏸ إيقاف' : '▶ تشغيل'; };
+  $('mzToggle').onclick = () => { toggleMusic(); $('mzToggle').innerHTML = MUSIC.on ? ic('pause') + ' إيقاف' : ic('play') + ' تشغيل'; };
   $('mzVol').oninput = (e) => {
     MUSIC.vol = e.target.value / 100;
     $('mzVal').textContent = e.target.value + '%';

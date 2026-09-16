@@ -267,3 +267,14 @@ function isNetErr(msg){
   if(typeof navigator !== 'undefined' && navigator.onLine === false) return true;
   return /failed to fetch|networkerror|network request failed|load failed|fetch failed/i.test(String(msg||''));
 }
+
+/* ============================================================
+   أيقونة SVG من السبرايت اللي بـindex.html
+   ------------------------------------------------------------
+   ic('trash')            → أيقونة عادية
+   ic('trash','lg')       → أيقونة أكبر (كلاس إضافي)
+   الأسماء كلها موجودة بـ<svg id="iconSprite"> بأول الـbody.
+   ============================================================ */
+function ic(name, cls){
+  return '<svg class="ic' + (cls ? ' ' + cls : '') + '" aria-hidden="true"><use href="#i-' + name + '"></use></svg>';
+}

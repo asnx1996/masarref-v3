@@ -41,6 +41,70 @@
 <link rel="stylesheet" href="appearance.css">
 </head>
 <body>
+<!-- ============================================================
+     سبرايت الأيقونات — تتعرّف مرة وحدة وتنستعمل بكل مكان
+     ------------------------------------------------------------
+     الإيموجي بمواضع الأيقونات (زر، تبويب، خانة أيقونة) چان يتغيّر
+     شكله من جهاز لجهاز — أبل ترسمه غير من أندرويد غير من ويندوز —
+     وما يتلوّن ويّا الثيم ولا يتماشى ويّا وزن الخط. هذولي مرسومات
+     بخطوط currentColor: ياخذن لون النص اللي حوّلهن بالضبط، ويبقن
+     نفس الشكل بكل جهاز.
+
+     ⚠️ الإيموجي اللي جوّا الجُمل والتوستات ونبرة التطبيق (🎉 😂 💡
+     وربعهن) تبقى مثل ما هي — هذي نبرة التطبيق مو أيقونات.
+
+     الاستعمال بالـHTML:  <svg class="ic"><use href="#i-الاسم"></use></svg>
+     ومن الجافاسكربت:     ic('الاسم')   — الدالة بـcore.js
+     الشكل كله من CSS (.ic) — currentColor وسماكة موحّدة.
+     ============================================================ -->
+<svg id="iconSprite" aria-hidden="true" style="position:absolute;width:0;height:0;overflow:hidden">
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="1.8"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.8"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.8"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.8"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 3.5v17M8 20.5h8M4 7.5h16M12 7.5 8.6 4.6"/><path d="M4 7.5 1.6 13a2.85 2.85 0 0 0 4.8 0zM20 7.5 17.6 13a2.85 2.85 0 0 0 4.8 0z"/></symbol>
+  <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M5.5 2.5h13v19l-2.2-1.4-2.2 1.4-2.1-1.4-2.2 1.4-2.1-1.4-2.2 1.4z"/><path d="M9 8h6M9 12h6M9 16h3.5"/></symbol>
+  <symbol id="i-calculator" viewBox="0 0 24 24"><rect x="4" y="2.5" width="16" height="19" rx="2.6"/><path d="M8 7h8M8.5 12.5h.01M12 12.5h.01M15.5 12.5h.01M8.5 16.5h.01M12 16.5h.01M15.5 16.5h.01"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4.5 4.5A2.5 2.5 0 0 1 7 2h12.5v20H7a2.5 2.5 0 0 1-2.5-2.5z"/><path d="M4.5 17.5h15"/><path d="M8.5 6.5h7M8.5 10h7"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20.5 20.5-4.4-4.4"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="M3.5 7.5h7.6M15.9 7.5h4.6M3.5 16.5h2.6M10.9 16.5h9.6"/><circle cx="13.5" cy="7.5" r="2.4"/><circle cx="8.5" cy="16.5" r="2.4"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="m6.5 6.5 11 11M17.5 6.5l-11 11"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4L20.2 7.8a2.7 2.7 0 0 0-3.8-3.8L4 16z"/><path d="m14.8 5.6 3.6 3.6"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3.5 6.5h17M9.5 3.5h5M6 6.5 7 20.5h10l1-14"/><path d="M10 10.5v6M14 10.5v6"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M3.5 9h16l-4-4M20.5 15h-16l4 4"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10" width="15" height="11.5" rx="2.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-unlock" viewBox="0 0 24 24"><rect x="4.5" y="10" width="15" height="11.5" rx="2.6"/><path d="M8 10V7a4 4 0 0 1 7.6-1.7"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M8.5 13.5 3.5 8.5l5-5"/><path d="M3.5 8.5h10.5a6.5 6.5 0 0 1 0 13H9"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3.5 12a8.5 8.5 0 0 1 14.6-5.9"/><path d="M18.5 2.5v4h-4"/><path d="M20.5 12a8.5 8.5 0 0 1-14.6 5.9"/><path d="M5.5 21.5v-4h4"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 5 5 9-10.5"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="12" height="12" rx="2.6"/><path d="M16 8.5V6a2.5 2.5 0 0 0-2.5-2.5H6A2.5 2.5 0 0 0 3.5 6v7.5A2.5 2.5 0 0 0 6 16h2.5"/></symbol>
+  <symbol id="i-chev-down" viewBox="0 0 24 24"><path d="m6 9.5 6 6 6-6"/></symbol>
+  <symbol id="i-chev-up" viewBox="0 0 24 24"><path d="m6 14.5 6-6 6 6"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><path d="M3 8a3 3 0 0 1 3-3h11.5A1.5 1.5 0 0 1 19 6.5V8"/><rect x="3" y="8" width="18" height="12.5" rx="3"/><path d="M21 12.2h-3.6a2.1 2.1 0 0 0 0 4.2H21"/></symbol>
+  <symbol id="i-bank" viewBox="0 0 24 24"><path d="M2.5 9.5h19M12 2.5l-9.5 7h19z"/><path d="M6 9.5v9M10 9.5v9M14 9.5v9M18 9.5v9"/><path d="M2.5 21.5h19"/></symbol>
+  <symbol id="i-banknote" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2.6"/><circle cx="12" cy="12" r="2.6"/><path d="M6 10v4M18 10v4"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M13.5 2.5H7A2.5 2.5 0 0 0 4.5 5v14A2.5 2.5 0 0 0 7 21.5h10a2.5 2.5 0 0 0 2.5-2.5V8.5z"/><path d="M13.5 2.5v6h6"/><path d="M8.5 13h7M8.5 17h4.5"/></symbol>
+  <symbol id="i-loan" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.7"/><path d="M12 3.2a8.8 8.8 0 0 1 8.4 6.2"/><path d="M20.8 5.5v3.9h-3.9"/><path d="M12 20.8a8.8 8.8 0 0 1-8.4-6.2"/><path d="M3.2 18.5v-3.9h3.9"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.4"/><circle cx="12" cy="12" r="1.15" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9.5 18.5h5M10.5 21.5h3"/><path d="M12 2.5a6.5 6.5 0 0 0-3.9 11.7c.6.5 1 1.2 1 2v.3h5.8v-.3c0-.8.4-1.5 1-2A6.5 6.5 0 0 0 12 2.5z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.6"/><path d="M2.5 20.5a6.5 6.5 0 0 1 13 0"/><path d="M16 4.7a3.6 3.6 0 0 1 0 6.6"/><path d="M17.5 14.4a6.5 6.5 0 0 1 4 6.1"/></symbol>
+  <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 2.5a9.5 9.5 0 0 0 0 19 2.1 2.1 0 0 0 1.6-3.4 2.1 2.1 0 0 1 1.6-3.4h2.3a5 5 0 0 0 5-5.1C22.1 5.4 17.6 2.5 12 2.5z"/><path d="M7.5 11.5h.01M10 7.3h.01M15.2 7.8h.01"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M5.5 9a6.5 6.5 0 0 1 13 0c0 4.2 1.5 5.8 1.5 5.8H4S5.5 13.2 5.5 9z"/><path d="M9.8 18.5a2.3 2.3 0 0 0 4.4 0"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 2.5 9.5 5-9.5 5-9.5-5z"/><path d="m2.5 12.5 9.5 5 9.5-5"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M6.5 21v-8M11 21V5.5M15.5 21v-5.5M20 21V10"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2.5 4.5 5.4v5.9c0 5 3.2 8.7 7.5 10.2 4.3-1.5 7.5-5.2 7.5-10.2V5.4z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 6.5v6l3.6 2.1"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7.5A2.5 2.5 0 0 1 5.5 5h3.2a2 2 0 0 1 1.6.8l1.1 1.5a2 2 0 0 0 1.6.8h5.5A2.5 2.5 0 0 1 21 10.6v6.9A2.5 2.5 0 0 1 18.5 20h-13A2.5 2.5 0 0 1 3 17.5z"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M4 6.5h16M4 12h16M4 17.5h16"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24"><path d="M6.5 9V3.5h11V9"/><path d="M6.5 18H5a2.5 2.5 0 0 1-2.5-2.5v-4A2.5 2.5 0 0 1 5 9h14a2.5 2.5 0 0 1 2.5 2.5v4A2.5 2.5 0 0 1 19 18h-1.5"/><path d="M6.5 14h11v6.5h-11z"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3.5v11M7.5 10.5 12 15l4.5-4.5"/><path d="M3.5 17v1.5a2.5 2.5 0 0 0 2.5 2.5h12a2.5 2.5 0 0 0 2.5-2.5V17"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="12" r="4.5"/><path d="M11.9 10.5H21v3h-2.6v2.6H16v-2.6h-4.1"/></symbol>
+  <symbol id="i-music" viewBox="0 0 24 24"><path d="M9 18V5.5l11-2V16"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></symbol>
+  <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M6.8 19.5a4.8 4.8 0 0 1-.6-9.6 6.4 6.4 0 0 1 12.2 1.5 4 4 0 0 1-.9 8.1z"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7.5 4.3 19 12 7.5 19.7z"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16" rx="1.4"/><rect x="14" y="4" width="4" height="16" rx="1.4"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.2 1.8 20.8h20.4z"/><path d="M12 9.5v4.6M12 17.6h.01"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a13 13 0 0 1 0 18 13 13 0 0 1 0-18z"/></symbol>
+</svg>
 <div id="ambientBackground" aria-hidden="true"></div>
 <a class="skip-link" href="#appMain">تخطَّ إلى المحتوى</a>
 <div id="splash">
@@ -136,7 +200,7 @@
   <button type="button" id="periodBar" class="period-bar" title="اضغط لتعديل اسم الفترة وتواريخها">
     <span class="pb-name" id="pbName">—</span>
     <span class="pb-range" id="pbRange"></span>
-    <span class="pb-edit">✎</span>
+    <span class="pb-edit"><svg class="ic" aria-hidden="true"><use href="#i-pencil"></use></svg></span>
   </button>
   <div class="head-stats">
     <div class="hstat main">
@@ -168,8 +232,8 @@
   <!-- تبويب: المصروف — سلايدر يفصل عالم المصاريف عن عالم الصناديق -->
   <section class="tab" id="tab-add">
     <div class="seg-bar" id="opSeg">
-      <button class="seg-btn active" data-seg="seg-exp" aria-pressed="true">🧾 المصاريف</button>
-      <button class="seg-btn" data-seg="seg-funds" aria-pressed="false">🏦 الصناديق</button>
+      <button class="seg-btn active" data-seg="seg-exp" aria-pressed="true"><svg class="ic" aria-hidden="true"><use href="#i-receipt"></use></svg> المصاريف</button>
+      <button class="seg-btn" data-seg="seg-funds" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-bank"></use></svg> الصناديق</button>
     </div>
 
     <div class="seg-view" id="seg-exp">
@@ -201,7 +265,7 @@
       <div class="card" id="quickCard">
         <div class="qh">
           <h2 style="margin:0">⚡ أزرار سريعة</h2>
-          <button class="qh-add" id="btnAddQuick">＋ زر جديد</button>
+          <button class="qh-add" id="btnAddQuick"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> زر جديد</button>
         </div>
         <div class="hint" style="margin:2px 0 12px">مصاريفك المتكررة (كهرباء، إيجار، بنزين...) — اضغط الزر ويتعبّى المبلغ والتصنيف، أو ينسجل فوراً. مشتركة بينك وبين العائلة.</div>
         <div id="quickList"></div>
@@ -211,7 +275,7 @@
       <div class="dash-col">
         <h2 style="margin:18px 4px 10px">سجل المصاريف</h2>
         <div class="filter-bar" id="filterBar" style="display:none">
-          <input type="text" id="fltText" placeholder="🔎 دوّر بالتفاصيل...">
+          <span class="in-wrap"><svg class="ic" aria-hidden="true"><use href="#i-search"></use></svg><input type="text" id="fltText" class="has-ic" placeholder="دوّر بالتفاصيل..."></span>
           <select id="fltCat"><option value="">كل التصنيفات</option></select>
           <select id="fltBy"><option value="">الكل</option></select>
         </div>
@@ -249,10 +313,10 @@
     <div class="dash-full"><div id="insightCard"></div></div>
     <div class="dash-full">
       <div class="seg-bar ov-bar" id="ovSeg">
-        <button class="seg-btn active" data-ov="exp" aria-pressed="true">🧾 المصاريف</button>
-        <button class="seg-btn" data-ov="save" aria-pressed="false">🏦 الادخار</button>
-        <button class="seg-btn" data-ov="bills" aria-pressed="false">📄 الفواتير</button>
-        <button class="seg-btn" data-ov="loans" aria-pressed="false">🤝 القروض</button>
+        <button class="seg-btn active" data-ov="exp" aria-pressed="true"><svg class="ic" aria-hidden="true"><use href="#i-receipt"></use></svg> المصاريف</button>
+        <button class="seg-btn" data-ov="save" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-bank"></use></svg> الادخار</button>
+        <button class="seg-btn" data-ov="bills" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-file"></use></svg> الفواتير</button>
+        <button class="seg-btn" data-ov="loans" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-loan"></use></svg> القروض</button>
       </div>
       <div id="summaryCard"></div>
     </div>
@@ -263,51 +327,121 @@
 
   <!-- تبويب: الميزانية -->
   <section class="tab" id="tab-budget">
-    <div class="dash-full"><button class="btn ghost" id="btnCopyLast" style="margin-top:0">⧉ انسخ تصنيفات الشهر الماضي</button></div>
-    <div class="cols-wrap">
-    <div class="dash-col stick-col">
-    <div class="card" style="margin-top:14px">
-      <div class="qh">
-        <h2 style="margin:0">رواتب الشهر</h2>
-        <button class="qh-add" id="btnAddSalary">＋ شخص</button>
+
+    <!-- ============================================================
+         ميزان الشهر — الرقم الوحيد اللي يهم وأنت توزّع
+         ------------------------------------------------------------
+         قبل: «الباقي بلا توزيع» چان آخر سطر ببطاقة قائمة مسطّحة بين
+         خمس بطاقات متشابهة، وما تعرف إذا تجاوزت دخلك إلا لمن تقراه.
+         هسه: رقم كبير ملوّن + شريط مقسوم يوري نسبة المصاريف والادخار
+         من دخلك، ومثبّت فوق بالكمبيوتر فيبقى قدام عينك طول التوزيع.
+         ============================================================ -->
+    <div class="card bmeter dash-full" id="budgetMeter">
+      <div class="bm-main">
+        <span class="bm-lbl">الباقي بلا توزيع</span>
+        <b class="bm-val" id="allocLeft">0 د.ع</b>
       </div>
-      <div class="hint" style="margin:2px 0 12px">أضف راتب كل شخص بالعائلة — تكدر تضيف أو تحذف حسب عدد أفرادكم.</div>
-      <div id="salaryRows"></div>
+      <div class="bm-side">
+        <div class="bm-bar" id="bmBar" role="img" aria-label="نسبة توزيع الدخل">
+          <i class="bm-seg sp" id="bmSpend"></i>
+          <i class="bm-seg sv" id="bmSave"></i>
+        </div>
+        <div class="bm-keys">
+          <span class="bm-key sp">توزيع المصاريف <b id="aSpend">0 د.ع</b></span>
+          <span class="bm-key sv">محجوز للادخار <b id="aSave">0 د.ع</b></span>
+        </div>
+      </div>
+      <div class="bm-chips">
+        <span class="bm-chip">الرواتب <b id="aSalary">0 د.ع</b></span>
+        <span class="bm-chip">إيرادات إضافية <b id="aIncome">0 د.ع</b></span>
+        <span class="bm-chip wd" id="aWdLine" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-bank"></use></svg> مغطّى بسحب <b id="aWd">0 د.ع</b></span>
+      </div>
     </div>
-    <div class="card">
-      <h2>إيرادات إضافية 💵</h2>
-      <div id="incomeRows"></div>
-      <button class="btn ghost" id="btnAddIncome">+ إضافة دخل (سلفة / فلوس خارجية)</button>
-      <div class="hint">أي فلوس تجيك غير الراتب — سلفة، هدية، بيع غرض… تنضاف فوق مجموع الرواتب ويصير عندك رقم واحد توزّعه.</div>
+    <div class="bm-tools dash-full">
+      <button class="chip-btn" id="btnCopyLast"><svg class="ic" aria-hidden="true"><use href="#i-copy"></use></svg> انسخ تصنيفات الشهر الماضي</button>
     </div>
-    <div class="card">
-      <div class="alloc-line"><span>الرواتب</span><b id="aSalary">0 د.ع</b></div>
-      <div class="alloc-line"><span>إيرادات إضافية</span><b id="aIncome">0 د.ع</b></div>
-      <div class="alloc-line"><span>توزيع المصاريف</span><b id="aSpend">0 د.ع</b></div>
-      <div class="alloc-line"><span>محجوز للادخار</span><b id="aSave">0 د.ع</b></div>
-      <div class="alloc-line" id="aWdLine" style="display:none"><span>🏦 مغطّى بسحب من الصناديق</span><b id="aWd">0 د.ع</b></div>
-      <div class="alloc-line"><span>الباقي بلا توزيع</span><b id="allocLeft">0 د.ع</b></div>
+
+    <div class="cols-wrap">
+    <div class="dash-col">
+
+    <!-- الدخل: الرواتب والإيرادات الإضافية صارن بطاقة وحدة —
+         نفس المفهوم (فلوس داخلة)، فتفريقهن ببطاقتين چان يضخّم العمود
+         ويخلّي المجموع الواحد اللي توزّعه مفكّك على مكانين. -->
+    <div class="card bsec inc">
+      <div class="bsec-head">
+        <span class="bsec-ic ic-box"><svg class="ic" aria-hidden="true"><use href="#i-wallet"></use></svg></span>
+        <h2>الدخل</h2>
+        <b class="bsec-total" id="secIn">0 د.ع</b>
+      </div>
+
+      <div class="bsub">
+        <div class="bsub-head">
+          <span class="bsub-t">رواتب الشهر</span>
+          <button class="qh-add" id="btnAddSalary"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> شخص</button>
+        </div>
+        <div class="hint compact">أضف راتب كل شخص بالعائلة — تكدر تضيف أو تحذف حسب عدد أفرادكم.</div>
+        <div class="brows">
+          <div class="row-head"><span>الشخص</span><span>الراتب</span><span></span></div>
+          <div id="salaryRows"></div>
+        </div>
+      </div>
+
+      <div class="bsub">
+        <div class="bsub-head">
+          <span class="bsub-t">إيرادات إضافية</span>
+        </div>
+        <div class="hint compact">أي فلوس تجيك غير الراتب — سلفة، هدية، بيع غرض… تنضاف فوق مجموع الرواتب ويصير عندك رقم واحد توزّعه.</div>
+        <div class="brows">
+          <div class="row-head"><span>المصدر</span><span>المبلغ</span><span></span></div>
+          <div id="incomeRows"></div>
+        </div>
+        <button class="btn ghost" id="btnAddIncome">+ إضافة دخل (سلفة / فلوس خارجية)</button>
+      </div>
     </div>
+
+    <div class="card bsec sav">
+      <div class="bsec-head">
+        <span class="bsec-ic ic-box"><svg class="ic" aria-hidden="true"><use href="#i-bank"></use></svg></span>
+        <h2>صناديق الادخار</h2>
+        <b class="bsec-total" id="secSave">0 د.ع</b>
+      </div>
+      <div class="hint compact">المبلغ الي تحطه = المبلغ الي تدّخره شهرياً. الصندوق يتراكم تلقائياً، والسحب منه من تبويب «مصروف ← الصناديق».</div>
+      <div class="brows">
+        <div class="row-head"><span>الصندوق</span><span>شهرياً</span><span></span></div>
+        <div id="saveRows"></div>
+      </div>
+      <button class="btn ghost" id="btnAddSave">+ إضافة صندوق ادخار</button>
+    </div>
+
     </div>
     <div class="dash-col">
-    <div class="card" style="margin-top:14px">
-      <h2>توزيع المصاريف</h2>
-      <div id="catRows"></div>
+
+    <div class="card bsec spd">
+      <div class="bsec-head">
+        <span class="bsec-ic ic-box"><svg class="ic" aria-hidden="true"><use href="#i-receipt"></use></svg></span>
+        <h2>توزيع المصاريف</h2>
+        <b class="bsec-total" id="secSpend">0 د.ع</b>
+      </div>
+      <div class="hint compact">خصّص مبلغ لكل تصنيف. زر ⇄ ينقل مبلغ من تصنيف لتصنيف ثاني بعد ما تحفظ.</div>
+      <div class="brows cat">
+        <div class="row-head"><span>التصنيف</span><span>المخصص</span><span></span><span></span></div>
+        <div id="catRows"></div>
+      </div>
       <button class="btn ghost" id="btnAddCat">+ إضافة تصنيف مصروف</button>
     </div>
-    <div class="card">
-      <h2>صناديق الادخار 🏦</h2>
-      <div id="saveRows"></div>
-      <button class="btn ghost" id="btnAddSave">+ إضافة صندوق ادخار</button>
-      <div class="hint">المبلغ الي تحطه = المبلغ الي تدّخره شهرياً. الصندوق يتراكم تلقائياً، والسحب منه من تبويب «مصروف ← الصناديق».</div>
+
     </div>
     </div>
-    </div>
+
     <div class="dash-full">
-    <button class="btn" id="btnSaveBudget">حفظ ميزانية الشهر</button>
-    <button class="btn warn-btn" id="btnCloseMonth">إقفال الشهر وترحيل الباقي ✓</button>
-    <button class="btn danger" id="btnClearMonth">🗑 تفريغ ميزانية هذا الشهر</button>
-    <div class="hint">الإقفال يخلّي الشهر للعرض فقط (ما تكدر تعدّله بعدها)، ويرحّل باقي كل تصنيف وكل صندوق ادخار للشهر الجاي. التفريغ يمسح الرواتب والتصنيفات (المصاريف المسجلة تبقى).</div>
+    <div class="card bactions">
+      <button class="btn" id="btnSaveBudget">حفظ ميزانية الشهر</button>
+      <div class="ba-row">
+        <button class="btn warn-btn" id="btnCloseMonth"><svg class="ic" aria-hidden="true"><use href="#i-check"></use></svg> إقفال الشهر وترحيل الباقي</button>
+        <button class="btn danger" id="btnClearMonth"><svg class="ic" aria-hidden="true"><use href="#i-trash"></use></svg> تفريغ ميزانية هذا الشهر</button>
+      </div>
+      <div class="hint">الإقفال يخلّي الشهر للعرض فقط (ما تكدر تعدّله بعدها)، ويرحّل باقي كل تصنيف وكل صندوق ادخار للشهر الجاي. التفريغ يمسح الرواتب والتصنيفات (المصاريف المسجلة تبقى).</div>
+    </div>
     </div>
   </section>
 
@@ -318,13 +452,13 @@
     <div class="card" id="billsCard">
       <div class="qh">
         <h2 style="margin:0">🧾 فواتير الشهر</h2>
-        <button class="qh-add" id="btnCopyBills">⧉ انسخ الشهر الماضي</button>
+        <button class="qh-add" id="btnCopyBills"><svg class="ic" aria-hidden="true"><use href="#i-copy"></use></svg> انسخ الشهر الماضي</button>
       </div>
       <div class="hint" style="margin:2px 0 12px">اكتب فواتيرك المطلوبة هالشهر، وأشّر ✓ على اللي دفعته. الموقع يراقب إذا الباقي يكفّي للفواتير الباقية.</div>
       <div id="billsList"></div>
     </div>
     <div class="card stick-col">
-      <h2>➕ إضافة فاتورة</h2>
+      <h2><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg> إضافة فاتورة</h2>
       <label>اسم الفاتورة</label>
       <input type="text" id="blName" placeholder="مثلاً: كهرباء / إيجار / نت">
       <div class="row" style="margin-top:10px">
@@ -366,7 +500,7 @@
       <div class="hint" style="margin:2px 0 12px">اختر حساباً — تصنيف مصروف، صندوق ادخار، أو فلوسك الفعلية — وشوف كل دائن ومدين عليه خلال الفترة، مرتّب بتاريخ العملية ووياه الرصيد بعد كل حركة.</div>
       <label>الحساب</label>
       <select id="ledAcc"></select>
-      <button class="btn ghost" id="btnLedXls">📊 تصدير الدفتر إكسل</button>
+      <button class="btn ghost" id="btnLedXls"><svg class="ic" aria-hidden="true"><use href="#i-chart"></use></svg> تصدير الدفتر إكسل</button>
     </div>
     <div id="ledBody"></div>
   </section>
@@ -386,14 +520,14 @@
 </main>
 
 <nav id="appNav" style="display:none" aria-label="التنقّل الرئيسي">
-  <button data-tab="tab-dash" class="active"><span class="ic" aria-hidden="true">◫</span>اللوحة</button>
-  <button data-tab="tab-add"><span class="ic" aria-hidden="true">＋</span>مصروف</button>
-  <button data-tab="tab-budget"><span class="ic" aria-hidden="true">⚖</span>الميزانية</button>
-  <button data-tab="tab-bills" id="navBills"><span class="ic" aria-hidden="true">🧾</span>فواتيري</button>
-  <button data-tab="tab-recon" id="navRecon"><span class="ic" aria-hidden="true">🧮</span>المطابقة</button>
-  <button data-tab="tab-ledger" id="navLedger"><span class="ic" aria-hidden="true">📖</span>الدفتر</button>
-  <button data-tab="tab-audit" id="navAudit"><span class="ic" aria-hidden="true">🔎</span>التدقيق</button>
-  <button data-tab="tab-settings"><span class="ic" aria-hidden="true">⚙</span>الإعدادات</button>
+  <button data-tab="tab-dash" class="active"><svg class="ic" aria-hidden="true"><use href="#i-grid"></use></svg>اللوحة</button>
+  <button data-tab="tab-add"><svg class="ic" aria-hidden="true"><use href="#i-plus"></use></svg>مصروف</button>
+  <button data-tab="tab-budget"><svg class="ic" aria-hidden="true"><use href="#i-scale"></use></svg>الميزانية</button>
+  <button data-tab="tab-bills" id="navBills"><svg class="ic" aria-hidden="true"><use href="#i-receipt"></use></svg>فواتيري</button>
+  <button data-tab="tab-recon" id="navRecon"><svg class="ic" aria-hidden="true"><use href="#i-calculator"></use></svg>المطابقة</button>
+  <button data-tab="tab-ledger" id="navLedger"><svg class="ic" aria-hidden="true"><use href="#i-book"></use></svg>الدفتر</button>
+  <button data-tab="tab-audit" id="navAudit"><svg class="ic" aria-hidden="true"><use href="#i-search"></use></svg>التدقيق</button>
+  <button data-tab="tab-settings"><svg class="ic" aria-hidden="true"><use href="#i-settings"></use></svg>الإعدادات</button>
 </nav>
 
 <div class="modal" id="modal"><div class="modal-card" id="modalCard" role="dialog" aria-modal="true" tabindex="-1"></div></div>

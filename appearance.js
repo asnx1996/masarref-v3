@@ -72,12 +72,12 @@ function appearanceSettings(){
     <div class="theme-choices" role="group" aria-label="${appearanceText('الثيم', 'Theme')}">
     ${Object.entries(APPEARANCE_THEMES).map(([id,t]) => `<button type="button" class="theme-choice" data-theme-choice="${id}" data-theme-mode="${t.dark?'dark':'light'}" ${appearanceFilter!=='all'&&appearanceFilter!==(t.dark?'dark':'light')?'hidden':''} aria-pressed="${theme===id}">
       <span class="theme-preview preview-${id}" aria-hidden="true"><span class="preview-top"><i></i><i></i></span><span class="preview-balance"><i></i><b>850,000</b></span><span class="preview-rows"><i></i><i></i><i></i></span><span class="preview-action"></span></span>
-      <span class="theme-label"><b>${appearanceText(t.name,t.en)}</b><span class="theme-check" aria-hidden="true">✓</span></span>
+      <span class="theme-label"><b>${appearanceText(t.name,t.en)}</b><span class="theme-check" aria-hidden="true">${ic('check')}</span></span>
       <span class="theme-description">${appearanceText(t.note,t.noteEn)}</span></button>`).join('')}
     </div>
     <div class="background-heading"><h4>${appearanceText('الخلفية', 'Background')}</h4><span>${appearanceText('مستقلة عن لون الثيم', 'Independent of theme colors')}</span></div>
     <div class="background-choices" role="group" aria-label="${appearanceText('الخلفية', 'Background')}">
-    ${Object.entries(APPEARANCE_BACKGROUNDS).map(([id,n]) => `<button type="button" data-background-choice="${id}" aria-pressed="${background===id}"><span class="background-swatch swatch-${id}" aria-hidden="true"></span><span>${appearanceText(...n)}</span><span class="background-check" aria-hidden="true">✓</span></button>`).join('')}
+    ${Object.entries(APPEARANCE_BACKGROUNDS).map(([id,n]) => `<button type="button" data-background-choice="${id}" aria-pressed="${background===id}"><span class="background-swatch swatch-${id}" aria-hidden="true"></span><span>${appearanceText(...n)}</span><span class="background-check" aria-hidden="true">${ic('check')}</span></button>`).join('')}
     </div>
     <div id="backgroundStrengthControl" ${['solid','landscape'].includes(background)?'hidden':''}>
       <label for="backgroundStrength">${appearanceText('وضوح الخلفية', 'Background intensity')}</label>

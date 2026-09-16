@@ -22,7 +22,7 @@
    بعدها شغّالة بالكود القديم، ينخلط app.js قديم ويّا styles.css جديد.
    التبديل ينصير بإعادة تحميل واحدة نظيفة بس.
    ============================================================ */
-const CACHE = 'masareef-v58';
+const CACHE = 'masareef-v59';
 const SHELL = [
   './', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './apple-touch-icon.png', './logo.svg',
   './fonts.css', './styles.css', './appearance.css', './appearance.js',

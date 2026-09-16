@@ -586,7 +586,7 @@ function confirmDel(title, sub, okLabel){
     if(!m || !c){ res(confirm(title + (sub ? '\n' + sub : ''))); return; }
     c.innerHTML = `
       <div class="grabber"></div>
-      <div class="cf-ico">🗑</div>
+      <div class="cf-ico">${ic('trash','lg')}</div>
       <div class="cf-title">${esc(title)}</div>
       ${sub ? `<div class="cf-sub">${esc(sub)}</div>` : ''}
       <div class="cf-actions">
@@ -1044,7 +1044,7 @@ function renderDashView(){
         </div>
         ${top ? `<div class="ov-top">🏆 أعلى مصرف: <b>«${esc(top.label)}»</b> — ${fmt(top.value)} (${Math.round(top.value/total*100)}٪ من صرفك)</div>` : ''}
         ${legend ? `<div class="legend">${legend}</div>` : ''}
-        ${activeCat ? `<button class="lg-clear" onclick="filterByCat('')">✕ إلغاء الفلتر «${esc(activeCat)}»</button>` : ''}
+        ${activeCat ? `<button class="lg-clear" onclick="filterByCat('')">${ic('close')} إلغاء الفلتر «${esc(activeCat)}»</button>` : ''}
       </div>`;
     el.onclick = (ev) => {
       const t = ev.target.closest('[data-cat]');
@@ -1060,7 +1060,7 @@ function renderDashView(){
   /* ===== 🏦 الادخار: كل الصناديق + منو قريب على هدفه (بلا تكرار بمكان ثاني) ===== */
   if(dashView === 'save'){
     const funds = (state._dashFunds || []).slice();
-    if(!funds.length){ el.innerHTML = `<div class="card sum-card"><div class="empty" style="padding:18px"><span class="emo">🏦</span><b>ماكو صناديق ادخار بعد</b>أضف صندوق من تبويب «الميزانية».</div></div>`; return; }
+    if(!funds.length){ el.innerHTML = `<div class="card sum-card"><div class="empty" style="padding:18px"><span class="emo">${ic('bank')}</span><b>ماكو صناديق ادخار بعد</b>أضف صندوق من تبويب «الميزانية».</div></div>`; return; }
     const withGoal = funds.filter(f => f.goal > 0).sort((a,b)=> (b.bal/b.goal) - (a.bal/a.goal));
     const noGoal = funds.filter(f => !(f.goal > 0));
     const best = withGoal[0];
@@ -1088,7 +1088,7 @@ function renderDashView(){
   /* ===== 📄 الفواتير: شنو انفدع وشنو باقي ===== */
   if(dashView === 'bills'){
     if(!billsItems.length){
-      el.innerHTML = `<div class="card sum-card"><div class="empty" style="padding:18px"><span class="emo">📄</span><b>ماكو فواتير مسجلة هالشهر</b>أضفها من تبويب «فواتيري» — وتنتسخ تلقائياً كل شهر.</div></div>`;
+      el.innerHTML = `<div class="card sum-card"><div class="empty" style="padding:18px"><span class="emo">${ic('file')}</span><b>ماكو فواتير مسجلة هالشهر</b>أضفها من تبويب «فواتيري» — وتنتسخ تلقائياً كل شهر.</div></div>`;
       return;
     }
     const total  = billsItems.reduce((a,b)=> a + (Number(b.amount)||0), 0);
@@ -1116,7 +1116,7 @@ function renderDashView(){
   if(dashView === 'loans'){
     const loans = state._dashDebts || [];
     if(!loans.length){
-      el.innerHTML = `<div class="card sum-card"><div class="empty" style="padding:18px"><span class="emo">🤝</span><b>ماكو قروض مفتوحة</b>كل الفلوس براحتها بالصناديق 😌</div></div>`;
+      el.innerHTML = `<div class="card sum-card"><div class="empty" style="padding:18px"><span class="emo">${ic('loan')}</span><b>ماكو قروض مفتوحة</b>كل الفلوس براحتها بالصناديق 😌</div></div>`;
       return;
     }
     const total = loans.reduce((s,d)=> s + (d.amount||0), 0);
@@ -1153,7 +1153,7 @@ function renderInsightCard(){
   const list = state._insights || [];
   clearInterval(insTimer);
   if(!list.length){ el.innerHTML = ''; return; }
-  el.innerHTML = `<div class="card insight"><span class="in-ico">🔍</span><span class="in-txt" id="insightTxt">${esc(list[0])}</span></div>`;
+  el.innerHTML = `<div class="card insight"><span class="in-ico">${ic('bulb','lg')}</span><span class="in-txt" id="insightTxt">${esc(list[0])}</span></div>`;
   insIdx = 0;
   if(list.length > 1){
     insTimer = setInterval(() => {
@@ -1392,7 +1392,7 @@ function render(){
     envHtml += `
       <div class="env-filter" onclick="filterByCat('')" tabindex="0" role="button" aria-label="إلغاء الفلتر">
         <span>🔎 مفلتر على «${esc(envFilter)}» — باقي الظروف مخفية</span>
-        <span class="env-filter-x">✕ إلغاء</span>
+        <span class="env-filter-x">${ic('close')} إلغاء</span>
       </div>`;
   }
   cats.forEach((c, ci) => {
@@ -1422,7 +1422,7 @@ function render(){
       <div class="env${isOpen?' open':''}">
         <div class="env-head clickable" onclick="toggleEnv(${ci})" tabindex="0" role="button" aria-expanded="${isOpen}" aria-label="${isOpen?'سكّر':'افتح'} حركات تصنيف ${esc(c.name)}" title="اضغط حتى تشوف مصاريف وسحوبات هذا التصنيف">
           <div class="env-top">
-            <span class="env-name">${esc(c.name)} <span class="env-caret">${isOpen?'▲':'▼'}</span></span>
+            <span class="env-name">${esc(c.name)} <span class="env-caret">${ic(isOpen?'chev-up':'chev-down')}</span></span>
             <span class="env-left ${left<0?'over':''}">${left<0 ? 'تجاوز ' + fmt(-left) : 'باقي ' + fmt(left)}</span>
           </div>
           <div class="bar"><i class="${cls}" style="width:${pct}%"></i></div>
@@ -1571,7 +1571,7 @@ function render(){
             <div class="debt-sub">${isCatLoan?'قرض على تصنيف':'انعطى'} ${esc(d.date)}</div>
             ${dueHtml}
             <div class="debt-actions">
-              <button class="db-return" onclick="returnDebt('${d.id}')">↩ رجّعه للصندوق</button>
+              <button class="db-return" onclick="returnDebt('${d.id}')">${ic('undo')} رجّعه للصندوق</button>
               <button class="db-cancel" onclick="cancelDebt('${d.id}')">شطب (احذفه)</button>
             </div>
           </div>`;
@@ -1580,7 +1580,7 @@ function render(){
       html += `
         <div class="dgrp ${tone}${isOpen?' open':''}" data-fund="${gi}">
           <button type="button" class="dgrp-head" onclick="toggleDebtGroup(${gi})" aria-expanded="${isOpen?'true':'false'}">
-            <span class="dgrp-ico">🏦</span>
+            <span class="dgrp-ico">${ic('bank','lg')}</span>
             <span class="dgrp-main">
               <span class="dgrp-name">${esc(g.fund)}</span>
               <span class="dgrp-meta">${cntTxt}${bal ? ' · رصيد الصندوق ' + fmt(bal) : ''}</span>
@@ -1621,7 +1621,7 @@ function render(){
     const envEl2 = $('envList');
     envEl2.classList.toggle('no-anim', !!state._envQuiet);
     state._envQuiet = false;
-    envEl2.innerHTML = envHtml || '<div class="empty"><span class="emo">🗂️</span><b>ماكو ميزانية لهذا الشهر بعد</b>روح لتبويب «الميزانية» وحدد الرواتب والتصنيفات.</div>';
+    envEl2.innerHTML = envHtml || '<div class="empty"><span class="emo">' + ic('folder') + '</span><b>ماكو ميزانية لهذا الشهر بعد</b>روح لتبويب «الميزانية» وحدد الرواتب والتصنيفات.</div>';
     renderDashView();
   }
 
@@ -1772,19 +1772,19 @@ function renderExpenseList(){
   offlineList().filter(q => q.month === state.month).forEach(q => {
     pendHtml += `
       <div class="exp pending">
-        <div class="cat-dot">⏳</div>
+        <div class="cat-dot">${ic('clock','lg')}</div>
         <div class="mid">
           <div class="desc">${esc(q.desc || 'بدون تفاصيل')}</div>
           <div class="meta">${esc(q.date)}${q.category ? ' · ' + esc(q.category) : ''} · ⏳ بانتظار النت</div>
         </div>
         <div class="amt">${fmt(q.amount)}</div>
-        <button class="del" onclick="event.stopPropagation();removeOffline('${q.qid}')" aria-label="حذف">✕</button>
+        <button class="del" onclick="event.stopPropagation();removeOffline('${q.qid}')" aria-label="حذف">${ic('close')}</button>
       </div>`;
   });
 
   let expHtml = '';
   list.forEach(e => { expHtml += expRowHtml(e, saveNames); });
-  $('expList').innerHTML = (pendHtml + expHtml) || '<div class="empty"><span class="emo">' + (state.expenses.length ? '🔍' : '🧾') + '</span><b>' + (state.expenses.length ? 'ماكو نتائج للفلتر.' : 'ماكو مصاريف مسجلة بهذا الشهر.') + '</b>' + (state.expenses.length ? 'جرّب تغيّر كلمة البحث أو الفلتر.' : 'سجّل أول مصروف من تبويب «الإضافة».') + '</div>';
+  $('expList').innerHTML = (pendHtml + expHtml) || '<div class="empty"><span class="emo">' + ic(state.expenses.length ? 'search' : 'receipt') + '</span><b>' + (state.expenses.length ? 'ماكو نتائج للفلتر.' : 'ماكو مصاريف مسجلة بهذا الشهر.') + '</b>' + (state.expenses.length ? 'جرّب تغيّر كلمة البحث أو الفلتر.' : 'سجّل أول مصروف من تبويب «الإضافة».') + '</div>';
 }
 
 /* ---------- صف حركة (مشترك بين قائمة المصاريف وحركات الصناديق) ---------- */
@@ -1822,7 +1822,7 @@ function expRowHtml(e, saveNames){
         <div class="meta">${esc(e.date)}${e.category ? ' · ' + esc(e.category) : ''}${e.by ? ' · ' + esc(e.by) : ''}${tag}</div>
       </div>
       <div class="amt ${isRet?'ret':''}">${isRet?'+':''}${fmt(Math.abs(e.amount))}</div>
-      ${state.locked ? '' : `<button class="del" onclick="event.stopPropagation();delExpense('${e.id}')" aria-label="حذف">✕</button>`}
+      ${state.locked ? '' : `<button class="del" onclick="event.stopPropagation();delExpense('${e.id}')" aria-label="حذف">${ic('close')}</button>`}
     </div>`;
 }
 
@@ -1870,7 +1870,7 @@ function renderFundMoves(){
   });
   let html = '';
   list.forEach(e => { html += expRowHtml(e, saveNames); });
-  el.innerHTML = html || '<div class="empty"><span class="emo">🏦</span><b>' + (moves.length ? 'ماكو نتائج للفلتر.' : 'ماكو حركات صناديق بهذا الشهر.') + '</b>' + (moves.length ? 'جرّب تبدّل الصندوق أو النوع.' : 'اسحب أو ودّع أو سجّل قرض من البطاقات فوق.') + '</div>';
+  el.innerHTML = html || '<div class="empty"><span class="emo">' + ic('bank') + '</span><b>' + (moves.length ? 'ماكو نتائج للفلتر.' : 'ماكو حركات صناديق بهذا الشهر.') + '</b>' + (moves.length ? 'جرّب تبدّل الصندوق أو النوع.' : 'اسحب أو ودّع أو سجّل قرض من البطاقات فوق.') + '</div>';
   const fb = $('fmFilterBar');
   if(fb) fb.style.display = moves.length ? 'flex' : 'none';
 }
@@ -1995,7 +1995,7 @@ function addRow(section, name, amount, carried, goal){
     <input type="text" class="cname" placeholder="${ph}" value="${esc(name||'')}" ${lockedFund?'readonly style="opacity:.75"':''}>
     <input type="tel" class="camt" placeholder="${phAmt}" inputmode="numeric" value="${amount ? Number(amount).toLocaleString('en-US') : ''}">
     ${isSave ? '' : '<span class="cat-slot"></span>'}
-    ${lockedFund ? '<span class="rm" style="border:none;background:none" title="صندوق مرحّل — محمي">🔒</span>' : `<button class="rm" aria-label="حذف ${esc(name||'التصنيف')}">✕</button>`}`;
+    ${lockedFund ? '<span class="rm" style="border:none;background:none" title="صندوق مرحّل — محمي">' + ic('lock') + '</span>' : `<button class="rm" aria-label="حذف ${esc(name||'التصنيف')}">${ic('close')}</button>`}`;
   const rm = div.querySelector('button.rm');
   if(rm) rm.onclick = () => { wrap.remove(); updateAlloc(); };
   const amt = div.querySelector('.camt');
@@ -2061,7 +2061,7 @@ function addSalaryRow(person, amount){
   div.innerHTML = `
     <input type="text" class="sname" placeholder="اسم الشخص" value="${esc(person||'')}">
     <input type="tel" class="samt" placeholder="الراتب" inputmode="numeric" value="${amount ? Number(amount).toLocaleString('en-US') : ''}">
-    <button class="rm" aria-label="حذف">✕</button>`;
+    <button class="rm" aria-label="حذف">${ic('close')}</button>`;
   div.querySelector('.rm').onclick = () => { wrap.remove(); updateAlloc(); };
   const amt = div.querySelector('.samt');
   liveFormat(amt);
@@ -2087,7 +2087,7 @@ function addIncomeRow(desc, amount){
   div.innerHTML = `
     <input type="text" class="iname" placeholder="مثلاً: سلفة من أخوي" value="${esc(desc||'')}">
     <input type="tel" class="iamt" placeholder="المبلغ" inputmode="numeric" value="${amount ? Number(amount).toLocaleString('en-US') : ''}">
-    <button class="rm" aria-label="حذف">✕</button>`;
+    <button class="rm" aria-label="حذف">${ic('close')}</button>`;
   div.querySelector('.rm').onclick = () => { wrap.remove(); updateAlloc(); };
   const amt = div.querySelector('.iamt');
   liveFormat(amt);
@@ -2117,6 +2117,11 @@ function updateAlloc(){
   $('aIncome').textContent = fmt(income);
   $('aSpend').textContent  = fmt(spend);
   $('aSave').textContent   = fmt(save);
+  /* نفس الأرقام تنعاد بترويسة كل قسم: الميزان فوق يوري الصورة كاملة،
+     وترويسة القسم توري مجموع القسم اللي تكتب بيه بالضبط */
+  $('secIn').textContent    = fmt(salary + income);
+  $('secSpend').textContent = fmt(spend);
+  $('secSave').textContent  = fmt(save);
   /* جزء من توزيع المصاريف مغطّى بسحوبات من الصناديق — هذا الجزء
      ما يطلع من الراتب، فلازم يرجع للباقي وإلا يبين وكأنك موزّع
      أكثر من دخلك. (نفس منطق «صافي من راتبك» بس على مستوى الشهر) */
@@ -2132,8 +2137,26 @@ function updateAlloc(){
     $('aWd').textContent = fmt(covered);
   }
   const left = (salary + income) - spend - save + covered;
-  $('allocLeft').textContent = fmt(left);
-  $('allocLeft').className = left < 0 ? 'neg' : '';
+  const leftEl = $('allocLeft');
+  leftEl.textContent = fmt(left);
+  /* classList مو className: العنصر صار يحمل .bm-val (تنسيق الرقم
+     الكبير)، والإسناد المباشر چان يمسحه بكل ضغطة زر */
+  leftEl.classList.toggle('neg', left < 0);
+
+  /* ---------- شريط الميزان ----------
+     المسار الفاضي = الباقي. لو التوزيع تجاوز المتاح، نقيس على التوزيع
+     نفسه حتى الشريط يمتلي بالكامل وينصبغ أحمر — الشريط ما يكذب ويوري
+     فراغ وأنت متجاوز. */
+  const pool = salary + income + covered;
+  const base = Math.max(pool, spend + save) || 1;
+  const pSpend = Math.round(spend / base * 100);
+  const pSave  = Math.round(save  / base * 100);
+  $('bmSpend').style.width = pSpend + '%';
+  $('bmSave').style.width  = pSave  + '%';
+  const bar = $('bmBar');
+  bar.classList.toggle('over', left < 0);
+  bar.setAttribute('aria-label',
+    'المصاريف ' + pSpend + '٪ والادخار ' + pSave + '٪ من ' + fmt(pool));
 }
 
 /* ---------- تعديل مصروف ---------- */
@@ -2354,8 +2377,8 @@ window.openLoan = (idx) => {
     </div>
     <label style="margin-top:10px">القرض على منو؟</label>
     <div class="ln-seg" style="display:flex;gap:8px;margin:2px 0 4px">
-      <button type="button" class="btn ghost ln-type on" data-lntype="person" style="flex:1;margin:0">👤 شخص</button>
-      <button type="button" class="btn ghost ln-type" data-lntype="cat" style="flex:1;margin:0">🗂️ تصنيف مصاريف</button>
+      <button type="button" class="btn ghost ln-type on" data-lntype="person" style="flex:1;margin:0">${ic('user')} شخص</button>
+      <button type="button" class="btn ghost ln-type" data-lntype="cat" style="flex:1;margin:0">${ic('folder')} تصنيف مصاريف</button>
     </div>
     <div id="lnPersonWrap">
       <input type="text" id="lnAcc" placeholder="مثلاً: أخوي أحمد / صديقي">
@@ -2682,8 +2705,8 @@ window.openFundLog = (idx) => {
           <div class="fl-meta">${esc(e.date)} · ${kind}${e.by ? ' · ' + esc(e.by) : ''}</div>
         </div>
         <div style="display:flex;align-items:center;gap:7px">
-          ${canEdit ? `<button class="fl-edit" onclick="openEditWithdraw('${e.id}', ${idx})" title="تعديل" aria-label="تعديل الحركة">✎</button>
-          <button class="fl-del" onclick="deleteWithdraw('${e.id}', ${idx})" title="حذف" aria-label="حذف الحركة">🗑</button>` : ''}
+          ${canEdit ? `<button class="fl-edit" onclick="openEditWithdraw('${e.id}', ${idx})" title="تعديل" aria-label="تعديل الحركة">${ic('pencil')}</button>
+          <button class="fl-del" onclick="deleteWithdraw('${e.id}', ${idx})" title="حذف" aria-label="حذف الحركة">${ic('trash')}</button>` : ''}
           <div class="fl-amt ${cls}">${sign}${fmt(Math.abs(e.amount))}</div>
         </div>
       </div>`;
@@ -2945,8 +2968,8 @@ function renderMemberCards(list, hhId){
       </div>
       <div class="mem-mail" dir="ltr">${esc(m.email || '—')}</div>
       <div class="mem-actions">
-        <button class="mem-pw" onclick="memSetPassword('${m.id}'${arg})">🔑 غيّر الباسورد</button>
-        ${(m.self || m.admin) ? '' : `<button class="mem-rm" onclick="memRemove('${m.id}'${arg})">✕ شيله من العائلة</button>`}
+        <button class="mem-pw" onclick="memSetPassword('${m.id}'${arg})">${ic('key')} غيّر الباسورد</button>
+        ${(m.self || m.admin) ? '' : `<button class="mem-rm" onclick="memRemove('${m.id}'${arg})">${ic('close')} شيله من العائلة</button>`}
       </div>
     </div>`).join('');
 }
@@ -2970,7 +2993,7 @@ window.memSetPassword = (id, hhId) => {
     <input type="password" id="mpNew" autocomplete="new-password" placeholder="٦ خانات على الأقل">
     <label>تأكيد الباسورد</label>
     <input type="password" id="mpNew2" autocomplete="new-password" placeholder="أعد كتابته">
-    <button class="btn" id="mpSave">غيّر الباسورد ✓</button>
+    <button class="btn" id="mpSave">${ic('check')} غيّر الباسورد</button>
     <button class="btn ghost" onclick="modalClose()">إلغاء</button>
   `);
   setTimeout(() => { try{ $('mpNew').focus(); }catch(_){} }, 260);
@@ -3053,7 +3076,7 @@ window.openPeriodSetup = async (month, isNew) => {
       <button type="button" class="btn ghost pd-quick" data-days="35" style="flex:1;margin:0;font-size:.74rem">٣٥ يوم</button>
       <button type="button" class="btn ghost pd-quick" data-days="40" style="flex:1;margin:0;font-size:.74rem">٤٠ يوم</button>
     </div>
-    <button class="btn" id="pdSave" style="margin-top:14px">${isNew ? 'يلا نبدي 🚀' : 'حفظ ✓'}</button>
+    <button class="btn" id="pdSave" style="margin-top:14px">${isNew ? 'يلا نبدي 🚀' : ic('check') + ' حفظ'}</button>
     ${isNew ? '' : '<button class="btn ghost" onclick="modalClose()">إلغاء</button>'}
   `);
   const refreshLen = () => {
@@ -3164,7 +3187,7 @@ function renderSettings(){
 
   $('settingsBody').innerHTML = `
     <details class="card set-acc" data-g="acc" ${openAttr('acc')}>
-      <summary><span class="sa-ico">👤</span>الحساب والعائلة<span class="sa-chev">›</span></summary>
+      <summary><span class="sa-ico ic-box">${ic('user')}</span>الحساب والعائلة<span class="sa-chev">›</span></summary>
       <div class="sa-body">
       <div class="hint" style="margin:0">كود عائلتك — انطيه لزوجك/زوجتك يدخّله وقت التسجيل حتى تصيرون بنفس المساحة وتشوفون نفس البيانات:</div>
       <div class="famcode"><b dir="ltr" id="famCode">…</b><button id="btnCopyCode">نسخ</button></div>
@@ -3195,7 +3218,7 @@ function renderSettings(){
     </details>
 
     <details class="card set-acc" data-g="look" ${openAttr('look')}>
-      <summary><span class="sa-ico">🎨</span>المظهر<span class="sa-chev">›</span></summary>
+      <summary><span class="sa-ico ic-box">${ic('palette')}</span>المظهر<span class="sa-chev">›</span></summary>
       <div class="sa-body">
       ${typeof appearanceSettings === 'function' ? appearanceSettings() : ''}
       <div class="set-toggle" id="legacyDarkControl" style="margin-top:0" ${typeof isModernAppearance === 'function' && isModernAppearance(curPal)?'hidden':''}>
@@ -3262,18 +3285,18 @@ function renderSettings(){
     </details>
 
     <details class="card set-acc" data-g="snd" ${openAttr('snd')}>
-      <summary><span class="sa-ico">🔔</span>الأصوات والموسيقى<span class="sa-chev">›</span></summary>
+      <summary><span class="sa-ico ic-box">${ic('bell')}</span>الأصوات والموسيقى<span class="sa-chev">›</span></summary>
       <div class="sa-body">
       <div class="set-toggle" style="margin-top:0">
         <span class="st-lbl">🔔 أصوات العمليات (إضافة / صرف / حذف)</span>
         <label class="switch"><input type="checkbox" id="sndToggle" ${SND.on?'checked':''}><span class="track"></span><span class="knob"></span></label>
       </div>
-      <button class="btn ghost" id="btnMusicS" style="margin-top:8px">🎵 موسيقى الخلفية</button>
+      <button class="btn ghost" id="btnMusicS" style="margin-top:8px">${ic('music')} موسيقى الخلفية</button>
       </div>
     </details>
 
     <details class="card set-acc" data-g="tabs" ${openAttr('tabs')}>
-      <summary><span class="sa-ico">🧩</span>التبويبات واللغة والعملة<span class="sa-chev">›</span></summary>
+      <summary><span class="sa-ico ic-box">${ic('layers')}</span>التبويبات واللغة والعملة<span class="sa-chev">›</span></summary>
       <div class="sa-body">
       <div class="set-toggle" style="margin-top:0">
         <span class="st-lbl">🧾 أظهر تبويب «فواتيري»</span>
@@ -3300,30 +3323,30 @@ function renderSettings(){
     </details>
 
     <details class="card set-acc" data-g="rep" ${openAttr('rep')}>
-      <summary><span class="sa-ico">📊</span>التقارير والنسخ الاحتياطي<span class="sa-chev">›</span></summary>
+      <summary><span class="sa-ico ic-box">${ic('chart')}</span>التقارير والنسخ الاحتياطي<span class="sa-chev">›</span></summary>
       <div class="sa-body">
-      <button class="btn ghost" id="btnChartS" style="margin-top:0">📊 مقارنة الأشهر</button>
-      <button class="btn ghost" id="btnPdf">🖨 طباعة / حفظ PDF — شهر ${esc(state.month)}</button>
-      <button class="btn ghost" id="btnXlsMonth">📊 تصدير إكسل — شهر ${esc(state.month)}</button>
-      <button class="btn ghost" id="btnXlsAll">🗂 تصدير إكسل — كل الأشهر</button>
-      <button class="btn ghost" id="btnBackup">💾 نسخة احتياطية كاملة (ملف)</button>
+      <button class="btn ghost" id="btnChartS" style="margin-top:0">${ic('chart')} مقارنة الأشهر</button>
+      <button class="btn ghost" id="btnPdf">${ic('print')} طباعة / حفظ PDF — شهر ${esc(state.month)}</button>
+      <button class="btn ghost" id="btnXlsMonth">${ic('chart')} تصدير إكسل — شهر ${esc(state.month)}</button>
+      <button class="btn ghost" id="btnXlsAll">${ic('folder')} تصدير إكسل — كل الأشهر</button>
+      <button class="btn ghost" id="btnBackup">${ic('download')} نسخة احتياطية كاملة (ملف)</button>
       </div>
     </details>
 
     ${session && session.admin ? `
     <details class="card set-acc" data-g="mem" ${openAttr('mem')}>
-      <summary><span class="sa-ico">👥</span>أعضاء العائلة<span class="sa-chev">›</span></summary>
+      <summary><span class="sa-ico ic-box">${ic('users')}</span>أعضاء العائلة<span class="sa-chev">›</span></summary>
       <div class="sa-body">
       <div class="hint" style="margin:0 0 10px">تكدر تغيّر باسورد أي عضو بعائلتك (لو نسى باسورده) أو تشيله منها. <b>ملاحظة:</b> لو إنت نسيت باسوردك، غيّره من لوحة Supabase ← Authentication ← Users.</div>
       <div id="memList"><div class="hint">…</div></div>
-      <button class="btn ghost" id="btnReloadMembers">↻ تحديث القائمة</button>
+      <button class="btn ghost" id="btnReloadMembers">${ic('refresh')} تحديث القائمة</button>
       </div>
     </details>
 
     <details class="card set-acc" data-g="adm" ${openAttr('adm')}>
-      <summary><span class="sa-ico">🛡</span>المشرف<span class="sa-chev">›</span></summary>
+      <summary><span class="sa-ico ic-box">${ic('shield')}</span>المشرف<span class="sa-chev">›</span></summary>
       <div class="sa-body">
-      <button class="btn ghost" id="btnAdmin" style="margin-top:0">🛡 لوحة المشرف</button>
+      <button class="btn ghost" id="btnAdmin" style="margin-top:0">${ic('shield')} لوحة المشرف</button>
       <div class="set-toggle">
         <span class="st-lbl">🔎 شغّل تبويب «مدقق الأرصدة»</span>
         <label class="switch"><input type="checkbox" id="auditToggle" ${(typeof AUDIT_ON!=='undefined'&&AUDIT_ON)?'checked':''}><span class="track"></span><span class="knob"></span></label>
@@ -3564,7 +3587,7 @@ async function showAdmin(){
             <div class="af-meta">👥 ${esc(h.member_names || '—')} · كود: <b dir="ltr">${esc(h.code||'—')}</b></div>
           </div>
           <div class="af-btns">
-            <button class="af-mem" onclick="adminMembers('${h.id}')">👥 الأعضاء</button>
+            <button class="af-mem" onclick="adminMembers('${h.id}')">${ic('users')} الأعضاء</button>
             ${mine ? '' : `<button class="af-del" onclick="adminDelete('${h.id}')">حذف</button>`}
           </div>
         </div>`;
@@ -4109,13 +4132,13 @@ function renderBills(){
     }
     return `
       <div class="bill ${cls}">
-        <button class="bl-chk" onclick="toggleBill('${b.id}', ${!b.paid})">${b.paid ? '✓' : ''}</button>
+        <button class="bl-chk" onclick="toggleBill('${b.id}', ${!b.paid})">${b.paid ? ic('check') : ''}</button>
         <div class="bl-main" onclick="editBill('${b.id}')" style="cursor:pointer" tabindex="0" role="button" aria-label="تعديل فاتورة ${esc(b.name)}" title="اضغط للتعديل">
           <div class="bl-name">${esc(b.name)} <span style="font-size:.62rem;color:var(--muted)">✎</span></div>
           ${meta ? `<div class="bl-meta">${esc(meta)}</div>` : ''}
         </div>
         <div class="bl-amt">${fmt(b.amount)}</div>
-        <button class="bl-del" onclick="deleteBill('${b.id}')" aria-label="حذف">✕</button>
+        <button class="bl-del" onclick="deleteBill('${b.id}')" aria-label="حذف">${ic('close')}</button>
       </div>`;
   }).join('');
 }
@@ -4267,7 +4290,7 @@ function renderRecons(){
     const sys = Number(r.systemTotal)||0;
     const diff = actual - sys;
     const badge = Math.abs(diff) < 1
-      ? '<span class="rc-badge ok">✓ مطابق</span>'
+      ? '<span class="rc-badge ok">' + ic('check') + ' مطابق</span>'
       : (diff < 0 ? '<span class="rc-badge miss">ناقص ' + fmt(-diff) + '</span>'
                   : '<span class="rc-badge extra">زايد ' + fmt(diff) + '</span>');
     const parts = [];
@@ -4279,7 +4302,7 @@ function renderRecons(){
         <div class="rc-line">
           <span class="rc-date">${esc(r.date)}</span>
           ${badge}
-          <button class="rc-del" onclick="deleteRecon('${r.id}')" aria-label="حذف">✕</button>
+          <button class="rc-del" onclick="deleteRecon('${r.id}')" aria-label="حذف">${ic('close')}</button>
         </div>
         <div class="rc-sub">الفعلي ${fmt(actual)} (${parts.join(' · ')}) مقابل النظام ${fmt(sys)}${r.byName ? ' · سجّلها ' + esc(r.byName) : ''}${r.note ? '<br>📝 ' + esc(r.note) : ''}</div>
       </div>`;
@@ -4313,7 +4336,7 @@ function renderQuick(){
   }
   box.innerHTML = '<div class="quick-grid">' + quickItems.map(q => `
     <div class="qbtn ${quickEditing?'editing':''}" onclick="useQuick('${q.id}')" tabindex="0" role="button" aria-label="زر سريع: ${esc(q.label)}">
-      <button class="qb-del" onclick="event.stopPropagation();removeQuick('${q.id}')" aria-label="حذف">✕</button>
+      <button class="qb-del" onclick="event.stopPropagation();removeQuick('${q.id}')" aria-label="حذف">${ic('close')}</button>
       <span class="qb-label">${esc(q.label)}</span>
       <span class="qb-sub">${q.amount>0 ? fmt(q.amount) : 'بلا مبلغ'}${q.category ? ' · ' + esc(q.category) : ''}</span>
     </div>`).join('') +
@@ -4577,7 +4600,7 @@ $('btnCloseMonth').onclick = () => {
   modalOpen(`
     <h2>إقفال «${esc(periodLabel(state.budget, state.month))}»</h2>
     <div class="hint" style="margin:0 0 12px">راح تنقفل الفترة للعرض فقط (تكدر تفتحها بعدين)، ويترحّل باقي كل تصنيف وصندوق للفترة الجاية، وبعدها نسألك عن اسم الفترة الجديدة ومداها.</div>
-    <button class="btn" id="doClose">إقفال الفترة ✓</button>
+    <button class="btn" id="doClose">${ic('check')} إقفال الفترة</button>
     <button class="btn ghost" onclick="modalClose()">إلغاء</button>
   `);
   $('doClose').onclick = async () => {

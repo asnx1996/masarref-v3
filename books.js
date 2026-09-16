@@ -234,7 +234,7 @@ function renderLedger(){
 
   let body = '';
   if(!L.rows.length){
-    body = '<div class="empty"><span class="emo">📖</span><b>ماكو أي حركة على هذا الحساب بهذه الفترة.</b>الدفتر يعرض المرحّل والمخصص والحركات — وهذا الحساب فارغ.</div>';
+    body = '<div class="empty"><span class="emo">' + ic('book') + '</span><b>ماكو أي حركة على هذا الحساب بهذه الفترة.</b>الدفتر يعرض المرحّل والمخصص والحركات — وهذا الحساب فارغ.</div>';
   }else{
     let trs = '';
     L.rows.forEach(r => {
@@ -631,13 +631,13 @@ async function bkAuditAll(){
    انحط جوّا onclick. الرقم ما ينكسر أبداً. */
 let audFinds = [];
 function bkFindCard(f, i){
-  const ico = f.sev === 'err' ? '🚨' : (f.sev === 'warn' ? '⚠️' : '💡');
+  const ico = ic(f.sev === 'err' ? 'alert' : (f.sev === 'warn' ? 'alert' : 'bulb'), 'lg');
   return `
     <div class="aud-find ${f.sev}">
       <div class="af-h"><span class="af-i">${ico}</span><b>${esc(f.title)}</b></div>
       <div class="af-b">${f.body}</div>
       <div class="af-f"><b>الحل:</b> ${esc(f.fix)}</div>
-      ${f.acc ? `<button class="af-go" onclick="openLedgerFind(${i})">📖 افتح دفتره</button>` : ''}
+      ${f.acc ? `<button class="af-go" onclick="openLedgerFind(${i})">${ic('book')} افتح دفتره</button>` : ''}
     </div>`;
 }
 function bkFindsHtml(list){
@@ -653,7 +653,7 @@ function renderAudit(){
   const box = $('auditBody');
   if(!box) return;
   if(!(session && session.admin)){
-    box.innerHTML = '<div class="empty"><span class="emo">🔒</span><b>هذي الأداة للمشرف بس.</b></div>';
+    box.innerHTML = '<div class="empty"><span class="emo">' + ic('lock') + '</span><b>هذي الأداة للمشرف بس.</b></div>';
     return;
   }
   const R = bkAuditMonth();
@@ -682,7 +682,7 @@ function renderAudit(){
       <td class="led-n cr">${fmt(cr)}</td>
       <td class="led-n dr">${fmt(dr)}</td>
       <td class="led-n bl ${t.L.closing < 0 ? 'neg' : ''}">${sfmt(t.L.closing)}</td>
-      <td class="aud-s">${t.L.closing < 0 ? '<span class="ab bad">✕ سالب</span>' : (t.acc.orphan ? '<span class="ab warn">⚠ يتيم</span>' : '<span class="ab ok">✓</span>')}</td>
+      <td class="aud-s">${t.L.closing < 0 ? '<span class="ab bad">' + ic('close') + ' سالب</span>' : (t.acc.orphan ? '<span class="ab warn">' + ic('alert') + ' يتيم</span>' : '<span class="ab ok">' + ic('check') + '</span>')}</td>
     </tr>`;
   });
 
@@ -723,13 +723,13 @@ function renderAudit(){
 
     <div class="card">
       <h2 style="margin-top:0">🔎 نتائج التدقيق — ${arCount(R.finds.length, 'ملاحظة وحدة', 'ملاحظتين', 'ملاحظات', 'ملاحظة')}</h2>
-      <div id="audFinds">${R.finds.length ? bkFindsHtml(R.finds) : '<div class="empty"><span class="emo">✅</span><b>ماكو أي ملاحظة على هذه الفترة.</b>كل الأرصدة تطابق حركاتها.</div>'}</div>
+      <div id="audFinds">${R.finds.length ? bkFindsHtml(R.finds) : '<div class="empty"><span class="emo">' + ic('check') + '</span><b>ماكو أي ملاحظة على هذه الفترة.</b>كل الأرصدة تطابق حركاتها.</div>'}</div>
     </div>
 
     <div class="card">
       <h2 style="margin-top:0">☁️ تدقيق كل الفترات</h2>
       <div class="hint" style="margin:0 0 10px">يجيب كل فتراتك من السحابة ويفحص سلسلة الترحيل: باقي كل فترة مقفلة لازم يطلع مرحّلاً بالفترة اللي بعدها بنفس الرقم. هذا الفحص هو اللي يلگي الانحرافات القديمة اللي تتراكم بهدوء.</div>
-      <button class="btn ghost" id="btnAuditAll" style="margin-top:0">☁️ شغّل تدقيق كل الفترات</button>
+      <button class="btn ghost" id="btnAuditAll" style="margin-top:0">${ic('cloud')} شغّل تدقيق كل الفترات</button>
       <div id="audAllBox"></div>
     </div>`;
 
@@ -745,7 +745,7 @@ function renderAudit(){
           ${(() => { const mm = arCount(A.months.length, 'فترة وحدة', 'فترتين', 'فترات', 'فترة'); return A.finds.length ? '🔎 فحصنا ' + mm + ' ولگينا ' + arCount(A.finds.length, 'ملاحظة وحدة', 'ملاحظتين', 'ملاحظات', 'ملاحظة') : '✅ فحصنا ' + mm + ' — سلسلة الترحيل سليمة كلها'; })()}
         </div>` + bkFindsHtml(A.finds);
     }catch(err){
-      out.innerHTML = '<div class="aud-find err" style="margin-top:12px"><div class="af-h"><span class="af-i">🚨</span><b>ما كدرت أجيب البيانات</b></div><div class="af-b">' + esc(err.message) + '</div></div>';
+      out.innerHTML = '<div class="aud-find err" style="margin-top:12px"><div class="af-h"><span class="af-i">' + ic('alert','lg') + '</span><b>ما كدرت أجيب البيانات</b></div><div class="af-b">' + esc(err.message) + '</div></div>';
     }finally{ loading(false); }
   };
 }
