@@ -77,6 +77,10 @@ function bkLedger(acc){
   const saveNames = bkSaveNames();
   const od = bkOpenDate();
   const rows = [];
+  /* cover = الجزء من المخصص اللي غطّاه سحب من الصناديق — يطلع بسطر
+     مدين مقابل، وينرجّع مع النتيجة حتى المدقق يفصل «المصروف» عن
+     «التغطية» بدل ما يعدّهن سوة. صفر بكل الحسابات غير التصنيفات. */
+  let cover = 0;
   /* flag: 'open' = رصيد افتتاحي (مو حركة — ما يدخل بالمجاميع)
            'head' = حركة أول الفترة (راتب/مخصص/حجز ادخار) — تدخل
                     بالمجاميع، بس تنعرض بسطر مظلّل لأنها مو عملية
@@ -122,19 +126,36 @@ function bkLedger(acc){
 
   }else if(acc.kind === 'cat'){
     const c = acc.cat;
+    const alloc = c ? (Number(c.amount) || 0) : 0;
     if(c){
       const carried = Number(c.carried) || 0;
       if(carried) add(od, 'مرحّل من الفترة الماضية', carried < 0 ? 'تجاوز مرحّل' : 'باقي مرحّل', carried > 0 ? carried : 0, carried < 0 ? -carried : 0, 'مرحّل', '', 'open');
-      const alloc = Number(c.amount) || 0;
       if(alloc) add(od, 'المخصص لهذه الفترة', 'من توزيع الميزانية', alloc, 0, 'مخصص', '', 'head');
     }
+    let wd = 0;                              /* سحب من صندوق وصل لهذا التصنيف */
     (state.expenses || []).forEach(e => {
       if(e.category !== acc.name) return;
       const kd = kindOf(e, saveNames);
       if(!hitsCat(kd)) return;               /* تسديد القرض ما يمسّ التصنيف */
       const a = Number(e.amount) || 0;
+      if(kd === 'cat_fund') wd += -a;
       add(e.date, e.desc || 'مصروف', (e.by ? e.by : ''), a < 0 ? -a : 0, a > 0 ? a : 0, (KIND_UI[kd] ? KIND_UI[kd].tag.replace(' · ','') : 'صرف'), e.id);
     });
+    /* ------------------------------------------------------------
+       السحب من الصندوق يغطّي المخصص — ما يزيد فوكه
+       ------------------------------------------------------------
+       سطر السحب فوك دائن (فلوس وصلت للتصنيف)، والمخصص دائن بعد.
+       لو خلّيناهم الاثنين بلا مقابل، التصنيف يطلع أغنى من الحقيقة
+       بمقدار الجزء المشترك — وهذا بالضبط اللي چان يخلي رصيد الدفتر
+       ما يطابق «المتاح» باللوحة. فنحط سطر مدين مقابل بمقدار
+       min(المخصص، السحب): المعنى إن هذا الجزء من المخصص ما يطلع من
+       راتبك، لأن الصندوق دفعه. والباقي (السحب اللي فوك المخصص) يبقى
+       دائن، لأنه فلوس زايدة فعلاً بإيدك.
+       النتيجة: المرحّل + max(المخصص، السحب) + القرض − الصرف —
+       نفس catAvailable() بـapp.js بالضبط.
+       ------------------------------------------------------------ */
+    cover = Math.min(alloc, wd);
+    if(cover > 0) add(od, 'مغطّى بسحب من الصناديق', 'هذا الجزء من المخصص جا من الصندوق مو من الراتب', 0, cover, 'تغطية', '', 'head');
 
   }else{ /* fund */
     const c = acc.cat;
@@ -167,7 +188,7 @@ function bkLedger(acc){
     r.bal = bal;
     if(r.open) opening = bal; else { credit += r.cr; debit += r.dr; }
   });
-  return { rows, opening, credit, debit, closing: bal };
+  return { rows, opening, credit, debit, closing: bal, cover };
 }
 
 /* ============================================================
@@ -250,7 +271,7 @@ function renderLedger(){
       <div class="lstat dr"><div class="ll">مجموع المدين −</div><div class="lv">${fmt(L.debit)}</div></div>
       <div class="lstat main"><div class="ll">الرصيد الختامي</div><div class="lv ${balCls}">${sfmt(L.closing)}</div></div>
     </div>
-    <div class="hint" style="margin:10px 2px 14px">${esc(acc.icon + ' ' + acc.name)} — الرصيد الختامي هنا يعني: <b>${esc(meaning)}</b>. الحركات مرتبة بتاريخ العملية، وسطر «افتتاح» هو الرصيد الجاي من الفترة الماضية، وأسطر «أول الفترة» هي الرواتب والمخصصات (حركات حقيقية بس بلا يوم معيّن).</div>
+    <div class="hint" style="margin:10px 2px 14px">${esc(acc.icon + ' ' + acc.name)} — الرصيد الختامي هنا يعني: <b>${esc(meaning)}</b>. الحركات مرتبة بتاريخ العملية، وسطر «افتتاح» هو الرصيد الجاي من الفترة الماضية، وأسطر «أول الفترة» هي الرواتب والمخصصات (حركات حقيقية بس بلا يوم معيّن).${acc.kind === 'cat' && L.cover > 0 ? ' وسطر «مغطّى بسحب من الصناديق» معناه إن ' + fmt(L.cover) + ' من المخصص جا من صندوق مو من راتبك — فما ينحسب مرتين.' : ''}</div>
     ${body}`;
 }
 
@@ -376,7 +397,7 @@ function bkAuditMonth(){
   table.filter(t => t.acc.kind === 'cat' && !t.acc.orphan && t.L.closing < 0).forEach(t => {
     finds.push({
       sev:'warn', code:'cat_over', title:'تصنيف «' + t.acc.name + '» متجاوز',
-      body:'المتاح ' + fmt(t.L.opening + t.L.credit) + ' والمصروف ' + fmt(t.L.debit) + ' — تجاوز بـ' + fmt(-t.L.closing) + '.',
+      body:'المتاح ' + fmt(t.L.opening + t.L.credit - t.L.cover) + ' والمصروف ' + fmt(t.L.debit - t.L.cover) + ' — تجاوز بـ' + fmt(-t.L.closing) + '.',
       fix:'زيّد مخصصه من «الميزانية»، أو انقل له من تصنيف عنده فائض.',
       acc: t.acc.key
     });
@@ -537,16 +558,18 @@ async function bkAuditAll(){
     if(c.type === 'save') saveOf[c.month].add(c.name);
   });
 
-  /* صافي الحركة على كل (شهر، اسم) */
-  const movedOf = {};
+  /* صافي الحركة على كل (شهر، اسم) — وسحب الصناديق لحاله، لأن
+     قاعدة «السحب يغطّي المخصص» تحتاجه مفروزاً (شوف bkLedger) */
+  const movedOf = {}, wdOf = {};
   expAll.forEach(e => {
     const m = e.month;
-    if(!movedOf[m]) movedOf[m] = {};
+    if(!movedOf[m]) { movedOf[m] = {}; wdOf[m] = {}; }
     const sn = saveOf[m] || new Set();
     const kd = kindOf(e, sn);
     const k = e.category || '';
     if(!k) return;
     if(isFundKind(kd) || hitsCat(kd)) movedOf[m][k] = (movedOf[m][k] || 0) + (Number(e.amount) || 0);
+    if(kd === 'cat_fund') wdOf[m][k] = (wdOf[m][k] || 0) - (Number(e.amount) || 0);
   });
 
   const breaks = [];
@@ -559,7 +582,12 @@ async function bkAuditAll(){
       const next = cn.get(name);
       if(!next) return;                  /* التصنيف انشال بالفترة الجاية — قرار مستخدم */
       if(c.closed) return;               /* صندوق مغلق ما يترحّل عمداً */
-      const expected = (Number(c.amount) || 0) + (Number(c.carried) || 0) - ((movedOf[m] || {})[name] || 0);
+      /* المرحّل = المرحّل السابق + max(المخصص، السحب) − الصرف.
+         الجزء المغطّى بالسحب ينطرح لأن المخصص والسحب چانوا الاثنين
+         زايدين بالحساب القديم — نفس التصحيح اللي بـbkLedger. */
+      const amt = Number(c.amount) || 0;
+      const wd  = c.type === 'save' ? 0 : ((wdOf[m] || {})[name] || 0);
+      const expected = amt + (Number(c.carried) || 0) - ((movedOf[m] || {})[name] || 0) - Math.min(amt, wd);
       const actual = Number(next.carried) || 0;
       if(Math.abs(expected - actual) >= 1)
         breaks.push({ month:m, next:nx, name, type:c.type === 'save' ? 'صندوق' : 'تصنيف', expected, actual });
@@ -644,11 +672,15 @@ function renderAudit(){
   let trs = '';
   R.table.forEach(t => {
     const cls = t.L.closing < 0 ? 'bad' : (t.acc.orphan ? 'warn' : '');
+    /* سطر التغطية (السحب اللي يغطّي المخصص) دائن ومدين بنفس المبلغ —
+       نطلّعه من العمودين حتى «دخل له» و«طلع منه» يبقون فلوس حقيقية.
+       الرصيد ما يتأثر: (دائن−تغطية) − (مدين−تغطية) = نفس الفرق. */
+    const cr = t.L.credit - t.L.cover, dr = t.L.debit - t.L.cover;
     trs += `<tr class="${cls}">
       <td class="aud-a"><b>${t.acc.icon} ${esc(t.acc.name)}</b><small>${t.acc.kind === 'remain' ? 'فلوس فعلية' : (t.acc.kind === 'fund' ? 'صندوق ادخار' : (t.acc.orphan ? 'بلا مخصص' : 'تصنيف مصروف'))}</small></td>
       <td class="led-n">${fmt(t.L.opening)}</td>
-      <td class="led-n cr">${fmt(t.L.credit)}</td>
-      <td class="led-n dr">${fmt(t.L.debit)}</td>
+      <td class="led-n cr">${fmt(cr)}</td>
+      <td class="led-n dr">${fmt(dr)}</td>
       <td class="led-n bl ${t.L.closing < 0 ? 'neg' : ''}">${sfmt(t.L.closing)}</td>
       <td class="aud-s">${t.L.closing < 0 ? '<span class="ab bad">✕ سالب</span>' : (t.acc.orphan ? '<span class="ab warn">⚠ يتيم</span>' : '<span class="ab ok">✓</span>')}</td>
     </tr>`;

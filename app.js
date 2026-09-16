@@ -1329,7 +1329,9 @@ function render(){
   });
   cats.filter(c=>c.type!=='save').forEach(c => {
     const fi = fundInByCat[c.name]||0, rp = repayByCat[c.name]||0;
-    const eff = (Number(c.amount)||0) + (Number(c.carried)||0) + fi - rp;
+    /* نفس متاح الظرف بالضبط — السحب يغطّي المخصص، والقرض يزيده */
+    const eff = (Number(c.carried)||0) + catAllocPool(Number(c.amount)||0, fundWdByCat[c.name]||0)
+              + ((fundLoanByCat[c.name]||0) - rp);
     const sp = (spentByCat[c.name]||0) + fi - rp;
     if(eff > 0 && sp > eff) insights.push('🚨 تحذير: «' + c.name + '» تجاوز ميزانيته بـ' + fmt(sp - eff));
     else if(eff > 0 && sp / eff >= .85) insights.push('⚠️ «' + c.name + '» وصل ' + Math.round(sp / eff * 100) + '% من ميزانيته — انتبه للباقي');
@@ -1363,11 +1365,21 @@ function render(){
   state._insights = insights;
   if(tabShown('tab-dash')) renderInsightCard();
 
+  /* «المتاح» بالنظرة العامة لازم يمشي بنفس قاعدة الظروف والدفتر:
+     السحب يغطّي المخصص ما يزيد فوكه. fundInTotal يحمل السحب كامل،
+     فننزل الجزء المغطّى (min لكل تصنيف) — واللي يبقى هو
+     Σ(المرحّل + max(المخصص، السحب) + القرض). */
+  let coveredTotal = 0;
+  cats.forEach(c => {
+    if(c.type === 'save') return;
+    coveredTotal += Math.min(Number(c.amount)||0, fundWdByCat[c.name]||0);
+  });
+
   /* بيانات النظرة العامة — تنخزن وتنرسم حسب التبويب المختار (renderDashView) */
   state._dash = {
     donutParts, dailyAvg, canDaily, prog,
     realSpending,
-    totalAvail: spendAlloc + spendCarried + fundInTotal - repayTotal
+    totalAvail: spendAlloc + spendCarried + fundInTotal - repayTotal - coveredTotal
   };
 
   /* ===== ظروف المصاريف =====
@@ -3620,19 +3632,27 @@ function buildReportHTML(){
   const cats = b.categories || [];
   const saveNames = new Set(cats.filter(c=>c.type==='save').map(c=>c.name));
 
-  const spentByCat = {}, fundInByCat = {}, repayByCat = {};
-  state.expenses.forEach(e => {
-    const k=e.category||'بلا تصنيف';
-    spentByCat[k]=(spentByCat[k]||0)+e.amount;
-    const d = String(e.desc||'');
-    if(e.amount < 0 && /^(قرض|تمويل) من صندوق/.test(d)) fundInByCat[k]=(fundInByCat[k]||0)-e.amount;
-    else if(e.amount > 0 && d.indexOf('سداد قرض لصندوق') === 0) repayByCat[k]=(repayByCat[k]||0)+e.amount;
-  });
+  /* نفس فرز اللوحة بالضبط — حسب e.kind مو حسب نص الوصف (شوف kindOf
+     بـcore.js). قبل چان التقرير يقرا الوصف بـregex، فما يشوف السحب
+     الجديد ولا القرض المحمّل، وتطلع أرقامه مختلفة عن اللوحة. */
+  const spentByCat = {}, fundWdByCat = {}, fundLoanByCat = {}, repayByCat = {}, loanChgByCat = {};
   let spendingSpent=0, saveContrib=0, spendCarried=0, fundDeposits=0;
-  cats.forEach(c => { if(c.type==='save') saveContrib+=(c.amount||0); else spendCarried+=(c.carried||0); });
+  cats.forEach(c => { if(c.type==='save') saveContrib+=(Number(c.amount)||0); else spendCarried+=(Number(c.carried)||0); });
   state.expenses.forEach(e => {
-    if(!saveNames.has(e.category)) spendingSpent += e.amount;
-    else if(e.amount < 0 && String(e.desc||'').indexOf('إيداع:') === 0) fundDeposits += -e.amount;
+    const kd = kindOf(e, saveNames);
+    const a  = Number(e.amount)||0;
+    const k  = e.category||'بلا تصنيف';
+    if(isFundKind(kd)){
+      spentByCat[k] = (spentByCat[k]||0) + a;
+      if(kd === 'fund_dep') fundDeposits += -a;
+      return;
+    }
+    if(hitsCat(kd))    spentByCat[k] = (spentByCat[k]||0) + a;
+    if(hitsRemain(kd)) spendingSpent += a;
+    if(kd === 'cat_fund')    fundWdByCat[k]   = (fundWdByCat[k]||0) - a;
+    if(kd === 'cat_loan_v1') fundLoanByCat[k] = (fundLoanByCat[k]||0) - a;
+    if(kd === 'cat_pay_v1')  repayByCat[k]    = (repayByCat[k]||0) + a;
+    if(kd === 'cat_loan' || kd === 'cat_fix') loanChgByCat[k] = (loanChgByCat[k]||0) + a;
   });
   const totalSalary = (b.salaries && b.salaries.length)
     ? b.salaries.reduce((s,x)=> s + (Number(x.amount)||0), 0)
@@ -3641,16 +3661,21 @@ function buildReportHTML(){
   const totalIncome = totalSalary + extraIncome;
   const remain = totalIncome + spendCarried - saveContrib - spendingSpent - fundDeposits;
   /* الصرف الفعلي للعرض بالتقرير (مثل اللوحة) */
-  let fundInTotal=0, repayTotal=0;
-  Object.keys(fundInByCat).forEach(k => { fundInTotal += fundInByCat[k]; });
+  let fundInTotal=0, repayTotal=0, loanChgTotal=0;
+  Object.keys(fundWdByCat).forEach(k => { fundInTotal += fundWdByCat[k]; });
+  Object.keys(fundLoanByCat).forEach(k => { fundInTotal += fundLoanByCat[k]; });
   Object.keys(repayByCat).forEach(k => { repayTotal += repayByCat[k]; });
-  const realSpending = spendingSpent + fundInTotal - repayTotal;
+  Object.keys(loanChgByCat).forEach(k => { loanChgTotal += loanChgByCat[k]; });
+  const realSpending = spendingSpent + fundInTotal - repayTotal + loanChgTotal;
 
   let catRows = '';
   cats.filter(c=>c.type!=='save').forEach(c=>{
-    const fundIn = fundInByCat[c.name]||0, repay = repayByCat[c.name]||0;
-    const eff = (c.amount||0)+(c.carried||0)+(fundIn-repay);
-    const sp = (spentByCat[c.name]||0)+fundIn-repay;
+    /* السحب من صندوق يغطّي المخصص ما يزيد فوكه — نفس catAllocPool
+       باللوحة وbkLedger بالدفاتر. القرض هو الوحيد اللي يزيد فوك المخصص. */
+    const wd = fundWdByCat[c.name]||0;
+    const loanNet = (fundLoanByCat[c.name]||0) - (repayByCat[c.name]||0);
+    const eff = (Number(c.carried)||0) + catAllocPool(Number(c.amount)||0, wd) + loanNet;
+    const sp = (spentByCat[c.name]||0) + wd + (fundLoanByCat[c.name]||0) - (repayByCat[c.name]||0);
     catRows += `<tr><td>${esc(c.name)}</td><td>${fmt(eff)}</td><td>${fmt(sp)}</td><td>${fmt(eff-sp)}</td></tr>`;
   });
 
@@ -3797,15 +3822,34 @@ async function exportExcel(scope){
       (b.incomes||[]).forEach(x => sum.push(['دخل إضافي: ' + (x.desc||''), money(x.amount)]));
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sum), 'الملخص');
 
-      const catRows = cats.map(c => ({
-        'الاسم': c.name,
-        'النوع': c.type === 'save' ? 'صندوق ادخار' : 'مصروف',
-        'المخصص': money(c.amount),
-        'المرحّل': money(c.carried),
-        'الهدف': c.type === 'save' ? money(c.goal) : '',
-        'المصروف/صافي السحب': money(spent[c.name]||0),
-        'الباقي/الرصيد': money(c.amount) + money(c.carried) - money(spent[c.name]||0)
-      }));
+      /* التصنيفات تنحسب بنفس قواعد اللوحة: السحب من صندوق يغطّي
+         المخصص (ما ينضاف فوكه)، والقرض يزيده، والتسديد ما يمسّه.
+         الصناديق تظل (مرحّل + مساهمة − صافي حركاتها). */
+      const catRows = cats.map(c => {
+        if(c.type === 'save'){
+          return {
+            'الاسم': c.name, 'النوع': 'صندوق ادخار',
+            'المخصص': money(c.amount), 'المرحّل': money(c.carried),
+            'الهدف': money(c.goal),
+            'سحب من الصناديق': '',
+            'المتاح الفعلي': money(c.amount) + money(c.carried),
+            'المصروف/صافي السحب': money(spent[c.name]||0),
+            'الباقي/الرصيد': money(c.amount) + money(c.carried) - money(spent[c.name]||0)
+          };
+        }
+        const p = catFundParts(c.name);
+        const avail = money(c.carried) + catAllocPool(money(c.amount), p.wd) + (p.loan - p.repay);
+        const left  = catAvailable(c.name);
+        return {
+          'الاسم': c.name, 'النوع': 'مصروف',
+          'المخصص': money(c.amount), 'المرحّل': money(c.carried),
+          'الهدف': '',
+          'سحب من الصناديق': p.wd || '',
+          'المتاح الفعلي': avail,
+          'المصروف/صافي السحب': avail - left,
+          'الباقي/الرصيد': left
+        };
+      });
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(catRows), 'التصنيفات والصناديق');
 
       const expRows = state.expenses.map(e => ({ 'التاريخ': e.date, 'التفاصيل': e.desc, 'التصنيف': e.category, 'المُدخِل': e.by, 'المبلغ': e.amount }));
