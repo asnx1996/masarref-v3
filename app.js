@@ -1235,6 +1235,14 @@ function render(){
   setStat($('hSpent'), realSpending);
   setStat($('hRemain'), remain);
   $('hRemain').className = 'val' + (remain < 0 ? ' neg' : '');
+  /* السلف المسجّلة بهذه الفترة — تنخصم من ميزانية الفترة الجاية */
+  const advTotal = Object.keys(advByCat).reduce((s2, k) => s2 + advByCat[k], 0);
+  state._advTotal = advTotal;
+  const hAdv = $('hAdv');
+  if(hAdv){
+    hAdv.style.display = advTotal > 0 ? '' : 'none';
+    hAdv.textContent = advTotal > 0 ? '⏳ سلف على الفترة الجاية: ' + fmt(advTotal) : '';
+  }
 
   /* ===== ملخص + رسم ===== */
   const donutParts = [];
@@ -1287,6 +1295,7 @@ function render(){
     else if(bal / goal >= .8) insights.push('🎯 صندوق «' + c.name + '» وصل ' + Math.round(bal / goal * 100) + '% من هدفه — قربت!');
   });
   if(fundDeposits > 0) insights.push('🏦 ودّعت ' + fmt(fundDeposits) + ' بالصناديق هالشهر — عاشت إيدك');
+  if(advTotal > 0) insights.push('⏳ عليك سلف من الصناديق ' + fmt(advTotal) + ' — تنخصم من ميزانية الفترة الجاية وترجع للصناديق');
   if(fundRepaid > 0) insights.push('↩ انخصم ' + fmt(fundRepaid) + ' من ميزانيتك سداداً لسلف الفترة الماضية من الصناديق');
   if(prog.left > 0 && remain > 0) insights.push('💡 باقي ' + prog.left + ' يوم بالشهر وتكدر تصرف ' + fmt(canDaily) + ' باليوم');
   if(!insights.length) insights.push('😌 كلشي تحت السيطرة — التحقيق ما لگه شي مريب');
@@ -1420,7 +1429,15 @@ function render(){
       fundView.push({ name:c.name, bal, goal, closed:isClosed });
       delete spentByCat[c.name];
     });
-    saveHtml = `<div class="save-head">صناديق الادخار 🏦 <span>الإجمالي: ${fmt(totalBal)}</span></div>` + rows;
+    /* ملخص السلف: شكد راح ينخصم من الفترة الجاية، ولأي صندوق يرجع */
+    const advFunds = saveList.map(({c}) => ({ name:c.name, adv: catFundParts(c.name).adv })).filter(x => x.adv > 0);
+    const advSum = advFunds.reduce((s2, x) => s2 + x.adv, 0);
+    const advHtml = advSum > 0 ? `
+      <div class="card" style="padding:12px 14px;margin:0 0 12px">
+        <div class="ov-line"><span>⏳ سلف تنخصم من ميزانية الفترة الجاية</span><b style="color:var(--amber-text)">${fmt(advSum)}</b></div>
+        ${advFunds.map(x => `<div class="ov-line" style="padding-top:6px"><small style="color:var(--muted)">ترجع لـ«${esc(x.name)}»</small><small>${fmt(x.adv)}</small></div>`).join('')}
+      </div>` : '';
+    saveHtml = `<div class="save-head">صناديق الادخار 🏦 <span>الإجمالي: ${fmt(totalBal)}</span></div>` + advHtml + rows;
     state._fundTotal = totalBal;
   }
   state._dashFunds = fundView;   /* اللوحة تحتاجها حتى لو تبويب المصروف مخفي */
@@ -1983,6 +2000,13 @@ function updateAlloc(){
     rl.style.display = repaid > 0 ? '' : 'none';
     $('aRep').textContent = fmt(repaid);
   }
+  const advNow = (state.expenses || []).filter(e => e.kind === 'fund_adv')
+    .reduce((s2, e) => s2 + (Number(e.amount) || 0), 0);
+  const al = $('aAdvLine');
+  if(al){
+    al.style.display = advNow > 0 ? '' : 'none';
+    $('aAdv').textContent = fmt(advNow);
+  }
   renderFixState();
   const left = (salary + income) - spend - save + covered - repaid;
   const leftEl = $('allocLeft');
@@ -2019,30 +2043,48 @@ function renderFixState(){
   const btn = $('btnFixBudget'), info = $('fixInfo');
   if(!btn) return;
   const fd = state.budget && state.budget.fixedDate;
-  btn.textContent = fd ? '📌 إلغاء التثبيت' : '📌 ثبّت الميزانية';
+  btn.textContent = fd ? '📌 تاريخ التثبيت: ' + fd : '📌 ثبّت الميزانية';
   btn.disabled = !!state.locked;
   if(info) info.textContent = fd
     ? 'مثبّتة من ' + fd + ' — السحب من هذا التاريخ وبعده سلفة تنخصم من الفترة الجاية'
     : 'غير مثبّتة — السحب من الصناديق يغطّي المخصص';
 }
-async function toggleBudgetFix(){
+function toggleBudgetFix(){
   if(state.locked) return;
-  const fd = state.budget && state.budget.fixedDate;
-  let date = '';
-  if(!fd){
-    date = periodDefaultDate(state.budget, state.month);
-    if(!confirm('تثبيت الميزانية بتاريخ ' + date + '؟\n\n• السحوبات قبل هذا التاريخ تبقى تغطّي المخصص.\n• أي سحب بهذا التاريخ أو بعده يصير سلفة: تنضاف للتصنيف هسه، ومن تقفل الفترة تنخصم من ميزانية الفترة الجاية وترجع للصندوق.')) return;
-  }else{
-    if(!confirm('إلغاء تثبيت الميزانية؟\n\nالسحوبات الجاية ترجع تغطّي المخصص. السلف المسجّلة تبقى سلف.')) return;
-  }
-  loading(true);
-  try{
-    const { error } = await sb.rpc('set_budget_fixed', { p_month: state.month, p_date: date });
-    if(error) throw new Error(error.message);
-    toast(date ? 'انثبّتت الميزانية ✓ 📌' : 'انلغى التثبيت ✓');
-    await loadMonth(state.month);
-  }catch(err){ toast('ما صار: ' + err.message, true); }
-  finally{ loading(false); }
+  const p = state.budget || {};
+  const fd = p.fixedDate || '';
+  const def = fd || periodDefaultDate(p, state.month);
+  const lim = hasPeriodDates(p) ? ` min="${esc(p.startDate)}" max="${esc(p.endDate)}"` : '';
+  modalOpen(`
+    <h2>📌 تثبيت الميزانية</h2>
+    <div class="hint" style="margin:0 0 10px">
+      • السحب من صندوق <b>قبل</b> هذا التاريخ = تغطية (يغطّي من مخصص التصنيف).<br>
+      • السحب <b>بهذا التاريخ أو بعده</b> = سلفة (تنضاف فوك المخصص، وتنخصم من ميزانية الفترة الجاية وترجع للصندوق).<br>
+      • تغيير التاريخ يمشي على السحوبات الجاية بس — المسجّلة تبقى مثل ما انسجّلت.
+    </div>
+    <label>تاريخ التثبيت</label>
+    <input type="date" id="fxDate" value="${esc(def)}"${lim}>
+    <button class="btn" id="fxSave">${fd ? 'حفظ التاريخ الجديد' : 'ثبّت'}</button>
+    ${fd ? '<button class="btn ghost" id="fxClear">إلغاء التثبيت</button>' : ''}
+    <button class="btn ghost" onclick="modalClose()">رجوع</button>
+  `);
+  const send = async (date) => {
+    loading(true);
+    try{
+      const { error } = await sb.rpc('set_budget_fixed', { p_month: state.month, p_date: date });
+      if(error) throw new Error(error.message);
+      modalClose();
+      toast(date ? 'انثبّتت الميزانية من ' + date + ' ✓ 📌' : 'انلغى التثبيت ✓');
+      await loadMonth(state.month);
+    }catch(err){ toast('ما صار: ' + err.message, true); }
+    finally{ loading(false); }
+  };
+  $('fxSave').onclick = () => {
+    const d = $('fxDate').value;
+    if(!d) return toast('اختار التاريخ', true);
+    send(d);
+  };
+  if($('fxClear')) $('fxClear').onclick = () => send('');
 }
 if($('btnFixBudget')) $('btnFixBudget').onclick = toggleBudgetFix;
 

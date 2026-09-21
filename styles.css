@@ -358,6 +358,8 @@
   .hstat.main{background:#fff;color:var(--green-text)}
   .hstat.main .lbl{opacity:1;color:var(--muted)}
   .hstat .val.neg{color:#FFD9D7}
+  /* سلف الفترة الجاية تحت «الباقي للصرف» — تذكير إن هذا الباقي بيه دين مؤجّل */
+  .hstat .hsub{font-size:.68rem;font-weight:600;margin-top:4px;color:var(--amber-text)}
   .hstat.main .val.neg{color:var(--red-text)}
   .head-user{display:flex;align-items:center;justify-content:space-between;margin-top:13px}
   .head-user .uname{font-size:.72rem;font-weight:500;opacity:.92}
