@@ -288,19 +288,15 @@
         <div id="saveList"></div>
       </div>
       <div class="dash-col">
-        <div id="debtList"></div>
         <h2 style="margin:18px 4px 10px">حركات الصناديق</h2>
         <div class="filter-bar" id="fmFilterBar" style="display:none">
           <select id="fmFund"><option value="">كل الصناديق</option></select>
           <select id="fmKind">
             <option value="">كل الأنواع</option>
-            <option value="wd">سحب −</option>
-            <option value="dep">إيداع +</option>
-            <option value="loan">قرض 🤝</option>
-            <option value="ret">إرجاع / سداد ↩</option>
-            <option value="fund">تمويل تصنيف 💸</option>
+            <option value="wd">سحب / سلفة −</option>
+            <option value="dep">إيداع / سداد +</option>
             <option value="xfer">نقل بين الصناديق ⇄</option>
-            <option value="fix">إعدام قرض 🚫</option>
+            <option value="fund">طرف التصنيف 💸</option>
           </select>
         </div>
         <div id="fundMovList"></div>
@@ -316,7 +312,6 @@
         <button class="seg-btn active" data-ov="exp" aria-pressed="true"><svg class="ic" aria-hidden="true"><use href="#i-receipt"></use></svg> المصاريف</button>
         <button class="seg-btn" data-ov="save" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-bank"></use></svg> الادخار</button>
         <button class="seg-btn" data-ov="bills" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-file"></use></svg> الفواتير</button>
-        <button class="seg-btn" data-ov="loans" aria-pressed="false"><svg class="ic" aria-hidden="true"><use href="#i-loan"></use></svg> القروض</button>
       </div>
       <div id="summaryCard"></div>
     </div>
@@ -355,9 +350,12 @@
         <span class="bm-chip">الرواتب <b id="aSalary">0 د.ع</b></span>
         <span class="bm-chip">إيرادات إضافية <b id="aIncome">0 د.ع</b></span>
         <span class="bm-chip wd" id="aWdLine" style="display:none"><svg class="ic" aria-hidden="true"><use href="#i-bank"></use></svg> مغطّى بسحب <b id="aWd">0 د.ع</b></span>
+        <span class="bm-chip rep" id="aRepLine" style="display:none">↩ سداد سلف الفترة الماضية <b id="aRep">0 د.ع</b></span>
       </div>
     </div>
     <div class="bm-tools dash-full">
+      <button class="chip-btn" id="btnFixBudget">📌 ثبّت الميزانية</button>
+      <span class="hint" id="fixInfo" style="margin:0"></span>
       <button class="chip-btn" id="btnCopyLast"><svg class="ic" aria-hidden="true"><use href="#i-copy"></use></svg> انسخ تصنيفات الشهر الماضي</button>
     </div>
 

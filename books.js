@@ -115,9 +115,9 @@ function bkLedger(acc){
     (state.expenses || []).forEach(e => {
       const kd = kindOf(e, saveNames);
       const a = Number(e.amount) || 0;
-      if(kd === 'fund_dep'){
-        /* إيداع بصندوق من الفائض — فلوس طلعت من إيدك للصندوق */
-        add(e.date, e.desc || 'إيداع بصندوق', (e.category || '') + (e.by ? ' · ' + e.by : ''), 0, -a, 'إيداع', e.id);
+      if(kd === 'fund_dep' || kd === 'fund_rep'){
+        /* إيداع بصندوق من الفائض، أو سداد سلفة الفترة الماضية — فلوس طلعت من إيدك للصندوق */
+        add(e.date, e.desc || 'إيداع بصندوق', (e.category || '') + (e.by ? ' · ' + e.by : ''), 0, -a, kd === 'fund_rep' ? 'سداد سلفة' : 'إيداع', e.id);
         return;
       }
       if(isFundKind(kd) || !hitsRemain(kd)) return;

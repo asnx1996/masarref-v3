@@ -243,6 +243,11 @@ test('السلوك القديم (v1) ما انتغيّر: يمسّ الاثني�
     if(!(hitsRemain(k) && hitsCat(k))) throw new Error(k + ' انتغيّر سلوكه');
   }
 });
+test('السلفة: طرف الصندوق وسدادها حركات صندوق، وطرف التصنيف يمسّ الباقي والتصنيف', () => {
+  for(const k of ['fund_adv','fund_rep']) eq(isFundKind(k), true, k);
+  if(!(hitsRemain('cat_adv') && hitsCat('cat_adv'))) throw new Error('cat_adv لازم يمسّ الاثنين مثل cat_fund');
+  eq(isFundMoveKind('cat_adv'), true);
+});
 test('isFundMoveKind: المصروف العادي بس يبقى بسجل المصاريف', () => {
   eq(isFundMoveKind('spend'), false);
   for(const k of ['fund_wd','fund_dep','cat_fund','cat_loan','cat_pay','cat_fix']) eq(isFundMoveKind(k), true, k);
