@@ -132,10 +132,11 @@ function bkLedger(acc){
       if(carried) add(od, 'مرحّل من الفترة الماضية', carried < 0 ? 'تجاوز مرحّل' : 'باقي مرحّل', carried > 0 ? carried : 0, carried < 0 ? -carried : 0, 'مرحّل', '', 'open');
       if(alloc) add(od, 'المخصص لهذه الفترة', 'من توزيع الميزانية', alloc, 0, 'مخصص', '', 'head');
     }
-    let wd = 0;                              /* سحب من صندوق وصل لهذا التصنيف */
+    let wd = 0, crep = 0;                    /* سحب من صندوق وصل لهذا التصنيف · سداد سلفة ماضية */
     (state.expenses || []).forEach(e => {
       if(e.category !== acc.name) return;
       const kd = kindOf(e, saveNames);
+      if(kd === 'cat_rep'){ crep += Number(e.amount) || 0; return; }   /* ينحسب تحت بسطر واحد */
       if(!hitsCat(kd)) return;               /* تسديد القرض ما يمسّ التصنيف */
       const a = Number(e.amount) || 0;
       if(kd === 'cat_fund') wd += -a;
@@ -156,6 +157,9 @@ function bkLedger(acc){
        ------------------------------------------------------------ */
     cover = Math.min(alloc, wd);
     if(cover > 0) add(od, 'مغطّى بسحب من الصناديق', 'هذا الجزء من المخصص جا من الصندوق مو من الراتب', 0, cover, 'تغطية', '', 'head');
+    /* سداد سلفة الفترة الماضية ياكل من المخصص (لحد المخصص) — catRepIn */
+    const repIn = Math.min(Math.max(0, alloc), Math.max(0, crep));
+    if(repIn > 0) add(od, 'سداد سلفة الفترة الماضية', 'يرجع للصندوق من مخصص هذا التصنيف', 0, repIn, 'سداد سلفة', '', 'head');
 
   }else{ /* fund */
     const c = acc.cat;
@@ -560,16 +564,17 @@ async function bkAuditAll(){
 
   /* صافي الحركة على كل (شهر، اسم) — وسحب الصناديق لحاله، لأن
      قاعدة «السحب يغطّي المخصص» تحتاجه مفروزاً (شوف bkLedger) */
-  const movedOf = {}, wdOf = {};
+  const movedOf = {}, wdOf = {}, repOf = {};
   expAll.forEach(e => {
     const m = e.month;
-    if(!movedOf[m]) { movedOf[m] = {}; wdOf[m] = {}; }
+    if(!movedOf[m]) { movedOf[m] = {}; wdOf[m] = {}; repOf[m] = {}; }
     const sn = saveOf[m] || new Set();
     const kd = kindOf(e, sn);
     const k = e.category || '';
     if(!k) return;
     if(isFundKind(kd) || hitsCat(kd)) movedOf[m][k] = (movedOf[m][k] || 0) + (Number(e.amount) || 0);
     if(kd === 'cat_fund') wdOf[m][k] = (wdOf[m][k] || 0) - (Number(e.amount) || 0);
+    if(kd === 'cat_rep')  repOf[m][k] = (repOf[m][k] || 0) + (Number(e.amount) || 0);
   });
 
   const breaks = [];
@@ -587,7 +592,9 @@ async function bkAuditAll(){
          زايدين بالحساب القديم — نفس التصحيح اللي بـbkLedger. */
       const amt = Number(c.amount) || 0;
       const wd  = c.type === 'save' ? 0 : ((wdOf[m] || {})[name] || 0);
-      const expected = amt + (Number(c.carried) || 0) - ((movedOf[m] || {})[name] || 0) - Math.min(amt, wd);
+      const rep = c.type === 'save' ? 0 : ((repOf[m] || {})[name] || 0);
+      const expected = amt + (Number(c.carried) || 0) - ((movedOf[m] || {})[name] || 0) - Math.min(amt, wd)
+                     - Math.min(Math.max(0, amt), Math.max(0, rep));
       const actual = Number(next.carried) || 0;
       if(Math.abs(expected - actual) >= 1)
         breaks.push({ month:m, next:nx, name, type:c.type === 'save' ? 'صندوق' : 'تصنيف', expected, actual });

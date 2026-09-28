@@ -248,6 +248,15 @@ test('السلفة: طرف الصندوق وسدادها حركات صندوق،
   if(!(hitsRemain('cat_adv') && hitsCat('cat_adv'))) throw new Error('cat_adv لازم يمسّ الاثنين مثل cat_fund');
   eq(isFundMoveKind('cat_adv'), true);
 });
+test('سحب فقط: مثل السلفة — طرف الصندوق حركة صندوق، وطرف التصنيف يمسّ الاثنين', () => {
+  eq(isFundKind('fund_plain'), true);
+  if(!(hitsRemain('cat_plain') && hitsCat('cat_plain'))) throw new Error('cat_plain لازم يمسّ الاثنين');
+});
+test('سداد السلفة من التصنيف (cat_rep): ما يمسّ الباقي ولا الصرف — fund_rep ينقص الباقي، والمخصص ينحسب بـmin', () => {
+  eq(hitsRemain('cat_rep'), false);
+  eq(hitsCat('cat_rep'), false);
+  eq(isFundMoveKind('cat_rep'), true);
+});
 test('isFundMoveKind: المصروف العادي بس يبقى بسجل المصاريف', () => {
   eq(isFundMoveKind('spend'), false);
   for(const k of ['fund_wd','fund_dep','cat_fund','cat_loan','cat_pay','cat_fix']) eq(isFundMoveKind(k), true, k);

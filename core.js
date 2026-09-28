@@ -190,10 +190,13 @@ function kindOf(e, saveNames){
 }
 /* حركة على صندوق ادخار (تحرّك رصيده) */
 const isFundKind = k => String(k).indexOf('fund_') === 0;
-/* تنخصم من متاح التصنيف؟ */
-const hitsCat    = k => !isFundKind(k) && k !== 'cat_pay';
-/* تنخصم من «الباقي للصرف»؟ (حركات الصناديق إلها حسابها لحالها) */
-const hitsRemain = k => !isFundKind(k) && k !== 'cat_loan' && k !== 'cat_fix';
+/* تنخصم من متاح التصنيف؟
+   cat_rep (سداد سلفة الفترة الماضية من مخصص التصنيف) إله حساب لحاله:
+   ياكل من المخصص بس — min(المخصص، السداد) — والزيادة تنخصم من الرواتب */
+const hitsCat    = k => !isFundKind(k) && k !== 'cat_pay' && k !== 'cat_rep';
+/* تنخصم من «الباقي للصرف»؟ (حركات الصناديق إلها حسابها لحالها؛
+   cat_rep طرفه fund_rep ينقص الباقي أصلاً) */
+const hitsRemain = k => !isFundKind(k) && k !== 'cat_loan' && k !== 'cat_fix' && k !== 'cat_rep';
 /* حركة صندوق بالمعنى الواسع — تروح لقسم «حركات الصناديق» مو لسجل المصاريف */
 const isFundMoveKind = k => k !== 'spend';
 
