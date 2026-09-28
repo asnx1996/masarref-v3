@@ -157,9 +157,9 @@ function bkLedger(acc){
        ------------------------------------------------------------ */
     cover = Math.min(alloc, wd);
     if(cover > 0) add(od, 'مغطّى بسحب من الصناديق', 'هذا الجزء من المخصص جا من الصندوق مو من الراتب', 0, cover, 'تغطية', '', 'head');
-    /* سداد سلفة الفترة الماضية ياكل من المخصص (لحد المخصص) — catRepIn */
-    const repIn = Math.min(Math.max(0, alloc), Math.max(0, crep));
-    if(repIn > 0) add(od, 'سداد سلفة الفترة الماضية', 'يرجع للصندوق من مخصص هذا التصنيف', 0, repIn, 'سداد سلفة', '', 'head');
+    /* سلفة الفترة الماضية: انصرفت قبل، فتنخصم من المتاح — catRepIn */
+    const repIn = Math.max(0, crep);
+    if(repIn > 0) add(od, 'سلفة الفترة الماضية', 'انصرفت من الصندوق قبل — تنخصم من مخصص هذا التصنيف', 0, repIn, 'سلفة ماضية', '', 'head');
 
   }else{ /* fund */
     const c = acc.cat;
@@ -594,7 +594,7 @@ async function bkAuditAll(){
       const wd  = c.type === 'save' ? 0 : ((wdOf[m] || {})[name] || 0);
       const rep = c.type === 'save' ? 0 : ((repOf[m] || {})[name] || 0);
       const expected = amt + (Number(c.carried) || 0) - ((movedOf[m] || {})[name] || 0) - Math.min(amt, wd)
-                     - Math.min(Math.max(0, amt), Math.max(0, rep));
+                     - Math.max(0, rep);
       const actual = Number(next.carried) || 0;
       if(Math.abs(expected - actual) >= 1)
         breaks.push({ month:m, next:nx, name, type:c.type === 'save' ? 'صندوق' : 'تصنيف', expected, actual });

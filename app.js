@@ -1303,7 +1303,7 @@ function render(){
     else if(bal / goal >= .8) insights.push('🎯 صندوق «' + c.name + '» وصل ' + Math.round(bal / goal * 100) + '% من هدفه — قربت!');
   });
   if(fundDeposits > 0) insights.push('🏦 ودّعت ' + fmt(fundDeposits) + ' بالصناديق هالشهر — عاشت إيدك');
-  if(advTotal > 0) insights.push('⏳ عليك سلف من الصناديق ' + fmt(advTotal) + ' — تنخصم من ميزانية الفترة الجاية وترجع للصناديق');
+  if(advTotal > 0) insights.push('⏳ عليك سلف من الصناديق ' + fmt(advTotal) + ' — تنخصم من مخصصات تصنيفاتها بالفترة الجاية');
   if(fundRepaid > 0) insights.push('↩ انخصم ' + fmt(fundRepaid) + ' من ميزانيتك سداداً لسلف الفترة الماضية من الصناديق');
   if(prog.left > 0 && remain > 0) insights.push('💡 باقي ' + prog.left + ' يوم بالشهر وتكدر تصرف ' + fmt(canDaily) + ' باليوم');
   if(!insights.length) insights.push('😌 كلشي تحت السيطرة — التحقيق ما لگه شي مريب');
@@ -1378,9 +1378,9 @@ function render(){
           ${carried ? `<div class="env-carry">${carried < 0 ? '⚠️ منها تجاوز مرحّل من الفترة الماضية: ' + fmt(-carried) : '↩ منها مرحّل من الشهر الماضي: ' + fmt(carried)}</div>` : ''}
           ${loanOut > 0 ? `<div class="env-carry">🤝 منها قرض من الصناديق (لازم يرجع): ${fmt(loanOut)}</div>` : ''}
           ${loanChg > 0 ? `<div class="env-carry">🤝 منها مصروف بقرض من الصناديق (لازم يرجع): ${fmt(loanChg)}</div>` : ''}
-          ${adv > 0 ? `<div class="env-carry">🏦 منها سلفة من الصناديق (ترجع للصندوق من مخصصه بالفترة الجاية): ${fmt(adv)}</div>` : ''}
+          ${adv > 0 ? `<div class="env-carry">🏦 منها سلفة من الصناديق (تنخصم من مخصصه بالفترة الجاية): ${fmt(adv)}</div>` : ''}
           ${plain > 0 ? `<div class="env-carry">💸 منها سحب فقط من الصناديق (ما يرجع): ${fmt(plain)}</div>` : ''}
-          ${repIn > 0 ? `<div class="env-carry">↩ انخصم من مخصصه سداد سلفة الفترة الماضية: ${fmt(repIn)}</div>` : ''}
+          ${repIn > 0 ? `<div class="env-carry">⏳ انخصمت منه سلفة الفترة الماضية (انصرفت قبل): ${fmt(repIn)}</div>` : ''}
         </div>
         ${isOpen ? envMovesHtml(c.name, saveNames) : ''}
       </div>`;
@@ -1433,7 +1433,7 @@ function render(){
             ${wd ? `<span>${wd>=0?'− صافي السحب':'+ صافي الإيداع'}: ${fmt(Math.abs(wd))}</span>` : ''}
           </div>
           ${goalHtml}
-          ${fp.adv > 0 ? `<div class="env-carry">⏳ سلف لهذه الفترة: ${fmt(fp.adv)} — ترجع للصندوق من ميزانية الفترة الجاية</div>` : ''}
+          ${fp.adv > 0 ? `<div class="env-carry">⏳ سلف منه لهذه الفترة: ${fmt(fp.adv)} — تنخصم من مخصصات الفترة الجاية</div>` : ''}
           ${fp.rep > 0 ? `<div class="env-carry">↩ رجع له سداد سلف الفترة الماضية: ${fmt(fp.rep)}</div>` : ''}
           ${isClosed ? `<div class="env-carry">🔒 مغلق — من ينقفل الشهر ما راح يترحّل للشهر الجاي</div>` : ''}
           <div class="fund-more">اضغط للخيارات ⌄</div>
@@ -1446,8 +1446,8 @@ function render(){
     const advSum = advFunds.reduce((s2, x) => s2 + x.adv, 0);
     const advHtml = advSum > 0 ? `
       <div class="card" style="padding:12px 14px;margin:0 0 12px">
-        <div class="ov-line"><span>⏳ سلف تنخصم من ميزانية الفترة الجاية</span><b style="color:var(--amber-text)">${fmt(advSum)}</b></div>
-        ${advFunds.map(x => `<div class="ov-line" style="padding-top:6px"><small style="color:var(--muted)">ترجع لـ«${esc(x.name)}»</small><small>${fmt(x.adv)}</small></div>`).join('')}
+        <div class="ov-line"><span>⏳ سلف تنخصم من مخصصات الفترة الجاية</span><b style="color:var(--amber-text)">${fmt(advSum)}</b></div>
+        ${advFunds.map(x => `<div class="ov-line" style="padding-top:6px"><small style="color:var(--muted)">من «${esc(x.name)}»</small><small>${fmt(x.adv)}</small></div>`).join('')}
       </div>` : '';
     saveHtml = `<div class="save-head">صناديق الادخار 🏦 <span>الإجمالي: ${fmt(totalBal)}</span></div>` + advHtml + rows;
     state._fundTotal = totalBal;
@@ -1671,7 +1671,7 @@ const KIND_UI = {
   fund_plain:   { icon:'💸', tag:' · سحب فقط' },
   cat_plain:    { icon:'💸', tag:' · سحب فقط' },
   fund_rep:     { icon:'↩', tag:' · سداد سلفة' },
-  cat_rep:      { icon:'↩', tag:' · سداد سلفة' }
+  cat_rep:      { icon:'⏳', tag:' · سلفة ماضية' }
 };
 function expRowHtml(e, saveNames){
   const k = kindOf(e, saveNames);
@@ -1818,7 +1818,7 @@ function catRowNote(name, amount, carried, isSave){
     const bits = [];
     if(carried)      bits.push('🏦 رصيد مرحّل: ' + fmt(carried) + ' · محمي من الحذف — يتقفل من بطاقته باللوحة');
     if(p.out > 0)    bits.push('🏦 انسحب منه: ' + fmt(p.out));
-    if(p.adv > 0)    bits.push('⏳ سلف منه: ' + fmt(p.adv) + ' (ترجع الفترة الجاية)');
+    if(p.adv > 0)    bits.push('⏳ سلف منه: ' + fmt(p.adv) + ' (تنخصم من مخصصات الفترة الجاية)');
     if(p.plain > 0)  bits.push('💸 سحب فقط منه: ' + fmt(p.plain));
     if(p.rep > 0)    bits.push('↩ رجع له سداد سلف: ' + fmt(p.rep));
     if(p.loan > 0)   bits.push('🤝 مقروض منه: ' + fmt(p.loan));
@@ -1836,8 +1836,8 @@ function catRowNote(name, amount, carried, isSave){
   if(p.wd > alloc) extras.push('🏦 سحب من الصناديق ' + fmt(p.wd) + ' (أكثر من المخصص)');
   if(p.adv > 0)    extras.push('⏳ سلفة من الصناديق ' + fmt(p.adv) + ' (تنخصم من الفترة الجاية)');
   if(p.plain > 0)  extras.push('💸 سحب فقط من الصناديق ' + fmt(p.plain) + ' (ما يرجع)');
-  if(repIn > 0)    extras.push('↩ ينخصم سداد سلفة الفترة الماضية ' + fmt(repIn));
-  if(p.crep > repIn) extras.push('⚠ السداد أكبر من المخصص — الزيادة ' + fmt(p.crep - repIn) + ' تنخصم من الرواتب');
+  if(repIn > 0)    extras.push('⏳ ينخصم سلفة الفترة الماضية ' + fmt(repIn));
+  if(repIn > alloc + carried) extras.push('⚠ السلفة أكبر من المخصص — التصنيف بالسالب');
   if(loanNet > 0)  extras.push('🤝 قرض من الصناديق ' + fmt(loanNet));
   if(!extras.length && p.wd <= 0 && p.chg <= 0) return '';
   let note = extras.length
@@ -1850,8 +1850,10 @@ function catRowNote(name, amount, carried, isSave){
     /* لو السحب أكثر من المخصص، سطر «مغطّى» يطلع صفر وما يفيد —
        سطر «أكثر من المخصص» فوك يكول القصة كاملة */
     if(Math.min(alloc, p.wd) > 0) note += '\n🏦 منها مغطّى بسحب من الصناديق: ' + fmt(Math.min(alloc, p.wd));
-    note += '\n💵 صافي من راتبك: ' + fmt(catFromSalary(alloc, p.wd));
+    if(p.crep <= 0) note += '\n💵 صافي من راتبك: ' + fmt(catFromSalary(alloc, p.wd));
   }
+  /* السلفة الماضية مدفوعة قبل — الراتب يدفع الباقي بس */
+  if(p.crep > 0) note += '\n💵 صافي من راتبك: ' + fmt(catFromSalary(alloc, p.wd) - catRepSaved(alloc, p.wd, p.crep));
   if(p.chg > 0) note += (note ? '\n' : '') + '🤝 منها مصروف بقرض من الصناديق: ' + fmt(p.chg) + ' (لازم يرجع — منخصم أصلاً)';
   return note;
 }
@@ -2016,22 +2018,20 @@ function updateAlloc(){
     wl.style.display = covered > 0 ? '' : 'none';
     $('aWd').textContent = fmt(covered);
   }
-  /* سداد سلف الفترة الماضية: كل سلفة ترجع من مخصص تصنيفها (cat_rep)،
-     فهذاك الجزء أصلاً داخل بالتوزيع. اللي ينخصم من الدخل قبل التوزيع
-     بس الزيادة فوك المخصص، والسداد اللي ما مربوط بتصنيف. */
-  const repTotal = (state.expenses || []).filter(e => e.kind === 'fund_rep')
-    .reduce((s, e) => s + (-(Number(e.amount) || 0)), 0);
-  let repInAlloc = 0;
+  /* سلف الفترة الماضية: انصرفت من الصندوق قبل، فالجزء من مخصص
+     تصنيفها اللي غطّته ما يطلع من الراتب هسه — يرجع للباقي مثل
+     التغطية. (حنود مخصصه ٧٠٠ وعليه سلفة ٢٠٠ ← الراتب يدفع ٥٠٠) */
+  let repSaved = 0;
   document.querySelectorAll('#catRows .cat-row').forEach(r => {
     const nm = r.querySelector('.cname').value.trim();
     if(!nm) return;
-    repInAlloc += catRepIn(num(r.querySelector('.camt').value), catFundParts(nm).crep);
+    const pp = catFundParts(nm);
+    repSaved += catRepSaved(num(r.querySelector('.camt').value), pp.wd, pp.crep);
   });
-  const repaid = Math.max(0, repTotal - repInAlloc);
   const rl = $('aRepLine');
   if(rl){
-    rl.style.display = repaid > 0 ? '' : 'none';
-    $('aRep').textContent = fmt(repaid);
+    rl.style.display = repSaved > 0 ? '' : 'none';
+    $('aRep').textContent = fmt(repSaved);
   }
   const advNow = (state.expenses || []).filter(e => e.kind === 'fund_adv')
     .reduce((s2, e) => s2 + (Number(e.amount) || 0), 0);
@@ -2041,7 +2041,7 @@ function updateAlloc(){
     $('aAdv').textContent = fmt(advNow);
   }
   renderFixState();
-  const left = (salary + income) - spend - save + covered - repaid;
+  const left = (salary + income) - spend - save + covered + repSaved;
   const leftEl = $('allocLeft');
   leftEl.textContent = fmt(left);
   /* classList مو className: العنصر صار يحمل .bm-val (تنسيق الرقم
@@ -2052,7 +2052,7 @@ function updateAlloc(){
      المسار الفاضي = الباقي. لو التوزيع تجاوز المتاح، نقيس على التوزيع
      نفسه حتى الشريط يمتلي بالكامل وينصبغ أحمر — الشريط ما يكذب ويوري
      فراغ وأنت متجاوز. */
-  const pool = Math.max(0, salary + income + covered - repaid);
+  const pool = Math.max(0, salary + income + covered + repSaved);
   const base = Math.max(pool, spend + save) || 1;
   const pSpend = Math.round(spend / base * 100);
   const pSave  = Math.round(save  / base * 100);
@@ -2092,7 +2092,7 @@ function toggleBudgetFix(){
     <h2>📌 تثبيت الميزانية</h2>
     <div class="hint" style="margin:0 0 10px">
       • السحب من صندوق <b>قبل</b> هذا التاريخ = تغطية (يغطّي من مخصص التصنيف).<br>
-      • السحب <b>بهذا التاريخ أو بعده</b> = سلفة (تنضاف فوك المخصص، وبالفترة الجاية ترجع للصندوق من مخصص نفس التصنيف).<br>
+      • السحب <b>بهذا التاريخ أو بعده</b> = سلفة (تنضاف فوك المخصص هسه، وبالفترة الجاية تنخصم من مخصص نفس التصنيف — فينقطع من الراتب أقل).<br>
       • تغيير التاريخ يمشي على السحوبات الجاية بس — المسجّلة تبقى مثل ما انسجّلت.
     </div>
     <label>تاريخ التثبيت</label>
@@ -2141,7 +2141,7 @@ window.openEdit = (id) => {
     return;
   }
   /* سداد سلفة ماضية → تختار أي تصنيف يسدّها (لو تغيّر اسمه) */
-  if(kd === 'fund_rep' || kd === 'cat_rep') return openRepayCategory(e.id);
+  if(kd === 'cat_rep') return openRepayCategory(e.id);
   if(kd !== 'spend'){ toast('حركة صندوق (إيداع/سداد) — تكدر تحذفها من زر ✕ بس ما تنعدّل', true); return; }
   /* المبلغ السالب (إرجاع) — المحرر يقرا المبلغ موجب فيقلبه لمصروف */
   if(e.amount < 0){ toast('هذا إرجاع (مبلغ سالب) — احذفه وسجّله من جديد إذا تريد تغيّره', true); return; }
@@ -2283,7 +2283,7 @@ function wdKindHint(kind, to, v, withAvail){
   /* التغطية: المتاح = max(المخصص، السحب) — فالزيادة بس اللي فوك المخصص */
   const after = kind === 'cover' ? now + Math.max(0, wdNow + v - Math.max(alloc, wdNow)) : now + v;
   let h = kind === 'adv'
-    ? `⏳ <b>سلفة</b>: تنضاف فوك مخصص «${esc(to)}» هسه، وبالفترة الجاية ترجع للصندوق من مخصص «${esc(to)}» نفسه (والزيادة فوك مخصصه من الرواتب).`
+    ? `⏳ <b>سلفة</b>: تنضاف فوك مخصص «${esc(to)}» هسه، وبالفترة الجاية تنخصم من مخصص «${esc(to)}» نفسه — فينقطع من راتبك أقل. ما ترجع للصندوق.`
     : kind === 'plain'
     ? `💸 <b>سحب فقط</b>: تنضاف فوك مخصص «${esc(to)}» وتصرف منها — ما تغطّي من المخصص، وما تنخصم من الفترة الجاية ولا ترجع للصندوق.`
     : `🏦 <b>تغطية</b>: تغطّي من مخصص «${esc(to)}» فيقل اللي ينستقطع من راتبك.`;
@@ -2374,11 +2374,17 @@ window.openWithdraw = (idx) => {
 function catAllocPool(alloc, wd){
   return Math.max(Number(alloc)||0, Number(wd)||0);
 }
-/* سداد سلفة الفترة الماضية ياكل من مخصص التصنيف نفسه — بس لحد المخصص؛
-   الزيادة (لو السلفة أكبر من المخصص) تنخصم من الرواتب قبل التوزيع.
-   نفس least(المخصص، cat_rep) بـcat_avail بالسيرفر. */
+/* سلفة الفترة الماضية (cat_rep) = تغطية مؤجّلة: انصرفت من الصندوق
+   قبل، فهسه تنخصم من متاح تصنيفها (كلها — نفس cat_avail بالسيرفر)،
+   وما ترجع للصندوق. */
 function catRepIn(alloc, rep){
-  return Math.min(Math.max(0, Number(alloc)||0), Math.max(0, Number(rep)||0));
+  return Math.max(0, Number(rep)||0);
+}
+/* شكد وفّرت السلفة من الراتب: الجزء من المخصص (بعد التغطية) اللي
+   صار مدفوع سلفاً — الراتب ما يحتاج يدفعه */
+function catRepSaved(alloc, wd, rep){
+  const a = Math.max(0, Number(alloc)||0);
+  return Math.min(a - Math.min(a, Math.max(0, Number(wd)||0)), Math.max(0, Number(rep)||0));
 }
 /* اللي يجي من الراتب فعلاً = المخصص ناقص السحب (ما ينزل تحت صفر) */
 function catFromSalary(alloc, wd){
@@ -4364,51 +4370,37 @@ window.removeOffline = async (qid) => {
   toast('انحذف من الطابور ✓');
 };
 
-/* ---------- سداد سلفة الفترة الماضية: منو يسدّها ----------
-   السداد ينخصم من مخصص التصنيف اللي أخذ السلفة. لو بدّلت اسم
-   التصنيف (أو تريد تصنيف ثاني يسدّها) تختاره هنا. «بلا تصنيف» =
-   تنخصم كلها من الرواتب قبل التوزيع. */
+/* ---------- سلفة الفترة الماضية: من مخصص أي تصنيف تنخصم ----------
+   تنخصم من التصنيف اللي أخذها. لو بدّلت اسمه (أو تريدها على تصنيف
+   ثاني) تختاره هنا. */
 window.openRepayCategory = (id) => {
   if(state.locked) return toast('هذه الفترة مقفلة', true);
-  const e = (state.expenses||[]).find(x => x.id === id);
+  const e = (state.expenses||[]).find(x => x.id === id && x.kind === 'cat_rep');
   if(!e) return;
-  const fundSide = e.kind === 'fund_rep' ? e : (state.expenses||[]).find(x => x.id === e.linkId);
-  if(!fundSide) return toast('ما لكيت سداد السلفة', true);
-  const catSide = (state.expenses||[]).find(x => x.linkId === fundSide.id && x.kind === 'cat_rep');
-  const cur = catSide ? catSide.category : '';
   const spendCats = ((state.budget && state.budget.categories) || []).filter(x => x.type !== 'save');
-  const known = spendCats.some(x => x.name === cur);
-  const opts = `<option value=""${!cur || !known ? ' selected' : ''}>— بلا تصنيف (من الرواتب) —</option>`
-    + spendCats.map(x => `<option value="${esc(x.name)}"${x.name === cur ? ' selected' : ''}>${esc(x.name)}</option>`).join('');
-  const amt = -(Number(fundSide.amount) || 0);
+  const known = spendCats.some(x => x.name === e.category);
+  const opts = (known ? '' : `<option value="" selected disabled>— اختر تصنيف —</option>`)
+    + spendCats.map(x => `<option value="${esc(x.name)}"${x.name === e.category ? ' selected' : ''}>${esc(x.name)}</option>`).join('');
+  const amt = Number(e.amount) || 0;
   modalOpen(`
-    <h2>↩ سداد سلفة</h2>
-    <div class="hint" style="margin:0 0 8px">${esc(fundSide.desc || '')}<br>المبلغ <b>${fmt(amt)}</b> يرجع لصندوق «${esc(fundSide.category)}».</div>
-    ${cur && !known ? `<div class="hint" style="margin:0 0 8px;color:var(--red)">⚠ التصنيف «${esc(cur)}» مو موجود بهذه الفترة — اختر التصنيف اللي يسدّها.</div>` : ''}
-    <label>يسدّها من مخصص</label>
+    <h2>⏳ سلفة من الفترة الماضية</h2>
+    <div class="hint" style="margin:0 0 8px">${esc(e.desc || '')}<br>المبلغ <b>${fmt(amt)}</b> انصرف من الصندوق قبل، فهسه ينخصم من مخصص تصنيفه — وينقطع من راتبك أقل بنفس المبلغ.</div>
+    ${!known ? `<div class="hint" style="margin:0 0 8px;color:var(--red)">⚠ التصنيف «${esc(e.category)}» مو موجود بهذه الفترة — اختر التصنيف اللي تنخصم منه.</div>` : ''}
+    <label>تنخصم من مخصص</label>
     <select id="rpCat">${opts}</select>
-    <div class="hint" id="rpHint" style="margin:6px 0 0"></div>
     <button class="btn" id="rpSave">حفظ</button>
     <button class="btn ghost" onclick="modalClose()">إلغاء</button>
   `);
-  const rpRefresh = () => {
-    const nm = $('rpCat').value;
-    const c = spendCats.find(x => x.name === nm);
-    if(!c){ $('rpHint').innerHTML = 'تنخصم كلها من الرواتب قبل التوزيع.'; return; }
-    const alloc = Number(c.amount) || 0;
-    const inA = Math.min(alloc, amt);
-    $('rpHint').innerHTML = `تنخصم من مخصص «${esc(nm)}» (${fmt(alloc)})` + (amt > inA ? ` — والزيادة ${fmt(amt - inA)} من الرواتب.` : '.');
-  };
-  rpRefresh();
-  $('rpCat').addEventListener('change', rpRefresh);
   $('rpSave').onclick = async () => {
+    const category = $('rpCat').value;
+    if(!category) return toast('اختر تصنيف', true);
     loading(true);
     try{
-      const res = await apiPost({ action:'setRepayCategory', id: fundSide.id, category: $('rpCat').value });
+      const res = await apiPost({ action:'setRepayCategory', id: e.id, category });
       if(guardAuth(res)) return;
       if(!res.ok) throw new Error(res.error || 'خطأ');
       modalClose();
-      toast('انحفظ ✓ ↩');
+      toast('انحفظ ✓ ⏳');
       await loadMonth(state.month);
     }catch(err){ toast('ما انحفظ: ' + err.message, true); }
     finally{ loading(false); }
@@ -4422,7 +4414,7 @@ window.delExpense = async (id) => {
     const kd = kindOf(e, saveNames);
     /* الطرف الطالع من صندوق → الحذف المتزامن من سجل الصندوق */
     if(kd === 'fund_wd' || kd === 'fund_adv' || kd === 'fund_plain' || kd === 'fund_xfer_out' || kd === 'fund_loan') return deleteWithdraw(e.id);
-    if(kd === 'fund_rep' || kd === 'cat_rep') return toast('هذا سداد سلفة تلقائي من الفترة الماضية — ينشال بس لو فكّيت قفلها', true);
+    if(kd === 'fund_rep' || kd === 'cat_rep') return toast('هاي سلفة تلقائية من الفترة الماضية — تنشال بس لو فكّيت قفلها', true);
   }
   /* السيرفر (delete_expense) يحذف الحركة ويا طرفها المرتبط — ما تبقى نص عملية */
   const linked = e && e.kind && e.kind !== 'spend' && e.kind !== 'fund_dep';
